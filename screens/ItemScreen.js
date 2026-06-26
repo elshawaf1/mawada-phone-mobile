@@ -371,27 +371,31 @@ export default function ItemScreen({ navigation, route }) {
               <FlatList
                 data={images}
                 horizontal
-                pagingEnabled
                 showsHorizontalScrollIndicator={false}
+                snapToInterval={width + 12}
+                snapToAlignment="center"
+                decelerationRate={0.88}
                 onMomentumScrollEnd={(e) => {
-                  const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                  const index = Math.round(e.nativeEvent.contentOffset.x / (width + 12));
                   setSelectedImageIndex(index);
                 }}
                 scrollEventThrottle={16}
-                decelerationRate="fast"
+                contentContainerStyle={{ paddingHorizontal: 0 }}
                 keyExtractor={(item, i) => item.id || `img-${i}`}
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    activeOpacity={1}
-                    onPress={handleImageDoubleTap}
-                    style={{ width }}
-                  >
-                    <Image
-                      source={{ uri: item.url }}
-                      style={styles.navMainImage}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
+                  <View style={{ width, paddingHorizontal: 6 }}>
+                    <TouchableOpacity
+                      activeOpacity={1}
+                      onPress={handleImageDoubleTap}
+                      style={styles.imageSlide}
+                    >
+                      <Image
+                        source={{ uri: item.url }}
+                        style={styles.navMainImage}
+                        resizeMode="contain"
+                      />
+                    </TouchableOpacity>
+                  </View>
                 )}
               />
 
@@ -718,6 +722,10 @@ const styles = StyleSheet.create({
   imageCard: {
     backgroundColor: COLORS.gray50, marginHorizontal: 16, marginTop: 16,
     borderRadius: 24, overflow: 'hidden',
+  },
+  imageSlide: {
+    backgroundColor: COLORS.gray50,
+    borderRadius: 18, overflow: 'hidden',
   },
   navMainImage: { width: '100%', height: 360 },
   navDots: {
