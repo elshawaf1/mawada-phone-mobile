@@ -9,6 +9,7 @@ import {
   Share,
   Linking,
   Alert,
+  Modal,
 } from 'react-native';
 import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +30,7 @@ function PaymentIcon({ method }) {
 export default function OrderConfirmScreen({ navigation, route }) {
   const { t, weekdays, months } = useTranslation();
   const order = route?.params?.order;
-  const viewShotRef = useRef(null);
+  const captureRef2 = useRef(null);
 
   const getDeliveryEstimate = () => {
     const d = new Date();
@@ -84,11 +85,14 @@ export default function OrderConfirmScreen({ navigation, route }) {
   };
 
   const handleScreenshot = async () => {
+    setCapturing(true);
+  };
+
+  const doCapture = async () => {
+    await new Promise((r) => setTimeout(r, 400));
+    if (!captureRef2.current) { setCapturing(false); return; }
     try {
-      setCapturing(true);
-      await new Promise((r) => setTimeout(r, 300));
-      if (!viewShotRef.current) return;
-      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      const uri = await captureRef(captureRef2, { format: 'png', quality: 1, result: 'tmpfile' });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
@@ -307,19 +311,22 @@ export default function OrderConfirmScreen({ navigation, route }) {
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {capturing ? (
-        <View ref={viewShotRef} style={styles.captureContainer}>
-          {renderContent()}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {renderContent()}
+      </ScrollView>
+
+      {/* Capture Modal - renders outside normal layout, unconstrained */}
+      <Modal visible={capturing} transparent={false} animationType="none" statusBarTranslucent>
+        <View style={styles.captureModal}>
+          <View ref={captureRef2} style={styles.captureView} onLayout={() => doCapture()}>
+            {renderContent()}
+          </View>
         </View>
-      ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {renderContent()}
-        </ScrollView>
-      )}
+      </Modal>
     </View>
   );
 }
@@ -328,7 +335,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8FAFC' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 40 },
-  captureContainer: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+
+  captureModal: { flex: 1, backgroundColor: '#F8FAFC' },
+  captureView: { backgroundColor: '#F8FAFC', padding: 16 },
 
   /* ── Header ── */
   header: { alignItems: 'center', paddingTop: 12, paddingBottom: 18 },

@@ -10,6 +10,7 @@ import {
   StatusBar,
   Alert,
   Share,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -80,7 +81,7 @@ export default function OrderDetailScreen({ navigation, route }) {
   const [order, setOrder] = useState(initialOrder);
   const [loading, setLoading] = useState(!initialOrder);
   const [capturing, setCapturing] = useState(false);
-  const viewShotRef = useRef(null);
+  const captureRef2 = useRef(null);
 
   const STATUS_LABELS = {
     PENDING: t('orders.statusPending'),
@@ -192,12 +193,15 @@ export default function OrderDetailScreen({ navigation, route }) {
     Share.share({ message });
   }, [order, STATUS_LABELS, t]);
 
-  const handleScreenshot = useCallback(async () => {
+  const handleScreenshot = useCallback(() => {
+    setCapturing(true);
+  }, []);
+
+  const doCapture = useCallback(async () => {
+    await new Promise((r) => setTimeout(r, 400));
+    if (!captureRef2.current) { setCapturing(false); return; }
     try {
-      setCapturing(true);
-      await new Promise((r) => setTimeout(r, 300));
-      if (!viewShotRef.current) return;
-      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      const uri = await captureRef(captureRef2, { format: 'png', quality: 1, result: 'tmpfile' });
       if (await SharingExpo.isAvailableAsync()) {
         await SharingExpo.shareAsync(uri);
       } else {
@@ -443,7 +447,7 @@ export default function OrderDetailScreen({ navigation, route }) {
       />
 
       {capturing ? (
-        <View ref={viewShotRef} style={styles.captureContainer}>
+        <View style={styles.captureContainer}>
           {renderContent()}
         </View>
       ) : (
@@ -467,6 +471,15 @@ export default function OrderDetailScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Capture Modal */}
+      <Modal visible={capturing} transparent={false} animationType="none" statusBarTranslucent>
+        <View style={styles.captureModal}>
+          <View ref={captureRef2} style={styles.captureView} onLayout={() => doCapture()}>
+            {renderContent()}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -488,7 +501,9 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: { padding: 16 },
-  captureContainer: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+  captureContainer: { flex: 1, backgroundColor: '#F8FAFC' },
+  captureModal: { flex: 1, backgroundColor: '#F8FAFC' },
+  captureView: { backgroundColor: '#F8FAFC', padding: 16 },
 
   statusBadgeRow: {
     flexDirection: 'row-reverse', gap: 8, marginBottom: 12,
