@@ -562,11 +562,12 @@ export default function HomeScreen({ navigation }) {
             />
 
             {bundles.length > 0 && (
-              <View style={styles.bundleSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>{t('home.offerMawda')}</Text>
-                </View>
-                {bundles.slice(0, 2).map((bundle) => (
+              <View style={styles.bundleSectionWrap}>
+                <View style={styles.bundleSection}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitleLight}>{t('home.offerMawda')}</Text>
+                  </View>
+                  {bundles.slice(0, 2).map((bundle) => (
                   <BundleCard
                     key={bundle.id}
                     bundle={bundle}
@@ -587,6 +588,7 @@ export default function HomeScreen({ navigation }) {
                     }}
                   />
                 ))}
+                </View>
               </View>
             )}
 
@@ -727,7 +729,13 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
 
-  bundleSection: { marginBottom: 24, paddingHorizontal: 8 },
+  bundleSection: { marginBottom: 0, paddingHorizontal: 8 },
+  bundleSectionWrap: {
+    backgroundColor: '#0F172A', borderRadius: 20, marginHorizontal: 16, marginBottom: 24, paddingVertical: 14,
+  },
+  sectionTitleLight: {
+    fontSize: 18, fontWeight: '800', color: '#FFF', textAlign: 'right',
+  },
 
 
   sectionHeader: {
