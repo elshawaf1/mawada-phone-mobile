@@ -255,6 +255,78 @@ export const db = {
     if (error) throw new Error(error.message);
     return data;
   },
+
+  async getBundleByProduct(productId) {
+    const { data, error } = await supabase
+      .from('product_bundles')
+      .select('*')
+      .eq('main_product_id', productId)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+
+    const addonIds = data.addon_product_ids || [];
+    let addonProducts = [];
+    if (addonIds.length > 0) {
+      const { data: addons } = await supabase
+        .from('products')
+        .select('*, product_images(*)')
+        .in('id', addonIds)
+        .eq('isActive', true);
+      addonProducts = addons || [];
+    }
+
+    const { data: mainProduct } = await supabase
+      .from('products')
+      .select('*, product_images(*)')
+      .eq('id', data.main_product_id)
+      .single();
+
+    return { ...data, main_product: mainProduct, addon_products: addonProducts };
+  },
+
+  async getActiveBundles() {
+    const { data, error } = await supabase
+      .from('product_bundles')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order');
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) return [];
+
+    const enriched = await Promise.all(
+      data.map(async (bundle) => {
+        const addonIds = bundle.addon_product_ids || [];
+        const [mainRes, addonsRes] = await Promise.all([
+          supabase.from('products').select('*, product_images(*)').eq('id', bundle.main_product_id).single(),
+          addonIds.length > 0
+            ? supabase.from('products').select('*, product_images(*)').in('id', addonIds).eq('isActive', true)
+            : { data: [] },
+        ]);
+        return {
+          ...bundle,
+          main_product: mainRes.data,
+          addon_products: addonsRes.data || [],
+        };
+      })
+    );
+    return enriched;
+  },
+
+  async getRelatedProducts(categoryId, excludeId, limit = 6) {
+    if (!categoryId) return [];
+    const { data, error } = await supabase
+      .from('products')
+      .select('*, product_images(*), brands(name, nameAr)')
+      .eq('categoryId', categoryId)
+      .eq('isActive', true)
+      .neq('id', excludeId)
+      .order('createdAt', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return data || [];
+  },
 };
 
 export const authAPI = {

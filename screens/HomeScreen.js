@@ -16,12 +16,16 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { Heart, Clock, Tag } from 'lucide-react-native';
 import MainLayout from '../components/MainLayout';
 import ProductCard, { ProductCardHorizontal } from '../components/ProductCard';
+import BundleCard from '../components/BundleCard';
+import RelatedProductsGrid from '../components/RelatedProductsGrid';
+import ProductMatchLabel from '../components/ProductMatchLabel';
 import { ProductGridSkeleton, BannerSkeleton } from '../components/Skeleton';
 import { COLORS, SPACING, SHADOWS, RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../constants';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
+import { db } from '../services/api';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
@@ -357,6 +361,7 @@ export default function HomeScreen({ navigation }) {
   const [addedMap, setAddedMap] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [bundles, setBundles] = useState([]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -445,6 +450,9 @@ export default function HomeScreen({ navigation }) {
       setBrands(brandsRes.data || []);
       setCategories(categoriesRes.data || []);
       setProducts(productsWithRatings);
+
+      const bundlesData = await db.getActiveBundles().catch(() => []);
+      setBundles(bundlesData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -547,6 +555,58 @@ export default function HomeScreen({ navigation }) {
               addedMap={addedMap}
               t={t}
             />
+
+            {bundles.length > 0 && (
+              <View style={styles.bundleSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{t('home.completeYourSetup')}</Text>
+                </View>
+                {bundles.slice(0, 2).map((bundle) => (
+                  <BundleCard
+                    key={bundle.id}
+                    bundle={bundle}
+                    onAddBundle={() => {
+                      if (bundle.addon_products) {
+                        bundle.addon_products.forEach((addon) => {
+                          const addonPrice = addon.isOnSale && addon.salePrice ? addon.salePrice : addon.basePrice;
+                          handleAddToCart({
+                            ...addon,
+                            basePrice: addonPrice * (1 - (bundle.discount_percent || 0) / 100),
+                          });
+                        });
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+
+            {products.length > 0 && (
+              <View style={styles.recommendedSection}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>{t('home.recommendedForYou')}</Text>
+                </View>
+                <ProductMatchLabel text={t('home.perfectPair')} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ height: 280, transform: [{ scaleX: -1 }] }}
+                  contentContainerStyle={styles.featuredScroll}
+                >
+                  {products.slice(0, 6).map((item) => (
+                    <View key={item.id} style={{ transform: [{ scaleX: -1 }] }}>
+                      <ProductCardHorizontal
+                        item={item}
+                        onPress={() => navigation.navigate('Item', { productId: item.id })}
+                        onAddToCart={() => handleAddToCart(item)}
+                        inCart={isInCart(item.id)}
+                        justAdded={addedMap[item.id]}
+                      />
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             {brands.length > 0 && (
               <>
@@ -666,6 +726,9 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 4,
   },
+
+  bundleSection: { marginBottom: 24, paddingHorizontal: 8 },
+  recommendedSection: { marginBottom: 24 },
 
   sectionHeader: {
     flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',

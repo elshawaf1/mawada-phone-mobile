@@ -62,6 +62,9 @@ const ar = {
     categories: 'التصنيفات', brands: 'الماركات', featured: 'مميز',
     products: 'المنتجات', all: 'الكل', seeAll: 'عرض الكل', shopNow: 'تسوق الآن',
     errorLoading: 'حدث خطأ في تحميل البيانات', noProducts: 'لا توجد منتجات',
+    completeYourSetup: 'أكمل معداتك', perfectPair: 'زوج مثالي',
+    recommendedForYou: 'موصى لك', youMayAlsoLike: 'قد يعجبك ايضاً',
+    addToBundle: 'أضف للباقة', bundleSavings: 'وفّر {percent}%',
   },
   search: {
     title: 'بحث المنتجات', placeholder: 'ابحث عن هاتفك الجديد',
@@ -361,6 +364,9 @@ const en = {
     categories: 'Categories', brands: 'Brands', featured: 'Featured',
     products: 'Products', all: 'All', seeAll: 'See All', shopNow: 'Shop Now',
     errorLoading: 'Failed to load data', noProducts: 'No products found',
+    completeYourSetup: 'Complete Your Setup', perfectPair: 'Perfect Pair',
+    recommendedForYou: 'Recommended for you', youMayAlsoLike: 'You may also like',
+    addToBundle: 'Add to bundle', bundleSavings: 'Save {percent}%',
   },
   search: {
     title: 'Search Products', placeholder: 'Search for your new phone',

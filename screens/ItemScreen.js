@@ -18,11 +18,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { ShoppingCart, Star } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import Button from '../components/Button';
+import BundleCard from '../components/BundleCard';
+import RelatedProductsGrid from '../components/RelatedProductsGrid';
 import SkeletonBox, { ListSkeleton } from '../components/Skeleton';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
+import { db } from '../services/api';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
@@ -94,6 +97,8 @@ export default function ItemScreen({ navigation, route }) {
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [bundle, setBundle] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   const handleImageDoubleTap = () => {
     const now = Date.now();
@@ -109,6 +114,12 @@ export default function ItemScreen({ navigation, route }) {
       fetchReviews();
     }
   }, [productId]);
+
+  useEffect(() => {
+    if (product) {
+      fetchBundleAndRelated();
+    }
+  }, [product?.id]);
 
   const fetchProduct = async () => {
     try {
@@ -182,6 +193,19 @@ export default function ItemScreen({ navigation, route }) {
       console.error('Error fetching reviews:', error);
     } finally {
       setReviewsLoading(false);
+    }
+  };
+
+  const fetchBundleAndRelated = async () => {
+    try {
+      const [bundleData, relatedData] = await Promise.all([
+        db.getBundleByProduct(product.id),
+        db.getRelatedProducts(product.categoryId, product.id, 6),
+      ]);
+      setBundle(bundleData);
+      setRelatedProducts(relatedData);
+    } catch (error) {
+      console.error('Error fetching bundle/related:', error);
     }
   };
 
@@ -496,6 +520,51 @@ export default function ItemScreen({ navigation, route }) {
             </>
           )}
 
+          {/* Bundle Section */}
+          {bundle && (
+            <View style={styles.bundleSection}>
+              <BundleCard
+                bundle={bundle}
+                onAddBundle={() => {
+                  if (bundle.addon_products) {
+                    bundle.addon_products.forEach((addon) => {
+                      const addonPrice = addon.isOnSale && addon.salePrice ? addon.salePrice : addon.basePrice;
+                      addToCart({
+                        id: addon.id,
+                        productId: addon.id,
+                        title: addon.nameAr,
+                        price: addonPrice * (1 - (bundle.discount_percent || 0) / 100),
+                        image: addon.product_images?.find(i => i.isPrimary)?.url || addon.product_images?.[0]?.url || null,
+                        variantId: null,
+                      });
+                    });
+                  }
+                }}
+              />
+            </View>
+          )}
+
+          {/* Related Products Section */}
+          {relatedProducts.length > 0 && (
+            <View style={styles.relatedSection}>
+              <RelatedProductsGrid
+                products={relatedProducts}
+                onProductPress={(item) => navigation.navigate('Item', { productId: item.id })}
+                onAddToCart={(item) => {
+                  const price = item.usePriceRange ? (item.minPrice || item.basePrice) : (item.isOnSale && item.salePrice ? item.salePrice : item.basePrice);
+                  addToCart({
+                    id: item.id,
+                    productId: item.id,
+                    title: item.nameAr,
+                    price,
+                    image: item.product_images?.find(i => i.isPrimary)?.url || item.product_images?.[0]?.url || null,
+                    variantId: null,
+                  });
+                }}
+              />
+            </View>
+          )}
+
           {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <View style={styles.reviewsHeader}>
@@ -653,6 +722,9 @@ const styles = StyleSheet.create({
   backBtnText: { color: COLORS.white, fontWeight: FONT_WEIGHTS.bold },
 
   scroll: { paddingBottom: 120 },
+
+  bundleSection: { paddingHorizontal: 16, marginTop: 16 },
+  relatedSection: { marginTop: 24 },
 
   imageCard: {
     backgroundColor: COLORS.gray50, marginHorizontal: 16, marginTop: 16,

@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SCREEN, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 
 const CARD_W = (SCREEN.width - 24) / 2;
-const INFO_H = 105;
 
 function formatPrice(n) {
   return Number(n || 0).toLocaleString();
@@ -73,7 +73,7 @@ export function ProductCardHorizontal({ item, onPress, onAddToCart, inCart, just
           {brandName && (
             <Text style={styles.hBrand} numberOfLines={1}>{brandName}</Text>
           )}
-          <Text style={styles.hTitle} numberOfLines={3} ellipsizeMode="tail">{item.nameAr}</Text>
+          <Text style={styles.hTitle} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
           <View style={styles.hPriceRow}>
             <Text style={styles.hPrice} numberOfLines={1} ellipsizeMode="tail">{priceText}</Text>
             {oldPrice && (
@@ -121,6 +121,7 @@ export default function ProductCard({
   };
   const handleHeartPress = (e) => {
     e.stopPropagation?.();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.sequence([
       Animated.spring(heartScale, { toValue: 1.35, useNativeDriver: true, friction: 3 }),
       Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, friction: 3 }),
@@ -128,6 +129,7 @@ export default function ProductCard({
     onToggleFavorite?.();
   };
   const handleCartPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Animated.sequence([
       Animated.spring(cartScale, { toValue: 1.25, useNativeDriver: true, friction: 3 }),
       Animated.spring(cartScale, { toValue: 1, useNativeDriver: true, friction: 3 }),
@@ -201,7 +203,7 @@ export default function ProductCard({
             <Text style={styles.brandName} numberOfLines={1} ellipsizeMode="tail">{brandName}</Text>
           )}
 
-          <Text style={styles.title} numberOfLines={3} ellipsizeMode="tail">{item.nameAr}</Text>
+          <Text style={styles.title} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
 
           <View style={styles.metaRow}>
             {hasRating && (
@@ -237,23 +239,25 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: '#E8ECF1',
-    ...SHADOWS.md,
+    shadowColor: '#94A3B8',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 16,
+    elevation: 3,
   },
 
   imageZone: {
     height: CARD_W,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7F8FA',
+    backgroundColor: '#F7F7F7',
     position: 'relative',
   },
   image: {
-    width: '78%',
-    height: '78%',
+    width: '75%',
+    height: '75%',
   },
 
   heartBtn: {
@@ -347,11 +351,10 @@ const styles = StyleSheet.create({
   },
 
   info: {
-    height: INFO_H,
     paddingHorizontal: 12,
     paddingTop: 10,
     paddingBottom: 10,
-    justifyContent: 'flex-start',
+    minHeight: 160,
   },
 
   brandName: {
@@ -423,17 +426,19 @@ const styles = StyleSheet.create({
     width: 155,
     height: 250,
     backgroundColor: COLORS.white,
-    borderRadius: 14,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: '#E8ECF1',
-    ...SHADOWS.md,
+    shadowColor: '#94A3B8',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 3,
   },
   hImageZone: {
     height: 155,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7F8FA',
+    backgroundColor: '#F7F7F7',
     position: 'relative',
   },
   hImage: {
