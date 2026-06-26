@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   summaryVal: { fontSize: 14, fontWeight: '700', color: COLORS.text },
   totalLine: { height: 1, backgroundColor: COLORS.gray100, marginVertical: 10 },
   totalLabel: { fontSize: 16, fontWeight: '700', color: COLORS.text },
-  totVal: { fontSize: 20, fontWeight: '900', color: COLORS.error },
+  totalVal: { fontSize: 20, fontWeight: '900', color: COLORS.error },
 
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLORS.gray100, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: -4 }, shadowRadius: 12, elevation: 8 },
   bottomLeft: { alignItems: 'flex-end', marginRight: 10 },

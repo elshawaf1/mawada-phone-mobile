@@ -42,11 +42,13 @@ export function AppSettingsProvider({ children }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.multiGet(['locale', 'darkMode']).then(([l, d]) => {
-      if (l[1]) setLocale(l[1]);
-      if (d[1]) setDarkMode(d[1] === 'true');
-      setLoaded(true);
-    });
+    AsyncStorage.multiGet(['locale', 'darkMode'])
+      .then(([l, d]) => {
+        if (l[1]) setLocale(l[1]);
+        if (d[1]) setDarkMode(d[1] === 'true');
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, []);
 
   const toggleLocale = useCallback(() => {

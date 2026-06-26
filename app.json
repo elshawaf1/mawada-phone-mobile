@@ -23,8 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.mawadaphone.app",
-      "color": "#0F2A44",
-      "useNextNotificationsApi": true
+      "color": "#0F2A44"
     },
     "web": {
       "favicon": "./assets/favicon.png"

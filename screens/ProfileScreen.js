@@ -194,13 +194,16 @@ export default function ProfileScreen({ navigation }) {
                   activeOpacity={0.7}
                   onPress={item.onPress}
                 >
-                  <View style={styles.leftCol}>
-                    {item.hasChevron && (
-                      <Ionicons name={dir.leftChevron} size={16} color="#C7C7CC" />
-                    )}
+                  <View style={styles.iconCol}>
+                    <View style={[
+                      styles.iconContainer, 
+                      item.isDestructive ? styles.destructiveIconBg : styles.normalIconBg
+                    ]}>
+                      {renderIcon(item)}
+                    </View>
                   </View>
 
-                  <View style={styles.rightCol}>
+                  <View style={styles.labelCol}>
                     <Text style={[styles.menuTitle, item.isDestructive && styles.destructiveText]}>
                       {item.title}
                     </Text>
@@ -210,13 +213,12 @@ export default function ProfileScreen({ navigation }) {
                         <Text style={styles.menuBadgeText}>{item.badge > 9 ? '9+' : item.badge}</Text>
                       </View>
                     )}
-                    
-                    <View style={[
-                      styles.iconContainer, 
-                      item.isDestructive ? styles.destructiveIconBg : styles.normalIconBg
-                    ]}>
-                      {renderIcon(item)}
-                    </View>
+                  </View>
+
+                  <View style={styles.chevronCol}>
+                    {item.hasChevron && (
+                      <Ionicons name={dir.leftChevron} size={16} color="#C7C7CC" />
+                    )}
                   </View>
                 </TouchableOpacity>
               );
@@ -257,9 +259,10 @@ const styles = StyleSheet.create({
   menuList: { marginTop: 8 },
   menuRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, height: 56 },
   systemRowAdjustment: { marginTop: 8 },
-  leftCol: { justifyContent: 'center', alignItems: 'flex-end', width: 30 },
-  rightCol: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', flex: 1 },
-  menuTitle: { fontSize: 15, fontWeight: '600', color: '#2C2C2E', marginRight: 14, textAlign: 'right' },
+  iconCol: { justifyContent: 'center', alignItems: 'center', width: 38 },
+  labelCol: { flexDirection: 'row-reverse', alignItems: 'center', flex: 1, marginRight: 10 },
+  chevronCol: { justifyContent: 'center', alignItems: 'center', width: 30 },
+  menuTitle: { fontSize: 15, fontWeight: '600', color: '#2C2C2E', textAlign: 'right' },
   destructiveText: { color: '#FF3B30' },
   iconContainer: { width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center' },
   normalIconBg: { backgroundColor: '#F2F2F7' },

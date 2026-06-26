@@ -72,6 +72,22 @@ export default function MyOrdersScreen({ navigation }) {
   const tabAnim = useRef(new Animated.Value(0)).current;
   const tabPositions = useRef({}).current;
 
+  const tabCounts = useMemo(() => {
+    const counts = { all: orders.length, active: 0, done: 0, cancelled: 0 };
+    orders.forEach((o) => {
+      const tab = TABS.find((t) => t.statuses && t.statuses.includes(o.status));
+      if (tab) counts[tab.key] += 1;
+    });
+    return counts;
+  }, [orders]);
+
+  const filtered = useMemo(() => {
+    if (activeTab === 'all') return orders;
+    const tab = TABS.find((t) => t.key === activeTab);
+    if (!tab || !tab.statuses) return orders;
+    return orders.filter((o) => tab.statuses.includes(o.status));
+  }, [orders, activeTab]);
+
   useEffect(() => {
     const filteredList = filtered;
     filteredList.forEach((order) => {
@@ -165,22 +181,6 @@ export default function MyOrdersScreen({ navigation }) {
       ]
     );
   }, []);
-
-  const tabCounts = useMemo(() => {
-    const counts = { all: orders.length, active: 0, done: 0, cancelled: 0 };
-    orders.forEach((o) => {
-      const tab = TABS.find((t) => t.statuses && t.statuses.includes(o.status));
-      if (tab) counts[tab.key] += 1;
-    });
-    return counts;
-  }, [orders]);
-
-  const filtered = useMemo(() => {
-    if (activeTab === 'all') return orders;
-    const tab = TABS.find((t) => t.key === activeTab);
-    if (!tab || !tab.statuses) return orders;
-    return orders.filter((o) => tab.statuses.includes(o.status));
-  }, [orders, activeTab]);
 
   const handleTabPress = (key) => {
     setActiveTab(key);
