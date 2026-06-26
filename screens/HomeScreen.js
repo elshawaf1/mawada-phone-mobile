@@ -255,7 +255,7 @@ function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMa
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ height: 310 }}
+        style={{ height: 370 }}
         contentContainerStyle={styles.featuredScroll}
       >
         {featured.map((item) => (
