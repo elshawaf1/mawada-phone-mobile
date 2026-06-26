@@ -15,7 +15,7 @@ import {
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { Heart, Clock, Tag } from 'lucide-react-native';
 import MainLayout from '../components/MainLayout';
-import ProductCard, { ProductCardHorizontal } from '../components/ProductCard';
+import ProductCard from '../components/ProductCard';
 import BundleCard from '../components/BundleCard';
 import RelatedProductsGrid from '../components/RelatedProductsGrid';
 import { ProductGridSkeleton, BannerSkeleton } from '../components/Skeleton';
@@ -255,18 +255,17 @@ function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMa
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={{ height: 280, transform: [{ scaleX: -1 }] }}
+        style={{ height: 310 }}
         contentContainerStyle={styles.featuredScroll}
       >
         {featured.map((item) => (
-          <View key={item.id} style={{ transform: [{ scaleX: -1 }] }}>
-            <ProductCardHorizontal
-            key={item.id}
-            item={item}
-            onPress={() => navigation.navigate('Item', { productId: item.id })}
-            onAddToCart={() => onAddToCart(item)}
-            inCart={inCartMap[item.id]}
-            justAdded={addedMap[item.id]}
+          <View key={item.id}>
+            <ProductCard
+              item={item}
+              onPress={() => navigation.navigate('Item', { productId: item.id })}
+              onAddToCart={() => onAddToCart(item)}
+              inCart={inCartMap[item.id]}
+              justAdded={addedMap[item.id]}
             />
           </View>
         ))}
@@ -724,8 +723,8 @@ const styles = StyleSheet.create({
   featuredSection: { marginBottom: 24 },
   featuredScroll: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingHorizontal: SPACING.md,
+    gap: 8,
     paddingBottom: 4,
   },
 
