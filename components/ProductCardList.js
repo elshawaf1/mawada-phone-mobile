@@ -118,8 +118,8 @@ const styles = StyleSheet.create({
   },
 
   imageZone: {
-    width: 90,
-    height: 90,
+    width: 100,
+    height: 100,
     borderRadius: 12,
     backgroundColor: '#F7F7F7',
     justifyContent: 'center',
@@ -127,8 +127,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   image: {
-    width: '80%',
-    height: '80%',
+    width: '90%',
+    height: '90%',
   },
   ribbon: {
     position: 'absolute',

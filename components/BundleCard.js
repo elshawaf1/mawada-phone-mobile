@@ -167,13 +167,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mainImage: {
-    width: 90,
-    height: 90,
+    width: 110,
+    height: 110,
     marginBottom: 8,
   },
   imagePlaceholder: {
-    width: 90,
-    height: 90,
+    width: 110,
+    height: 110,
     borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',

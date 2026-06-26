@@ -256,8 +256,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   image: {
-    width: '75%',
-    height: '75%',
+    width: '90%',
+    height: '90%',
   },
 
   heartBtn: {
@@ -442,8 +442,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   hImage: {
-    width: '72%',
-    height: '72%',
+    width: '90%',
+    height: '90%',
   },
   hRibbon: {
     position: 'absolute',

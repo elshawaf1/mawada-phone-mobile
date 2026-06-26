@@ -18,7 +18,6 @@ import MainLayout from '../components/MainLayout';
 import ProductCard, { ProductCardHorizontal } from '../components/ProductCard';
 import BundleCard from '../components/BundleCard';
 import RelatedProductsGrid from '../components/RelatedProductsGrid';
-import ProductMatchLabel from '../components/ProductMatchLabel';
 import { ProductGridSkeleton, BannerSkeleton } from '../components/Skeleton';
 import { COLORS, SPACING, SHADOWS, RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../constants';
 import { useApp } from '../context/AppContext';
@@ -581,33 +580,6 @@ export default function HomeScreen({ navigation }) {
               </View>
             )}
 
-            {products.length > 0 && (
-              <View style={styles.recommendedSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>{t('home.recommendedForYou')}</Text>
-                </View>
-                <ProductMatchLabel text={t('home.perfectPair')} />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={{ height: 280, transform: [{ scaleX: -1 }] }}
-                  contentContainerStyle={styles.featuredScroll}
-                >
-                  {products.slice(0, 6).map((item) => (
-                    <View key={item.id} style={{ transform: [{ scaleX: -1 }] }}>
-                      <ProductCardHorizontal
-                        item={item}
-                        onPress={() => navigation.navigate('Item', { productId: item.id })}
-                        onAddToCart={() => handleAddToCart(item)}
-                        inCart={isInCart(item.id)}
-                        justAdded={addedMap[item.id]}
-                      />
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
             {brands.length > 0 && (
               <>
                 <View style={styles.sectionHeader}>
@@ -728,7 +700,7 @@ const styles = StyleSheet.create({
   },
 
   bundleSection: { marginBottom: 24, paddingHorizontal: 8 },
-  recommendedSection: { marginBottom: 24 },
+
 
   sectionHeader: {
     flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
