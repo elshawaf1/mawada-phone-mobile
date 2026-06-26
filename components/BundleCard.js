@@ -67,8 +67,6 @@ export default function BundleCard({ bundle, onAddBundle }) {
   return (
     <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.gradientBg}>
-        <View style={styles.glowOrb1} />
-        <View style={styles.glowOrb2} />
 
         {savings > 0 && (
           <View style={styles.savingsBadge}>
