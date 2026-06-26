@@ -728,9 +728,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
 
-  bundleSection: { marginBottom: 0, paddingHorizontal: 8 },
+  bundleSection: { marginBottom: 0, paddingHorizontal: 4 },
   bundleSectionWrap: {
-    backgroundColor: '#0F172A', borderRadius: 20, marginHorizontal: 16, marginBottom: 24, paddingVertical: 14,
+    backgroundColor: '#0F172A', borderRadius: 16, marginHorizontal: 12, marginBottom: 16, paddingVertical: 10,
   },
   sectionTitleLight: {
     fontSize: 18, fontWeight: '800', color: '#FFF', textAlign: 'right',
