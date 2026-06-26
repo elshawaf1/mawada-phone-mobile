@@ -78,7 +78,7 @@ function formatTime(dateStr, t, locale) {
 }
 
 export default function ItemScreen({ navigation, route }) {
-  const { addToCart, isFavorite, toggleFavorite } = useApp();
+  const { addToCart, isFavorite, toggleFavorite, isInCart } = useApp();
   const { user } = useAuth();
   const { t, locale } = useTranslation();
   const dir = useDirection();
@@ -99,6 +99,7 @@ export default function ItemScreen({ navigation, route }) {
   const [submitting, setSubmitting] = useState(false);
   const [bundle, setBundle] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [addedMap, setAddedMap] = useState({});
 
   const handleImageDoubleTap = () => {
     const now = Date.now();
@@ -560,7 +561,11 @@ export default function ItemScreen({ navigation, route }) {
                     image: item.product_images?.find(i => i.isPrimary)?.url || item.product_images?.[0]?.url || null,
                     variantId: null,
                   });
+                  setAddedMap((prev) => ({ ...prev, [item.id]: true }));
+                  setTimeout(() => setAddedMap((prev) => ({ ...prev, [item.id]: false })), 1200);
                 }}
+                inCartMap={relatedProducts.reduce((m, p) => ({ ...m, [p.id]: isInCart(p.id) }), {})}
+                addedMap={addedMap}
               />
             </View>
           )}
