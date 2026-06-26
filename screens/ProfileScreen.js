@@ -157,14 +157,14 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9F9F9" />
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
       
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarOutline}>
               <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person-outline" size={50} color="#C7C7CC" />
+                <Ionicons name="person-outline" size={50} color="#94A3B8" />
               </View>
             </View>
             <TouchableOpacity style={styles.editBadge} activeOpacity={0.8}>
@@ -234,7 +234,7 @@ export default function ProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  container: { flex: 1, backgroundColor: '#0F172A' },
   scrollContent: { paddingTop: 80, paddingBottom: 100, alignItems: 'center' },
   profileCard: {
     width: '90%', backgroundColor: '#ffffff', borderRadius: 28,
@@ -244,14 +244,14 @@ const styles = StyleSheet.create({
   },
   avatarWrapper: { position: 'absolute', top: -55, alignSelf: 'center', zIndex: 10 },
   avatarOutline: {
-    width: 110, height: 110, borderRadius: 55, borderWidth: 1.5, borderColor: '#E5E5EA',
-    backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+    width: 110, height: 110, borderRadius: 55, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
   },
   avatarImage: { width: 102, height: 102, borderRadius: 51 },
-  avatarPlaceholder: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' },
+  avatarPlaceholder: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' },
   editBadge: {
-    position: 'absolute', bottom: 2, left: 6, backgroundColor: '#2C2C2E',
-    width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#FFF',
+    position: 'absolute', bottom: 2, left: 6, backgroundColor: '#22C55E',
+    width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#0F172A',
   },
   userInfo: { marginTop: 75, marginBottom: 16, alignItems: 'center' },
   userName: { fontSize: 18, fontWeight: '700', color: '#2C2C2E' },
