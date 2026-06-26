@@ -5,6 +5,7 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  FlatList,
   Dimensions,
   StatusBar,
   ActivityIndicator,
@@ -366,64 +367,44 @@ export default function ItemScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.imageCard}>
           {images.length > 0 ? (
-            <View style={styles.imageNavContainer}>
-              <TouchableOpacity
-                style={styles.navArrow}
-                onPress={() =>
-                  setSelectedImageIndex(
-                    selectedImageIndex === 0
-                      ? Math.min(images.length, 3) - 1
-                      : selectedImageIndex - 1
-                  )
-                }
-                activeOpacity={0.5}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Ionicons name="chevron-forward" size={24} color={COLORS.gray500} />
-              </TouchableOpacity>
+            <View>
+              <FlatList
+                data={images}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(e) => {
+                  const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                  setSelectedImageIndex(index);
+                }}
+                scrollEventThrottle={16}
+                decelerationRate="fast"
+                keyExtractor={(item, i) => item.id || `img-${i}`}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    activeOpacity={1}
+                    onPress={handleImageDoubleTap}
+                    style={{ width }}
+                  >
+                    <Image
+                      source={{ uri: item.url }}
+                      style={styles.navMainImage}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                )}
+              />
 
-              <TouchableOpacity activeOpacity={1} onPress={handleImageDoubleTap} style={styles.imageTapZone}>
-                <View style={styles.navImageWrap}>
-                  <Image
-                    source={{ uri: images[selectedImageIndex]?.url }}
-                    style={styles.navMainImage}
-                    resizeMode="contain"
-                  />
-                  {images.length > 1 && (
-                    <View style={styles.navDots}>
-                      {images.slice(0, 3).map((_, i) => (
-                        <TouchableOpacity
-                          key={i}
-                          onPress={() => setSelectedImageIndex(i)}
-                          activeOpacity={0.6}
-                        >
-                          <View
-                            style={[
-                              styles.navDot,
-                              selectedImageIndex === i && styles.navDotActive,
-                            ]}
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+              {images.length > 1 && (
+                <View style={styles.navDots}>
+                  {images.map((_, i) => (
+                    <View
+                      key={i}
+                      style={[styles.navDot, selectedImageIndex === i && styles.navDotActive]}
+                    />
+                  ))}
                 </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.navArrow}
-                onPress={() =>
-                  setSelectedImageIndex(
-                    selectedImageIndex === Math.min(images.length, 3) - 1
-                      ? 0
-                      : selectedImageIndex + 1
-                  )
-                }
-                activeOpacity={0.5}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Ionicons name="chevron-back" size={24} color={COLORS.gray500} />
-              </TouchableOpacity>
+              )}
             </View>
           ) : (
             <View style={styles.navEmpty}>
@@ -738,22 +719,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray50, marginHorizontal: 16, marginTop: 16,
     borderRadius: 24, overflow: 'hidden',
   },
-  imageNavContainer: {
-    height: 360, flexDirection: 'row-reverse', alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  navArrow: {
-    width: 28, justifyContent: 'center', alignItems: 'center',
-  },
-  imageTapZone: { flex: 1 },
-  navImageWrap: {
-    flex: 1, height: '100%', justifyContent: 'center', alignItems: 'center',
-    paddingVertical: 20,
-  },
-  navMainImage: { width: '80%', height: '90%' },
+  navMainImage: { width: '100%', height: 360 },
   navDots: {
-    position: 'absolute', bottom: 14, right: 0, left: undefined,
-    flexDirection: 'row-reverse', gap: 6,
+    position: 'absolute', bottom: 14, right: 0, left: 0,
+    flexDirection: 'row-reverse', justifyContent: 'center', gap: 6,
   },
   navDot: {
     width: 7, height: 7, borderRadius: 3.5,
