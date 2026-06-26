@@ -245,10 +245,10 @@ const styles = StyleSheet.create({
   avatarWrapper: { position: 'absolute', top: -55, alignSelf: 'center', zIndex: 10 },
   avatarOutline: {
     width: 110, height: 110, borderRadius: 55, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+    backgroundColor: '#f1f1f1', justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
   },
   avatarImage: { width: 102, height: 102, borderRadius: 51 },
-  avatarPlaceholder: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' },
+  avatarPlaceholder: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#f1f1f1', justifyContent: 'center', alignItems: 'center' },
   editBadge: {
     position: 'absolute', bottom: 2, left: 6, backgroundColor: '#22C55E',
     width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#0F172A',
