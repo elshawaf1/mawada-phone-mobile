@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Animated,
   Share,
   Linking,
   Alert,
@@ -16,10 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import Button from '../components/Button';
-import ConfettiOverlay from '../components/ConfettiOverlay';
 import { supabase } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
-import { useDirection } from '../hooks/useDirection';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -29,11 +26,8 @@ function PaymentIcon({ method }) {
   return <Banknote size={14} color="#22C55E" strokeWidth={2.25} />;
 }
 
-const STATUS_ORDER = ['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
-
 export default function OrderConfirmScreen({ navigation, route }) {
   const { t, weekdays, months } = useTranslation();
-  const dir = useDirection();
   const order = route?.params?.order;
   const viewShotRef = useRef(null);
 
@@ -54,21 +48,8 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
   const fawryCode = order?.fawryCode;
   const [paymentStatus, setPaymentStatus] = useState(order?.paymentStatus || 'PENDING');
-  const [heroSize, setHeroSize] = useState(null);
   const [capturing, setCapturing] = useState(false);
   const paymentMethod = order?.paymentMethod || 'COD';
-  const isOnlinePayment = ['VISA', 'WALLET'].includes(paymentMethod);
-
-  const animValue = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(animValue, {
-      toValue: 1,
-      friction: 4,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  }, []);
 
   useEffect(() => {
     if (!order?.id) return;
@@ -84,8 +65,6 @@ export default function OrderConfirmScreen({ navigation, route }) {
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [order?.id]);
-
-  const scale = animValue.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
 
   const timelineSteps = [
     { key: 'CONFIRMED', label: t('orders.stepConfirmed'), done: true },
@@ -108,13 +87,14 @@ export default function OrderConfirmScreen({ navigation, route }) {
     if (!viewShotRef.current) return;
     try {
       setCapturing(true);
-      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1 });
+      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile' });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
         await Share.share({ url: uri });
       }
     } catch (err) {
+      console.warn('Screenshot error:', err);
       Alert.alert(t('common.error'), t('orderConfirm.screenshotFailed'));
     } finally {
       setCapturing(false);
@@ -140,70 +120,58 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {/* ── Hero ── */}
-      <View style={styles.hero} onLayout={(e) => { if (!heroSize) setHeroSize(e.nativeEvent.layout); }}>
-        {paymentStatus !== 'FAILED' && heroSize && (
-          <ConfettiOverlay width={heroSize.width} height={heroSize.height} />
-        )}
-        <View style={styles.heroOrb1} />
-        <View style={styles.heroOrb2} />
-
-        <Animated.View style={[styles.heroIconWrap, { opacity: animValue, transform: [{ scale }] }]}>
-          {paymentStatus === 'FAILED' ? (
-            <AlertCircle size={48} color="#EF4444" strokeWidth={1.5} />
-          ) : (
-            <CheckCircle size={48} color="#22C55E" strokeWidth={1.5} />
-          )}
-        </Animated.View>
-
-        <Text style={styles.heroTitle}>
-          {paymentStatus === 'FAILED' ? t('orders.confirmFailedTitle') : t('orders.confirmSuccessTitle')}
-        </Text>
-        <Text style={styles.heroSubtitle}>
-          {paymentStatus === 'FAILED'
-            ? t('orders.confirmFailedSub')
-            : paymentMethod === 'COD'
-              ? t('orders.confirmCodSub')
-              : paymentStatus === 'PAID'
-                ? t('orders.confirmPaidSub')
-                : t('orders.confirmPendingSub')}
-        </Text>
-
-        <TouchableOpacity style={styles.orderIdPill} onPress={handleShareOrder} activeOpacity={0.8}>
-          <Ionicons name="copy-outline" size={13} color="#38BDF8" />
-          <Text style={styles.orderIdText} selectable>{displayId}</Text>
-        </TouchableOpacity>
-
-        <View style={styles.heroMeta}>
-          <View style={styles.heroTag}>
-            <PaymentIcon method={paymentMethod} />
-            <Text style={styles.heroTagText}>{paymentMethodLabels[paymentMethod] || paymentMethod}</Text>
-          </View>
-          <View style={styles.heroDotSep} />
-          <View style={styles.heroTag}>
-            <Truck size={12} color="rgba(255,255,255,0.5)" strokeWidth={2} />
-            <Text style={styles.heroTagText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
-          </View>
-        </View>
-
-        {fawryCode && (
-          <View style={styles.fawryCard}>
-            <Text style={styles.fawryLabel}>{t('orderConfirm.fawryBanner')}</Text>
-            <Text style={styles.fawryCode}>{fawryCode}</Text>
-            <Text style={styles.fawryHint}>{t('orderConfirm.fawryHint')}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* ── Scrollable Content ── */}
       <ScrollView
         ref={viewShotRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
+        <View style={styles.header}>
+          {paymentStatus === 'FAILED' ? (
+            <View style={[styles.iconWrap, styles.iconWrapFailed]}>
+              <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
+            </View>
+          ) : (
+            <View style={[styles.iconWrap, styles.iconWrapSuccess]}>
+              <CheckCircle size={40} color="#22C55E" strokeWidth={1.5} />
+            </View>
+          )}
+          <Text style={styles.headerTitle}>
+            {paymentStatus === 'FAILED' ? t('orders.confirmFailedTitle') : t('orders.confirmSuccessTitle')}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {paymentStatus === 'FAILED'
+              ? t('orders.confirmFailedSub')
+              : paymentMethod === 'COD'
+                ? t('orders.confirmCodSub')
+                : paymentStatus === 'PAID'
+                  ? t('orders.confirmPaidSub')
+                  : t('orders.confirmPendingSub')}
+          </Text>
+
+          {/* Order ID */}
+          <TouchableOpacity style={styles.orderIdRow} onPress={handleShareOrder} activeOpacity={0.8}>
+            <Ionicons name="copy-outline" size={13} color="#38BDF8" />
+            <Text style={styles.orderIdText} selectable>{displayId}</Text>
+          </TouchableOpacity>
+
+          {/* Meta tags */}
+          <View style={styles.metaRow}>
+            <View style={styles.metaTag}>
+              <PaymentIcon method={paymentMethod} />
+              <Text style={styles.metaTagText}>{paymentMethodLabels[paymentMethod] || paymentMethod}</Text>
+            </View>
+            <View style={styles.metaDot} />
+            <View style={styles.metaTag}>
+              <Truck size={12} color="#94A3B8" strokeWidth={2} />
+              <Text style={styles.metaTagText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
+            </View>
+          </View>
+        </View>
+
         {/* Timeline */}
         <View style={styles.timelineWrap}>
           <View style={styles.stepper}>
@@ -232,10 +200,18 @@ export default function OrderConfirmScreen({ navigation, route }) {
           </View>
         </View>
 
+        {/* Fawry */}
+        {fawryCode && (
+          <View style={styles.fawryCard}>
+            <Text style={styles.fawryLabel}>{t('orderConfirm.fawryBanner')}</Text>
+            <Text style={styles.fawryCode}>{fawryCode}</Text>
+            <Text style={styles.fawryHint}>{t('orderConfirm.fawryHint')}</Text>
+          </View>
+        )}
+
         {/* Unified Card */}
         <View style={styles.card}>
-          {/* Items */}
-          <Text style={styles.cardSectionTitle}>{t('orders.detail')}</Text>
+          <Text style={styles.cardTitle}>{t('orders.detail')}</Text>
           {items.map((item, index) => {
             const img = productImage(item);
             return (
@@ -259,27 +235,8 @@ export default function OrderConfirmScreen({ navigation, route }) {
             );
           })}
 
-          {/* Payment Status */}
-          <View style={styles.payStatusRow}>
-            <Text style={styles.payStatusLabel}>{t('orders.paymentStatus')}</Text>
-            <View style={[
-              styles.payStatusPill,
-              paymentStatus === 'PAID' && styles.payStatusPillPaid,
-              paymentStatus === 'FAILED' && styles.payStatusPillFailed,
-            ]}>
-              <Text style={[
-                styles.payStatusText,
-                paymentStatus === 'PAID' && styles.payStatusTextPaid,
-                paymentStatus === 'FAILED' && styles.payStatusTextFailed,
-              ]}>
-                {paymentStatus === 'PAID' ? t('orders.confirmPaymentPaid') : paymentStatus === 'FAILED' ? t('orders.confirmPaymentFailed') : t('orders.confirmPaymentPending')}
-              </Text>
-            </View>
-          </View>
-
           <View style={styles.costDivider} />
 
-          {/* Costs */}
           <View style={styles.costRow}>
             <Text style={styles.costLabel}>{t('orders.itemsPrice')}</Text>
             <Text style={styles.costValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
@@ -304,7 +261,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
         {/* Address */}
         {address && (
           <View style={styles.card}>
-            <Text style={styles.cardSectionTitle}>{t('orders.address')}</Text>
+            <Text style={styles.cardTitle}>{t('orders.address')}</Text>
             <View style={styles.addrRow}>
               <View style={styles.addrIcon}>
                 <MapPin size={16} color="#0F172A" strokeWidth={2} />
@@ -360,76 +317,45 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8FAFC' },
+  scroll: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 40 },
 
-  /* ── Hero ── */
-  hero: {
-    backgroundColor: '#0F172A',
-    paddingTop: 56,
-    paddingBottom: 24,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  heroOrb1: {
-    position: 'absolute', top: -60, right: -40,
-    width: 180, height: 180, borderRadius: 90,
-    backgroundColor: 'rgba(34,197,94,0.06)',
-  },
-  heroOrb2: {
-    position: 'absolute', bottom: -40, left: -30,
-    width: 140, height: 140, borderRadius: 70,
-    backgroundColor: 'rgba(56,189,248,0.05)',
-  },
-  heroIconWrap: {
+  /* ── Header ── */
+  header: { alignItems: 'center', paddingTop: 12, paddingBottom: 18 },
+  iconWrap: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: 'rgba(34,197,94,0.1)',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
   },
-  heroTitle: {
-    color: '#FFF', fontSize: 22, fontWeight: '800',
+  iconWrapSuccess: { backgroundColor: '#DCFCE7' },
+  iconWrapFailed: { backgroundColor: '#FEE2E2' },
+  headerTitle: {
+    color: '#0F172A', fontSize: 22, fontWeight: '800',
     textAlign: 'center', marginBottom: 4, letterSpacing: -0.3,
   },
-  heroSubtitle: {
-    color: 'rgba(255,255,255,0.5)', fontSize: 13,
+  headerSubtitle: {
+    color: '#64748B', fontSize: 13,
     textAlign: 'center', marginBottom: 16, lineHeight: 18,
   },
-  orderIdPill: {
+  orderIdRow: {
     flexDirection: 'row-reverse', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: '#F1F5F9',
     borderRadius: 20, paddingVertical: 7, paddingHorizontal: 14,
-    marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    marginBottom: 12,
   },
   orderIdText: {
     color: '#38BDF8', fontSize: 14, fontWeight: '700',
     fontFamily: 'monospace', letterSpacing: 0.5,
   },
-  heroMeta: {
+  metaRow: {
     flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
   },
-  heroTag: {
+  metaTag: {
     flexDirection: 'row-reverse', alignItems: 'center', gap: 5,
   },
-  heroTagText: {
-    color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: '500',
+  metaTagText: { color: '#94A3B8', fontSize: 11, fontWeight: '500' },
+  metaDot: {
+    width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#CBD5E1',
   },
-  heroDotSep: {
-    width: 3, height: 3, borderRadius: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  fawryCard: {
-    backgroundColor: 'rgba(56,189,248,0.08)',
-    borderRadius: 14, padding: 14, marginTop: 14,
-    alignItems: 'center', width: '100%',
-    borderWidth: 1, borderColor: 'rgba(56,189,248,0.2)',
-  },
-  fawryLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '600', marginBottom: 4 },
-  fawryCode: { color: '#38BDF8', fontSize: 22, fontWeight: '800', letterSpacing: 2, marginBottom: 2 },
-  fawryHint: { color: 'rgba(255,255,255,0.35)', fontSize: 10, textAlign: 'center' },
-
-  /* ── Scroll ── */
-  scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
 
   /* ── Timeline ── */
   timelineWrap: {
@@ -445,13 +371,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center',
     marginBottom: 6,
   },
-  stepCircleDone: {
-    backgroundColor: '#22C55E',
-    shadowColor: '#22C55E', shadowOpacity: 0.25, shadowOffset: { width: 0, height: 2 }, shadowRadius: 5, elevation: 2,
-  },
+  stepCircleDone: { backgroundColor: '#22C55E' },
   stepCircleActive: {
     backgroundColor: '#FFF', borderWidth: 2.5, borderColor: '#F59E0B',
-    shadowColor: '#F59E0B', shadowOpacity: 0.25, shadowOffset: { width: 0, height: 2 }, shadowRadius: 5, elevation: 2,
   },
   stepInnerDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: '#F59E0B' },
   stepLine: { flex: 1, height: 2, backgroundColor: '#E2E8F0', marginTop: 14, marginHorizontal: -2, borderRadius: 1 },
@@ -460,16 +382,23 @@ const styles = StyleSheet.create({
   stepLabelDone: { color: '#22C55E' },
   stepLabelActive: { color: '#F59E0B', fontWeight: '700' },
 
-  /* ── Unified Card ── */
+  /* ── Fawry ── */
+  fawryCard: {
+    backgroundColor: '#EFF6FF', borderRadius: 14, padding: 14, marginBottom: 12,
+    alignItems: 'center', borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  fawryLabel: { color: '#64748B', fontSize: 11, fontWeight: '600', marginBottom: 4 },
+  fawryCode: { color: '#2563EB', fontSize: 22, fontWeight: '800', letterSpacing: 2, marginBottom: 2 },
+  fawryHint: { color: '#94A3B8', fontSize: 10, textAlign: 'center' },
+
+  /* ── Card ── */
   card: {
     backgroundColor: '#FFF', borderRadius: 20, padding: 18, marginBottom: 12,
     shadowColor: '#000', shadowOpacity: 0.03, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
-  cardSectionTitle: {
+  cardTitle: {
     fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12,
   },
-
-  /* Items */
   itemRow: {
     flexDirection: 'row-reverse', alignItems: 'center', paddingVertical: 10,
   },
@@ -483,22 +412,6 @@ const styles = StyleSheet.create({
   itemPrice: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
   itemDivider: { height: StyleSheet.hairlineWidth, backgroundColor: '#F1F5F9' },
 
-  /* Payment Status */
-  payStatusRow: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: 12, paddingTop: 12,
-  },
-  payStatusLabel: { fontSize: 12, fontWeight: '600', color: '#64748B' },
-  payStatusPill: {
-    backgroundColor: '#FEF3C7', borderRadius: 8, paddingVertical: 3, paddingHorizontal: 10,
-  },
-  payStatusPillPaid: { backgroundColor: '#DCFCE7' },
-  payStatusPillFailed: { backgroundColor: '#FEE2E2' },
-  payStatusText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
-  payStatusTextPaid: { color: '#166534' },
-  payStatusTextFailed: { color: '#991B1B' },
-
-  /* Costs */
   costDivider: { height: StyleSheet.hairlineWidth, backgroundColor: '#F1F5F9', marginVertical: 10 },
   costRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginVertical: 3 },
   costLabel: { fontSize: 13, color: '#64748B' },
@@ -508,7 +421,7 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
   totalValue: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
 
-  /* Address */
+  /* ── Address ── */
   addrRow: { flexDirection: 'row-reverse', alignItems: 'flex-start' },
   addrIcon: {
     width: 34, height: 34, borderRadius: 10, backgroundColor: '#F1F5F9',
