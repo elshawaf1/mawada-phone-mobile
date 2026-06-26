@@ -67,6 +67,8 @@ export default function BundleCard({ bundle, onAddBundle }) {
   return (
     <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.gradientBg}>
+        <View style={styles.glowOrb1} />
+        <View style={styles.glowOrb2} />
 
         {savings > 0 && (
           <View style={styles.savingsBadge}>
@@ -112,7 +114,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
                 </View>
 
                 <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={4}>{name}</Text>
+                  <Text style={styles.productName} numberOfLines={2}>{name}</Text>
                   <View style={styles.priceRow}>
                     {hasDiscount && (
                       <Text style={styles.originalItemPrice}>{formatPrice(origPrice)} {t('common.currency')}</Text>
@@ -161,7 +163,7 @@ const styles = StyleSheet.create({
   gradientBg: {
     backgroundColor: '#0F172A',
     borderRadius: RADIUS.xxl || 24,
-    padding: 28,
+    padding: 20,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -217,9 +219,8 @@ const styles = StyleSheet.create({
   productRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    gap: 14,
+    padding: 12,
+    gap: 12,
   },
   productRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -229,14 +230,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 14,
+    width: 64,
+    height: 64,
+    borderRadius: 12,
   },
   imagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 14,
+    width: 64,
+    height: 64,
+    borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -262,11 +263,10 @@ const styles = StyleSheet.create({
   },
   productName: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 4,
     textAlign: 'right',
-    lineHeight: 21,
   },
   priceRow: {
     flexDirection: 'row-reverse',
