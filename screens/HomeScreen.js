@@ -564,22 +564,26 @@ export default function HomeScreen({ navigation }) {
             {bundles.length > 0 && (
               <View style={styles.bundleSection}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>{t('home.completeYourSetup')}</Text>
+                  <Text style={styles.sectionTitle}>{t('home.offerMawda')}</Text>
                 </View>
                 {bundles.slice(0, 2).map((bundle) => (
                   <BundleCard
                     key={bundle.id}
                     bundle={bundle}
                     onAddBundle={() => {
-                      if (bundle.addon_products) {
-                        bundle.addon_products.forEach((addon) => {
-                          const addonPrice = addon.isOnSale && addon.salePrice ? addon.salePrice : addon.basePrice;
-                          handleAddToCart({
-                            ...addon,
-                            basePrice: addonPrice * (1 - (bundle.discount_percent || 0) / 100),
-                          });
+                      const bundleItems = bundle.bundle_items || [];
+                      bundleItems.forEach((item) => {
+                        if (!item.product) return;
+                        const price = item.custom_price != null
+                          ? item.custom_price
+                          : item.product.isOnSale && item.product.salePrice
+                            ? item.product.salePrice
+                            : item.product.basePrice;
+                        handleAddToCart({
+                          ...item.product,
+                          basePrice: price,
                         });
-                      }
+                      });
                     }}
                   />
                 ))}

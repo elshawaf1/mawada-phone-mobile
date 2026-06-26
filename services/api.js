@@ -257,33 +257,49 @@ export const db = {
   },
 
   async getBundleByProduct(productId) {
-    const { data, error } = await supabase
+    const { data: bundle, error } = await supabase
       .from('product_bundles')
       .select('*')
       .eq('main_product_id', productId)
       .eq('is_active', true)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!data) return null;
+    if (!bundle) return null;
 
-    const addonIds = data.addon_product_ids || [];
-    let addonProducts = [];
-    if (addonIds.length > 0) {
-      const { data: addons } = await supabase
+    const { data: items } = await supabase
+      .from('bundle_items')
+      .select('*')
+      .eq('bundle_id', bundle.id)
+      .order('sort_order');
+
+    const allProductIds = (items || []).map(i => i.product_id);
+    let allProducts = [];
+    if (allProductIds.length > 0) {
+      const { data: prods } = await supabase
         .from('products')
         .select('*, product_images(*)')
-        .in('id', addonIds)
+        .in('id', allProductIds)
         .eq('isActive', true);
-      addonProducts = addons || [];
+      allProducts = prods || [];
     }
 
-    const { data: mainProduct } = await supabase
-      .from('products')
-      .select('*, product_images(*)')
-      .eq('id', data.main_product_id)
-      .single();
+    const productMap = {};
+    allProducts.forEach(p => { productMap[p.id] = p; });
 
-    return { ...data, main_product: mainProduct, addon_products: addonProducts };
+    const bundleItems = (items || []).map(item => ({
+      ...item,
+      product: productMap[item.product_id] || null,
+    }));
+
+    const mainItem = bundleItems.find(i => i.role === 'main');
+    const addonItems = bundleItems.filter(i => i.role === 'addon');
+
+    return {
+      ...bundle,
+      main_product: mainItem?.product || null,
+      addon_products: addonItems.map(i => i.product).filter(Boolean),
+      bundle_items: bundleItems,
+    };
   },
 
   async getActiveBundles() {
@@ -295,23 +311,43 @@ export const db = {
     if (error) throw new Error(error.message);
     if (!data || data.length === 0) return [];
 
-    const enriched = await Promise.all(
-      data.map(async (bundle) => {
-        const addonIds = bundle.addon_product_ids || [];
-        const [mainRes, addonsRes] = await Promise.all([
-          supabase.from('products').select('*, product_images(*)').eq('id', bundle.main_product_id).single(),
-          addonIds.length > 0
-            ? supabase.from('products').select('*, product_images(*)').in('id', addonIds).eq('isActive', true)
-            : { data: [] },
-        ]);
-        return {
-          ...bundle,
-          main_product: mainRes.data,
-          addon_products: addonsRes.data || [],
-        };
-      })
-    );
-    return enriched;
+    const bundleIds = data.map(b => b.id);
+    const { data: allItems } = await supabase
+      .from('bundle_items')
+      .select('*')
+      .in('bundle_id', bundleIds)
+      .order('sort_order');
+
+    const allProductIds = [...new Set((allItems || []).map(i => i.product_id))];
+    let allProducts = [];
+    if (allProductIds.length > 0) {
+      const { data: prods } = await supabase
+        .from('products')
+        .select('*, product_images(*)')
+        .in('id', allProductIds)
+        .eq('isActive', true);
+      allProducts = prods || [];
+    }
+
+    const productMap = {};
+    allProducts.forEach(p => { productMap[p.id] = p; });
+
+    return data.map(bundle => {
+      const items = (allItems || []).filter(i => i.bundle_id === bundle.id);
+      const bundleItems = items.map(item => ({
+        ...item,
+        product: productMap[item.product_id] || null,
+      }));
+      const mainItem = bundleItems.find(i => i.role === 'main');
+      const addonItems = bundleItems.filter(i => i.role === 'addon');
+
+      return {
+        ...bundle,
+        main_product: mainItem?.product || null,
+        addon_products: addonItems.map(i => i.product).filter(Boolean),
+        bundle_items: bundleItems,
+      };
+    });
   },
 
   async getRelatedProducts(productId, limit = 6) {

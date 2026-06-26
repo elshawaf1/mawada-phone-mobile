@@ -65,6 +65,8 @@ const ar = {
     completeYourSetup: 'أكمل معداتك', perfectPair: 'زوج مثالي',
     recommendedForYou: 'موصى لك', youMayAlsoLike: 'قد يعجبك ايضاً',
     addToBundle: 'أضف للباقة', bundleSavings: 'وفّر {percent}%',
+    offerMawda: 'عرض مودة', offerMawdaDesc: 'وفّر عند شراء هذه المنتجات معاً',
+    addToCartBtn: 'أضف إلى السلة', bundleYouSave: 'وفّر {amount} ج.م',
   },
   search: {
     title: 'بحث المنتجات', placeholder: 'ابحث عن هاتفك الجديد',
@@ -367,6 +369,8 @@ const en = {
     completeYourSetup: 'Complete Your Setup', perfectPair: 'Perfect Pair',
     recommendedForYou: 'Recommended for you', youMayAlsoLike: 'You may also like',
     addToBundle: 'Add to bundle', bundleSavings: 'Save {percent}%',
+    offerMawda: 'Mawda Offer', offerMawdaDesc: 'Save when you buy these products together',
+    addToCartBtn: 'Add to Cart', bundleYouSave: 'Save {amount} EGP',
   },
   search: {
     title: 'Search Products', placeholder: 'Search for your new phone',
