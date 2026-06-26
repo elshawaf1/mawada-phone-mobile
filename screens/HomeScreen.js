@@ -355,6 +355,7 @@ export default function HomeScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [activeBrand, setActiveBrand] = useState('all');
+  const [activeCondition, setActiveCondition] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [addedMap, setAddedMap] = useState({});
@@ -476,9 +477,12 @@ export default function HomeScreen({ navigation }) {
     }
   }, [addToCart, removeFromCart, isInCart]);
 
-  const filteredProducts = activeBrand === 'all'
-    ? products
-    : products.filter(p => p.brandId === activeBrand);
+  const filteredProducts = products.filter(p => {
+    if (activeBrand !== 'all' && p.brandId !== activeBrand) return false;
+    if (activeCondition === 'new' && p.condition && p.condition !== 'new') return false;
+    if (activeCondition === 'used' && p.condition && p.condition !== 'used') return false;
+    return true;
+  });
 
   if (loading) {
     return (
@@ -589,11 +593,29 @@ export default function HomeScreen({ navigation }) {
               </>
             )}
 
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, { marginTop: 8 }]}>
               <Text style={styles.sectionTitle}>{t('home.products')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Search')}>
                 <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.conditionFilter}>
+              {[{ key: 'all', label: t('home.all') }, { key: 'new', label: t('home.newProducts') }, { key: 'used', label: t('home.usedProducts') }].map((opt) => {
+                const isActive = activeCondition === opt.key;
+                return (
+                  <TouchableOpacity
+                    key={opt.key}
+                    style={[styles.conditionChip, isActive && styles.conditionChipActive]}
+                    onPress={() => setActiveCondition(opt.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.conditionChipText, isActive && styles.conditionChipTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         }
@@ -725,6 +747,33 @@ const styles = StyleSheet.create({
   },
   brandText: { fontSize: 13, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.textSecondary },
   brandTextActive: { color: COLORS.white },
+
+  conditionFilter: {
+    flexDirection: 'row-reverse',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    gap: 8,
+  },
+  conditionChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.gray200,
+    backgroundColor: COLORS.white,
+  },
+  conditionChipActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  conditionChipText: {
+    fontSize: 13,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textSecondary,
+  },
+  conditionChipTextActive: {
+    color: COLORS.white,
+  },
 
   notifBadge: {
     position: 'absolute', top: 4, right: 4,
