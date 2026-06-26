@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   gradientBg: {
     backgroundColor: '#0F172A',
     borderRadius: RADIUS.xxl || 24,
-    padding: 24,
+    padding: 28,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -217,7 +217,8 @@ const styles = StyleSheet.create({
   productRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    padding: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     gap: 14,
   },
   productRowBorder: {
@@ -228,13 +229,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   productImage: {
-    width: 72,
-    height: 72,
+    width: 80,
+    height: 80,
     borderRadius: 14,
   },
   imagePlaceholder: {
-    width: 72,
-    height: 72,
+    width: 80,
+    height: 80,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
   productName: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '800',
     marginBottom: 4,
     textAlign: 'right',
     lineHeight: 21,
