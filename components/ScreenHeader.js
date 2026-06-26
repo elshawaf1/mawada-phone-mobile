@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, StatusBar } from 'react-native';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
@@ -15,7 +15,7 @@ export default function ScreenHeader({ title, onBack, rightAction, onRightPress 
       <View style={[styles.headerContent, { flexDirection: dir.row }]}>
         {onBack ? (
           <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
-            <ChevronLeft color={COLORS.text} size={24} />
+            <ChevronRight color={COLORS.text} size={24} />
           </TouchableOpacity>
         ) : (
           <View style={styles.spacer} />
