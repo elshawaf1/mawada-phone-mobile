@@ -218,47 +218,44 @@ export default function OrderDetailScreen({ navigation, route }) {
         ) : (
           <View style={styles.timelineCard}>
             <Text style={styles.cardTitle}>{t('orders.status')}</Text>
-            <View style={[styles.timeline, { flexDirection: dir.row }]}>
+            <View style={styles.horizontalTimeline}>
               {TIMELINE_STEPS.map((step, idx) => {
                 const state = stepState(order.status, step.key);
                 const isLast = idx === TIMELINE_STEPS.length - 1;
                 return (
-                  <View key={step.key} style={styles.timelineItem}>
-                    <View style={styles.timelineDotColumn}>
-                      <View
-                        style={[
-                          styles.timelineDot,
-                          state === 'done' && styles.timelineDotDone,
-                          state === 'active' && styles.timelineDotActive,
-                        ]}
-                      />
-                      {!isLast && (
-                        <View
-                          style={[
-                            styles.timelineConnector,
-                            state === 'done' && styles.timelineConnectorDone,
-                          ]}
-                        />
-                      )}
+                  <React.Fragment key={step.key}>
+                    <View style={styles.stepContainer}>
+                      <View style={[
+                        styles.stepCircle,
+                        state === 'done' && styles.stepCircleDone,
+                        state === 'active' && styles.stepCircleActive,
+                      ]}>
+                        {state === 'done' ? (
+                          <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                        ) : state === 'active' ? (
+                          <View style={styles.activeInnerDot} />
+                        ) : null}
+                      </View>
+                      <Text style={[
+                        styles.stepLabel,
+                        state === 'done' && styles.stepLabelDone,
+                        state === 'active' && styles.stepLabelActive,
+                        state === 'pending' && styles.stepLabelPending,
+                      ]} numberOfLines={2}>
+                        {step.label}
+                      </Text>
                     </View>
-                    <Text
-                      style={[
-                        styles.timelineLabel,
-                        state === 'pending' && styles.timelineLabelPending,
-                      ]}
-                    >
-                      {step.label}
-                    </Text>
-                  </View>
+                    {!isLast && (
+                      <View style={styles.stepLineWrap}>
+                        <View style={[
+                          styles.stepLine,
+                          (state === 'done') && styles.stepLineDone,
+                        ]} />
+                      </View>
+                    )}
+                  </React.Fragment>
                 );
               })}
-            </View>
-            <View style={[styles.statusBadgeRow, { flexDirection: dir.row }]}>
-              <View style={[styles.badge, { backgroundColor: statusColor.bg }]}>
-                <Text style={[styles.badgeText, { color: statusColor.text }]}>
-                  {STATUS_LABELS[order.status] || order.status}
-                </Text>
-              </View>
             </View>
           </View>
         )}
@@ -399,24 +396,86 @@ const styles = StyleSheet.create({
   },
   cancelledText: { color: '#991B1B', fontSize: 14, fontWeight: '700' },
   timelineCard: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 12,
+    backgroundColor: '#fff', borderRadius: 20, padding: 18, marginBottom: 12,
     shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 4 }, shadowRadius: 10, elevation: 2,
   },
-  timeline: { flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: 12 },
-  timelineItem: { alignItems: 'center', flex: 1 },
-  timelineDotColumn: { alignItems: 'center' },
-  timelineDot: {
-    width: 14, height: 14, borderRadius: 7, backgroundColor: '#E2E8F0', marginBottom: 6,
+  horizontalTimeline: {
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  timelineDotDone: { backgroundColor: '#22C55E' },
-  timelineDotActive: { backgroundColor: '#F59E0B' },
-  timelineConnector: { width: 2, height: 18, backgroundColor: '#E2E8F0' },
-  timelineConnectorDone: { backgroundColor: '#22C55E' },
-  timelineLabel: { fontSize: 10, fontWeight: '600', color: '#0F172A', textAlign: 'center' },
-  timelineLabelPending: { color: '#94A3B8' },
-  statusBadgeRow: { flexDirection: 'row-reverse', justifyContent: 'center', marginTop: 4 },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
+  stepContainer: {
+    alignItems: 'center',
+    flex: 1,
+    maxWidth: 80,
+  },
+  stepCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  stepCircleDone: {
+    backgroundColor: '#22C55E',
+    shadowColor: '#22C55E',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  stepCircleActive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#F59E0B',
+    shadowColor: '#F59E0B',
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  activeInnerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F59E0B',
+  },
+  stepLineWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 15,
+    marginHorizontal: -4,
+  },
+  stepLine: {
+    height: 2.5,
+    width: '100%',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 2,
+  },
+  stepLineDone: {
+    backgroundColor: '#22C55E',
+  },
+  stepLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#0F172A',
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  stepLabelDone: {
+    color: '#22C55E',
+  },
+  stepLabelActive: {
+    color: '#F59E0B',
+    fontWeight: '700',
+  },
+  stepLabelPending: {
+    color: '#94A3B8',
+  },
   addressLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 4 },
   addressText: { fontSize: 13, color: '#64748B', textAlign: 'right', marginBottom: 2 },
   itemRow: {
