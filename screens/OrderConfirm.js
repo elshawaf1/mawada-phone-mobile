@@ -87,7 +87,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
     if (!viewShotRef.current) return;
     try {
       setCapturing(true);
-      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile', snapshotContentContainer: true });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
@@ -123,11 +123,11 @@ export default function OrderConfirmScreen({ navigation, route }) {
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <ScrollView
-        ref={viewShotRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <View ref={viewShotRef} style={styles.captureView}>
         {/* Header */}
         <View style={styles.header}>
           {paymentStatus === 'FAILED' ? (
@@ -310,6 +310,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
         )}
 
         <View style={{ height: 20 }} />
+        </View>
       </ScrollView>
     </View>
   );
@@ -318,7 +319,8 @@ export default function OrderConfirmScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8FAFC' },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
+  scrollContent: { paddingBottom: 40 },
+  captureView: { backgroundColor: '#F8FAFC', padding: 16 },
 
   /* ── Header ── */
   header: { alignItems: 'center', paddingTop: 12, paddingBottom: 18 },
