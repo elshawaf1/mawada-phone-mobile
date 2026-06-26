@@ -65,7 +65,7 @@ export default function ProductCardList({ item, onPress, onAddToCart, inCart, ju
             <Text style={styles.brand} numberOfLines={1}>{brandName}</Text>
           )}
 
-          <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">{item.nameAr}</Text>
+          <Text style={styles.title} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
 
           {hasRating && (
             <View style={styles.ratingRow}>
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
@@ -118,8 +118,8 @@ const styles = StyleSheet.create({
   },
 
   imageZone: {
-    width: 100,
-    height: 100,
+    width: 110,
+    height: 110,
     borderRadius: 12,
     backgroundColor: '#F7F7F7',
     justifyContent: 'center',
