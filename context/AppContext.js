@@ -94,11 +94,13 @@ export function AppProvider({ children }) {
         .select('*, products(*, product_images(*))')
         .eq('userId', userId);
       if (error) throw error;
-      const mapped = (data || []).map((w) => ({
-        ...w.products,
-        wishlistItemId: w.id,
-        wishlistCreatedAt: w.createdAt,
-      }));
+      const mapped = (data || [])
+        .filter((w) => w.products && w.products.isActive !== false)
+        .map((w) => ({
+          ...w.products,
+          wishlistItemId: w.id,
+          wishlistCreatedAt: w.createdAt,
+        }));
       setFavorites(mapped);
     } catch (err) {
       console.error('fetchFavorites error:', err);
