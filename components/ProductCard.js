@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   heartBtn: {
     position: 'absolute',
     top: 8,
-    right: 8,
+    left: 8,
     width: 30,
     height: 30,
     borderRadius: 15,
