@@ -63,6 +63,7 @@ export default function SearchScreen({ navigation, route }) {
   const { user } = useAuth();
   const inputRef = useRef(null);
   const initialQuery = route?.params?.q ?? '';
+  const initialBrandId = route?.params?.brandId ?? null;
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ export default function SearchScreen({ navigation, route }) {
   const [error, setError] = useState(null);
   const [addedMap, setAddedMap] = useState({});
   const [sortBy, setSortBy] = useState('latest');
-  const [selectedBrandId, setSelectedBrandId] = useState(null);
+  const [selectedBrandId, setSelectedBrandId] = useState(initialBrandId);
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -99,11 +100,13 @@ export default function SearchScreen({ navigation, route }) {
   useEffect(() => {
     if (initialQuery) {
       performSearch(initialQuery, 1);
+    } else if (initialBrandId) {
+      performSearch('', 1);
     }
   }, []);
 
   useEffect(() => {
-    if (hasSearched && searchQuery.trim()) {
+    if (hasSearched && (searchQuery.trim() || selectedBrandId)) {
       setPage(1);
       setResults([]);
       performSearch(searchQuery, 1);
@@ -172,7 +175,7 @@ export default function SearchScreen({ navigation, route }) {
 
   const performSearch = async (query, pageNum, append = false) => {
     const q = query.trim();
-    if (!q) return;
+    if (!q && !selectedBrandId) return;
     if (!append) setLoading(true);
     else setLoadingMore(true);
     setError(null);
@@ -182,8 +185,11 @@ export default function SearchScreen({ navigation, route }) {
       let dbQuery = supabase
         .from('products')
         .select('*, product_images(id, url, "isPrimary"), brands(name, "nameAr")', { count: 'exact' })
-        .eq('isActive', true)
-        .or(`nameAr.ilike.%${sanitized}%,name.ilike.%${sanitized}%,descriptionAr.ilike.%${sanitized}%`);
+        .eq('isActive', true);
+
+      if (sanitized) {
+        dbQuery = dbQuery.or(`nameAr.ilike.%${sanitized}%,name.ilike.%${sanitized}%,descriptionAr.ilike.%${sanitized}%`);
+      }
 
       if (selectedBrandId) {
         dbQuery = dbQuery.eq('brandId', selectedBrandId);

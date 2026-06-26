@@ -70,12 +70,12 @@ export default function BrandsScreen({ navigation }) {
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Search')}
+            onPress={() => navigation.navigate('Search', { brandId: item.id, brandName: item.nameAr })}
           >
             <View style={styles.cardRow}>
               <View style={styles.logoWrap}>
-                {item.logo ? (
-                  <Image source={{ uri: item.logo }} style={styles.logo} resizeMode="contain" />
+                {item.logoUrl ? (
+                  <Image source={{ uri: item.logoUrl }} style={styles.logo} resizeMode="contain" />
                 ) : (
                   <View style={styles.logoFallback}>
                     <Ionicons name="phone-portrait-outline" size={22} color="#CBD5E1" />
