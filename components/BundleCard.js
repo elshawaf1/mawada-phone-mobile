@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   gradientBg: {
     backgroundColor: '#0F172A',
     borderRadius: RADIUS.xxl || 24,
-    padding: 10,
+    padding: 5,
     position: 'relative',
     overflow: 'hidden',
   },
