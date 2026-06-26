@@ -167,9 +167,6 @@ export default function ProfileScreen({ navigation }) {
                 <Ionicons name="person-outline" size={50} color="#94A3B8" />
               </View>
             </View>
-            <TouchableOpacity style={styles.editBadge} activeOpacity={0.8}>
-              <MaterialCommunityIcons name="pencil" size={14} color="#FFF" />
-            </TouchableOpacity>
           </View>
 
           {user && (
