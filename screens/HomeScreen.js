@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   featuredSection: { marginBottom: 24 },
   featuredScroll: {
     flexDirection: 'row',
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
     gap: 12,
     paddingBottom: 4,
   },
