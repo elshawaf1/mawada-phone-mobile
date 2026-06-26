@@ -84,15 +84,11 @@ export default function OrderConfirmScreen({ navigation, route }) {
   };
 
   const handleScreenshot = async () => {
-    if (!viewShotRef.current) return;
     try {
       setCapturing(true);
-      const uri = await captureRef(viewShotRef, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-        snapshotContentContainer: true,
-      });
+      await new Promise((r) => setTimeout(r, 300));
+      if (!viewShotRef.current) return;
+      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile' });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
@@ -100,7 +96,6 @@ export default function OrderConfirmScreen({ navigation, route }) {
       }
     } catch (err) {
       console.warn('Screenshot error:', err);
-      Alert.alert(t('common.error'), t('orderConfirm.screenshotFailed'));
     } finally {
       setCapturing(false);
     }
@@ -123,199 +118,208 @@ export default function OrderConfirmScreen({ navigation, route }) {
     return imgs.find(i => i.isPrimary)?.url || imgs[0]?.url || null;
   };
 
+  const renderContent = () => (
+    <>
+      {/* Header */}
+      <View style={styles.header}>
+        {paymentStatus === 'FAILED' ? (
+          <View style={[styles.iconWrap, styles.iconWrapFailed]}>
+            <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
+          </View>
+        ) : (
+          <View style={[styles.iconWrap, styles.iconWrapSuccess]}>
+            <CheckCircle size={40} color="#22C55E" strokeWidth={1.5} />
+          </View>
+        )}
+        <Text style={styles.headerTitle}>
+          {paymentStatus === 'FAILED' ? t('orders.confirmFailedTitle') : t('orders.confirmSuccessTitle')}
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          {paymentStatus === 'FAILED'
+            ? t('orders.confirmFailedSub')
+            : paymentMethod === 'COD'
+              ? t('orders.confirmCodSub')
+              : paymentStatus === 'PAID'
+                ? t('orders.confirmPaidSub')
+                : t('orders.confirmPendingSub')}
+        </Text>
+
+        <TouchableOpacity style={styles.orderIdRow} onPress={handleShareOrder} activeOpacity={0.8}>
+          <Ionicons name="copy-outline" size={13} color="#38BDF8" />
+          <Text style={styles.orderIdText} selectable>{displayId}</Text>
+        </TouchableOpacity>
+
+        <View style={styles.metaRow}>
+          <View style={styles.metaTag}>
+            <PaymentIcon method={paymentMethod} />
+            <Text style={styles.metaTagText}>{paymentMethodLabels[paymentMethod] || paymentMethod}</Text>
+          </View>
+          <View style={styles.metaDot} />
+          <View style={styles.metaTag}>
+            <Truck size={12} color="#94A3B8" strokeWidth={2} />
+            <Text style={styles.metaTagText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Timeline */}
+      <View style={styles.timelineWrap}>
+        <View style={styles.stepper}>
+          {timelineSteps.map((step, idx) => {
+            const isLast = idx === timelineSteps.length - 1;
+            return (
+              <React.Fragment key={step.key}>
+                <View style={styles.stepCol}>
+                  <View style={[
+                    styles.stepCircle,
+                    step.done && styles.stepCircleDone,
+                    step.current && styles.stepCircleActive,
+                  ]}>
+                    {step.done ? <Check size={13} color="#FFF" strokeWidth={3} /> : step.current ? <View style={styles.stepInnerDot} /> : null}
+                  </View>
+                  <Text style={[
+                    styles.stepLabel,
+                    step.done && styles.stepLabelDone,
+                    step.current && styles.stepLabelActive,
+                  ]} numberOfLines={1}>{step.label}</Text>
+                </View>
+                {!isLast && <View style={[styles.stepLine, step.done && styles.stepLineDone]} />}
+              </React.Fragment>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Fawry */}
+      {fawryCode && (
+        <View style={styles.fawryCard}>
+          <Text style={styles.fawryLabel}>{t('orderConfirm.fawryBanner')}</Text>
+          <Text style={styles.fawryCode}>{fawryCode}</Text>
+          <Text style={styles.fawryHint}>{t('orderConfirm.fawryHint')}</Text>
+        </View>
+      )}
+
+      {/* Unified Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{t('orders.detail')}</Text>
+        {items.map((item, index) => {
+          const img = productImage(item);
+          return (
+            <View key={item.id || index}>
+              <View style={styles.itemRow}>
+                <View style={styles.itemThumb}>
+                  {img ? (
+                    <View />
+                  ) : (
+                    <Ionicons name="bag-outline" size={16} color="#CBD5E1" />
+                  )}
+                </View>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName} numberOfLines={1}>{item.nameAr || item.products?.nameAr || t('orderConfirm.itemFallback')}</Text>
+                  <Text style={styles.itemMeta}>×{item.quantity}</Text>
+                </View>
+                <Text style={styles.itemPrice}>{formatPrice(item.unitPrice)} {t('common.egp')}</Text>
+              </View>
+              {index < items.length - 1 && <View style={styles.itemDivider} />}
+            </View>
+          );
+        })}
+
+        <View style={styles.costDivider} />
+
+        <View style={styles.costRow}>
+          <Text style={styles.costLabel}>{t('orders.itemsPrice')}</Text>
+          <Text style={styles.costValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
+        </View>
+        {discount > 0 && (
+          <View style={styles.costRow}>
+            <Text style={styles.costLabelGreen}>{t('common.discount')}</Text>
+            <Text style={styles.costValueGreen}>-{formatPrice(discount)} {t('common.egp')}</Text>
+          </View>
+        )}
+        <View style={styles.costRow}>
+          <Text style={styles.costLabel}>{t('orders.delivery')}</Text>
+          <Text style={styles.costValue}>{delivery > 0 ? `${formatPrice(delivery)} ${t('common.egp')}` : t('common.free')}</Text>
+        </View>
+        <View style={styles.costDivider} />
+        <View style={styles.costRow}>
+          <Text style={styles.totalLabel}>{t('common.total')}</Text>
+          <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
+        </View>
+      </View>
+
+      {/* Address */}
+      {address && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t('orders.address')}</Text>
+          <View style={styles.addrRow}>
+            <View style={styles.addrIcon}>
+              <MapPin size={16} color="#0F172A" strokeWidth={2} />
+            </View>
+            <View style={styles.addrInfo}>
+              <Text style={styles.addrLabel}>{address.label || t('orders.addressFallback')}</Text>
+              <Text style={styles.addrDetail}>{address.street}{address.region ? ` - ${address.region}` : ''}</Text>
+              {address.phone && (
+                <TouchableOpacity style={styles.addrPhone} onPress={() => Linking.openURL(`tel:${address.phone}`).catch(() => {})} activeOpacity={0.7}>
+                  <Ionicons name="call-outline" size={12} color="#22C55E" />
+                  <Text style={styles.addrPhoneText}>+20 {address.phone}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Actions */}
+      {paymentStatus === 'FAILED' ? (
+        <>
+          <TouchableOpacity style={styles.ctaPrimary} onPress={handleRetry} activeOpacity={0.85}>
+            <Text style={styles.ctaPrimaryText}>{t('orders.confirmRetry')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.textLink} onPress={() => navigation.navigate('Chat')} activeOpacity={0.7}>
+            <Text style={styles.textLinkText}>{t('orders.confirmSupport')}</Text>
+          </TouchableOpacity>
+          <Button title={t('orders.confirmHome')} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} fullWidth style={styles.btnMargin} />
+        </>
+      ) : (
+        <>
+          <TouchableOpacity style={styles.ctaPrimary} onPress={handleNavigateOrders} activeOpacity={0.85}>
+            <Ionicons name="location-outline" size={18} color="#FFF" />
+            <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.ctaScreenshot} onPress={handleScreenshot} activeOpacity={0.85} disabled={capturing}>
+            <Camera size={18} color="#0F172A" strokeWidth={2} />
+            <Text style={styles.ctaScreenshotText}>{t('orderConfirm.screenshotShare')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.textLink} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} activeOpacity={0.7}>
+            <Text style={styles.textLinkText}>{t('orders.confirmHome')}</Text>
+          </TouchableOpacity>
+        </>
+      )}
+
+      <View style={{ height: 20 }} />
+    </>
+  );
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <ScrollView
-        ref={viewShotRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          {paymentStatus === 'FAILED' ? (
-            <View style={[styles.iconWrap, styles.iconWrapFailed]}>
-              <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
-            </View>
-          ) : (
-            <View style={[styles.iconWrap, styles.iconWrapSuccess]}>
-              <CheckCircle size={40} color="#22C55E" strokeWidth={1.5} />
-            </View>
-          )}
-          <Text style={styles.headerTitle}>
-            {paymentStatus === 'FAILED' ? t('orders.confirmFailedTitle') : t('orders.confirmSuccessTitle')}
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            {paymentStatus === 'FAILED'
-              ? t('orders.confirmFailedSub')
-              : paymentMethod === 'COD'
-                ? t('orders.confirmCodSub')
-                : paymentStatus === 'PAID'
-                  ? t('orders.confirmPaidSub')
-                  : t('orders.confirmPendingSub')}
-          </Text>
-
-          {/* Order ID */}
-          <TouchableOpacity style={styles.orderIdRow} onPress={handleShareOrder} activeOpacity={0.8}>
-            <Ionicons name="copy-outline" size={13} color="#38BDF8" />
-            <Text style={styles.orderIdText} selectable>{displayId}</Text>
-          </TouchableOpacity>
-
-          {/* Meta tags */}
-          <View style={styles.metaRow}>
-            <View style={styles.metaTag}>
-              <PaymentIcon method={paymentMethod} />
-              <Text style={styles.metaTagText}>{paymentMethodLabels[paymentMethod] || paymentMethod}</Text>
-            </View>
-            <View style={styles.metaDot} />
-            <View style={styles.metaTag}>
-              <Truck size={12} color="#94A3B8" strokeWidth={2} />
-              <Text style={styles.metaTagText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
-            </View>
-          </View>
+      {capturing ? (
+        <View ref={viewShotRef} style={styles.captureContainer}>
+          {renderContent()}
         </View>
-
-        {/* Timeline */}
-        <View style={styles.timelineWrap}>
-          <View style={styles.stepper}>
-            {timelineSteps.map((step, idx) => {
-              const isLast = idx === timelineSteps.length - 1;
-              return (
-                <React.Fragment key={step.key}>
-                  <View style={styles.stepCol}>
-                    <View style={[
-                      styles.stepCircle,
-                      step.done && styles.stepCircleDone,
-                      step.current && styles.stepCircleActive,
-                    ]}>
-                      {step.done ? <Check size={13} color="#FFF" strokeWidth={3} /> : step.current ? <View style={styles.stepInnerDot} /> : null}
-                    </View>
-                    <Text style={[
-                      styles.stepLabel,
-                      step.done && styles.stepLabelDone,
-                      step.current && styles.stepLabelActive,
-                    ]} numberOfLines={1}>{step.label}</Text>
-                  </View>
-                  {!isLast && <View style={[styles.stepLine, step.done && styles.stepLineDone]} />}
-                </React.Fragment>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Fawry */}
-        {fawryCode && (
-          <View style={styles.fawryCard}>
-            <Text style={styles.fawryLabel}>{t('orderConfirm.fawryBanner')}</Text>
-            <Text style={styles.fawryCode}>{fawryCode}</Text>
-            <Text style={styles.fawryHint}>{t('orderConfirm.fawryHint')}</Text>
-          </View>
-        )}
-
-        {/* Unified Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>{t('orders.detail')}</Text>
-          {items.map((item, index) => {
-            const img = productImage(item);
-            return (
-              <View key={item.id || index}>
-                <View style={styles.itemRow}>
-                  <View style={styles.itemThumb}>
-                    {img ? (
-                      <View />
-                    ) : (
-                      <Ionicons name="bag-outline" size={16} color="#CBD5E1" />
-                    )}
-                  </View>
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemName} numberOfLines={1}>{item.nameAr || item.products?.nameAr || t('orderConfirm.itemFallback')}</Text>
-                    <Text style={styles.itemMeta}>×{item.quantity}</Text>
-                  </View>
-                  <Text style={styles.itemPrice}>{formatPrice(item.unitPrice)} {t('common.egp')}</Text>
-                </View>
-                {index < items.length - 1 && <View style={styles.itemDivider} />}
-              </View>
-            );
-          })}
-
-          <View style={styles.costDivider} />
-
-          <View style={styles.costRow}>
-            <Text style={styles.costLabel}>{t('orders.itemsPrice')}</Text>
-            <Text style={styles.costValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
-          </View>
-          {discount > 0 && (
-            <View style={styles.costRow}>
-              <Text style={styles.costLabelGreen}>{t('common.discount')}</Text>
-              <Text style={styles.costValueGreen}>-{formatPrice(discount)} {t('common.egp')}</Text>
-            </View>
-          )}
-          <View style={styles.costRow}>
-            <Text style={styles.costLabel}>{t('orders.delivery')}</Text>
-            <Text style={styles.costValue}>{delivery > 0 ? `${formatPrice(delivery)} ${t('common.egp')}` : t('common.free')}</Text>
-          </View>
-          <View style={styles.costDivider} />
-          <View style={styles.costRow}>
-            <Text style={styles.totalLabel}>{t('common.total')}</Text>
-            <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
-          </View>
-        </View>
-
-        {/* Address */}
-        {address && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{t('orders.address')}</Text>
-            <View style={styles.addrRow}>
-              <View style={styles.addrIcon}>
-                <MapPin size={16} color="#0F172A" strokeWidth={2} />
-              </View>
-              <View style={styles.addrInfo}>
-                <Text style={styles.addrLabel}>{address.label || t('orders.addressFallback')}</Text>
-                <Text style={styles.addrDetail}>{address.street}{address.region ? ` - ${address.region}` : ''}</Text>
-                {address.phone && (
-                  <TouchableOpacity style={styles.addrPhone} onPress={() => Linking.openURL(`tel:${address.phone}`).catch(() => {})} activeOpacity={0.7}>
-                    <Ionicons name="call-outline" size={12} color="#22C55E" />
-                    <Text style={styles.addrPhoneText}>+20 {address.phone}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Actions */}
-        {paymentStatus === 'FAILED' ? (
-          <>
-            <TouchableOpacity style={styles.ctaPrimary} onPress={handleRetry} activeOpacity={0.85}>
-              <Text style={styles.ctaPrimaryText}>{t('orders.confirmRetry')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.textLink} onPress={() => navigation.navigate('Chat')} activeOpacity={0.7}>
-              <Text style={styles.textLinkText}>{t('orders.confirmSupport')}</Text>
-            </TouchableOpacity>
-            <Button title={t('orders.confirmHome')} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} fullWidth style={styles.btnMargin} />
-          </>
-        ) : (
-          <>
-            <TouchableOpacity style={styles.ctaPrimary} onPress={handleNavigateOrders} activeOpacity={0.85}>
-              <Ionicons name="location-outline" size={18} color="#FFF" />
-              <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.ctaScreenshot} onPress={handleScreenshot} activeOpacity={0.85} disabled={capturing}>
-              <Camera size={18} color="#0F172A" strokeWidth={2} />
-              <Text style={styles.ctaScreenshotText}>{t('orderConfirm.screenshotShare')}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.textLink} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} activeOpacity={0.7}>
-              <Text style={styles.textLinkText}>{t('orders.confirmHome')}</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        <View style={{ height: 20 }} />
-      </ScrollView>
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderContent()}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -324,6 +328,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8FAFC' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 40 },
+  captureContainer: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
 
   /* ── Header ── */
   header: { alignItems: 'center', paddingTop: 12, paddingBottom: 18 },

@@ -193,10 +193,11 @@ export default function OrderDetailScreen({ navigation, route }) {
   }, [order, STATUS_LABELS, t]);
 
   const handleScreenshot = useCallback(async () => {
-    if (!viewShotRef.current) return;
     try {
       setCapturing(true);
-      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile', snapshotContentContainer: true });
+      await new Promise((r) => setTimeout(r, 300));
+      if (!viewShotRef.current) return;
+      const uri = await captureRef(viewShotRef, { format: 'png', quality: 1, result: 'tmpfile' });
       if (await SharingExpo.isAvailableAsync()) {
         await SharingExpo.shareAsync(uri);
       } else {
@@ -241,6 +242,185 @@ export default function OrderDetailScreen({ navigation, route }) {
   const payable = isPayable(order);
   const isCancelled = order.status === 'CANCELLED';
 
+  const renderContent = () => (
+    <>
+      {/* Status Badge */}
+      <View style={styles.statusBadgeRow}>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
+          <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
+            {STATUS_LABELS[order.status] || order.status}
+          </Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: paymentColor.bg }]}>
+          <Text style={[styles.statusBadgeText, { color: paymentColor.text }]}>
+            {PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus}
+          </Text>
+        </View>
+      </View>
+
+      {/* Timeline */}
+      {isCancelled ? (
+        <View style={styles.cancelledBanner}>
+          <Ionicons name="close-circle" size={20} color="#991B1B" />
+          <Text style={styles.cancelledText}>{t('orders.cancelledBanner')}</Text>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Clock size={16} color="#0F172A" strokeWidth={2.25} />
+            <Text style={styles.cardTitle}>{t('orders.status')}</Text>
+          </View>
+          <View style={styles.horizontalTimeline}>
+            {TIMELINE_STEPS.map((step, idx) => {
+              const state = stepState(order.status, step.key);
+              const isLast = idx === TIMELINE_STEPS.length - 1;
+              return (
+                <React.Fragment key={step.key}>
+                  <View style={styles.stepContainer}>
+                    <View style={[
+                      styles.stepCircle,
+                      state === 'done' && styles.stepCircleDone,
+                      state === 'active' && styles.stepCircleActive,
+                    ]}>
+                      {state === 'done' ? (
+                        <Check size={14} color="#FFF" strokeWidth={3} />
+                      ) : state === 'active' ? (
+                        <View style={styles.activeInnerDot} />
+                      ) : (
+                        <CircleDashed size={14} color="#CBD5E1" strokeWidth={2} />
+                      )}
+                    </View>
+                    <Text style={[
+                      styles.stepLabel,
+                      state === 'done' && styles.stepLabelDone,
+                      state === 'active' && styles.stepLabelActive,
+                      state === 'pending' && styles.stepLabelPending,
+                    ]} numberOfLines={2}>
+                      {step.label}
+                    </Text>
+                  </View>
+                  {!isLast && (
+                    <View style={styles.stepLineWrap}>
+                      <View style={[styles.stepLine, state === 'done' && styles.stepLineDone]} />
+                    </View>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
+      {/* Address */}
+      {address && (
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <MapPin size={16} color="#0F172A" strokeWidth={2.25} />
+            <Text style={styles.cardTitle}>{t('orders.address')}</Text>
+          </View>
+          <Text style={styles.addressLabel}>{address.label || t('orders.addressFallback')}</Text>
+          <Text style={styles.addressText}>
+            {address.street}{address.region ? ` - ${address.region}` : ''}
+          </Text>
+          {address.city && <Text style={styles.addressText}>{address.city}</Text>}
+          {address.phone && (
+            <TouchableOpacity style={styles.phoneRow} onPress={() => {}} activeOpacity={0.7}>
+              <Ionicons name="call-outline" size={13} color="#22C55E" />
+              <Text style={styles.phoneText}>+20 {address.phone}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Products */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Package size={16} color="#0F172A" strokeWidth={2.25} />
+          <Text style={styles.cardTitle}>{t('common.products')} ({items.length})</Text>
+        </View>
+        {items.map((item, idx) => {
+          const product = item.products || {};
+          const variant = item.product_variants || {};
+          const img = product.product_images?.[0]?.url;
+          const attrs = [variant.color, variant.storage, variant.ram].filter(Boolean).join(' · ');
+          return (
+            <View key={item.id || idx} style={[styles.itemRow, idx === 0 && { borderTopWidth: 0 }]}>
+              <View style={styles.itemImageWrapper}>
+                {img ? (
+                  <Image source={{ uri: img }} style={styles.itemImage} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.itemImage, styles.itemImagePlaceholder]}>
+                    <Package size={20} color="#CBD5E1" strokeWidth={1.5} />
+                  </View>
+                )}
+              </View>
+              <View style={styles.itemInfo}>
+                <Text style={styles.itemTitle} numberOfLines={2}>
+                  {product.nameAr || t('common.product')}
+                </Text>
+                {attrs ? <Text style={styles.itemVariant}>{attrs}</Text> : null}
+                <Text style={styles.itemQty}>{t('orders.quantity', { count: item.quantity })}</Text>
+              </View>
+              <Text style={styles.itemPrice}>{formatPrice(item.unitPrice * item.quantity)} {t('common.egp')}</Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Payment Summary */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <CreditCard size={16} color="#0F172A" strokeWidth={2.25} />
+          <Text style={styles.cardTitle}>{t('orders.paymentSummary')}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryValue}>{formatPrice(order.subtotal)} {t('common.egp')}</Text>
+          <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
+        </View>
+        {Number(order.shippingCost) > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryValue}>{formatPrice(order.shippingCost)} {t('common.egp')}</Text>
+            <Text style={styles.summaryLabel}>{t('orders.delivery')}</Text>
+          </View>
+        )}
+        {Number(order.discount) > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryValueGreen}>- {formatPrice(order.discount)} {t('common.egp')}</Text>
+            <Text style={styles.summaryLabelGreen}>{t('common.discount')}</Text>
+          </View>
+        )}
+        <View style={styles.divider} />
+        <View style={styles.summaryRow}>
+          <Text style={styles.totalValue}>{formatPrice(order.total)} {t('common.egp')}</Text>
+          <Text style={styles.totalLabel}>{t('common.total')}</Text>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.summaryRow}>
+          <View style={[styles.badge, { backgroundColor: '#F1F5F9' }]}>
+            <Text style={[styles.badgeText, { color: '#334155' }]}>
+              {PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}
+            </Text>
+          </View>
+          <Text style={styles.summaryLabel}>{t('orders.paymentMethod')}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <View style={[styles.badge, { backgroundColor: paymentColor.bg }]}>
+            <Text style={[styles.badgeText, { color: paymentColor.text }]}>
+              {PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus}
+            </Text>
+          </View>
+          <Text style={styles.summaryLabel}>{t('orders.paymentStatus')}</Text>
+        </View>
+        {order.couponCode && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryValue}>{order.couponCode}</Text>
+            <Text style={styles.summaryLabel}>{t('orders.couponCode')}</Text>
+          </View>
+        )}
+      </View>
+    </>
+  );
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -262,188 +442,20 @@ export default function OrderDetailScreen({ navigation, route }) {
         }
       />
 
-      <ScrollView
-        ref={viewShotRef}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: payable ? 100 : 24 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Status Badge */}
-        <View style={styles.statusBadgeRow}>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
-            <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
-              {STATUS_LABELS[order.status] || order.status}
-            </Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: paymentColor.bg }]}>
-            <Text style={[styles.statusBadgeText, { color: paymentColor.text }]}>
-              {PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus}
-            </Text>
-          </View>
+      {capturing ? (
+        <View ref={viewShotRef} style={styles.captureContainer}>
+          {renderContent()}
         </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: payable ? 100 : 24 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderContent()}
+        </ScrollView>
+      )}
 
-        {/* Timeline */}
-        {isCancelled ? (
-          <View style={styles.cancelledBanner}>
-            <Ionicons name="close-circle" size={20} color="#991B1B" />
-            <Text style={styles.cancelledText}>{t('orders.cancelledBanner')}</Text>
-          </View>
-        ) : (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Clock size={16} color="#0F172A" strokeWidth={2.25} />
-              <Text style={styles.cardTitle}>{t('orders.status')}</Text>
-            </View>
-            <View style={styles.horizontalTimeline}>
-              {TIMELINE_STEPS.map((step, idx) => {
-                const state = stepState(order.status, step.key);
-                const isLast = idx === TIMELINE_STEPS.length - 1;
-                return (
-                  <React.Fragment key={step.key}>
-                    <View style={styles.stepContainer}>
-                      <View style={[
-                        styles.stepCircle,
-                        state === 'done' && styles.stepCircleDone,
-                        state === 'active' && styles.stepCircleActive,
-                      ]}>
-                        {state === 'done' ? (
-                          <Check size={14} color="#FFF" strokeWidth={3} />
-                        ) : state === 'active' ? (
-                          <View style={styles.activeInnerDot} />
-                        ) : (
-                          <CircleDashed size={14} color="#CBD5E1" strokeWidth={2} />
-                        )}
-                      </View>
-                      <Text style={[
-                        styles.stepLabel,
-                        state === 'done' && styles.stepLabelDone,
-                        state === 'active' && styles.stepLabelActive,
-                        state === 'pending' && styles.stepLabelPending,
-                      ]} numberOfLines={2}>
-                        {step.label}
-                      </Text>
-                    </View>
-                    {!isLast && (
-                      <View style={styles.stepLineWrap}>
-                        <View style={[styles.stepLine, state === 'done' && styles.stepLineDone]} />
-                      </View>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* Address */}
-        {address && (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <MapPin size={16} color="#0F172A" strokeWidth={2.25} />
-              <Text style={styles.cardTitle}>{t('orders.address')}</Text>
-            </View>
-            <Text style={styles.addressLabel}>{address.label || t('orders.addressFallback')}</Text>
-            <Text style={styles.addressText}>
-              {address.street}{address.region ? ` - ${address.region}` : ''}
-            </Text>
-            {address.city && <Text style={styles.addressText}>{address.city}</Text>}
-            {address.phone && (
-              <TouchableOpacity style={styles.phoneRow} onPress={() => {}} activeOpacity={0.7}>
-                <Ionicons name="call-outline" size={13} color="#22C55E" />
-                <Text style={styles.phoneText}>+20 {address.phone}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        {/* Products */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Package size={16} color="#0F172A" strokeWidth={2.25} />
-            <Text style={styles.cardTitle}>{t('common.products')} ({items.length})</Text>
-          </View>
-          {items.map((item, idx) => {
-            const product = item.products || {};
-            const variant = item.product_variants || {};
-            const img = product.product_images?.[0]?.url;
-            const attrs = [variant.color, variant.storage, variant.ram].filter(Boolean).join(' · ');
-            return (
-              <View key={item.id || idx} style={[styles.itemRow, idx === 0 && { borderTopWidth: 0 }]}>
-                <View style={styles.itemImageWrapper}>
-                  {img ? (
-                    <Image source={{ uri: img }} style={styles.itemImage} resizeMode="cover" />
-                  ) : (
-                    <View style={[styles.itemImage, styles.itemImagePlaceholder]}>
-                      <Package size={20} color="#CBD5E1" strokeWidth={1.5} />
-                    </View>
-                  )}
-                </View>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemTitle} numberOfLines={2}>
-                    {product.nameAr || t('common.product')}
-                  </Text>
-                  {attrs ? <Text style={styles.itemVariant}>{attrs}</Text> : null}
-                  <Text style={styles.itemQty}>{t('orders.quantity', { count: item.quantity })}</Text>
-                </View>
-                <Text style={styles.itemPrice}>{formatPrice(item.unitPrice * item.quantity)} {t('common.egp')}</Text>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Payment Summary */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <CreditCard size={16} color="#0F172A" strokeWidth={2.25} />
-            <Text style={styles.cardTitle}>{t('orders.paymentSummary')}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryValue}>{formatPrice(order.subtotal)} {t('common.egp')}</Text>
-            <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
-          </View>
-          {Number(order.shippingCost) > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryValue}>{formatPrice(order.shippingCost)} {t('common.egp')}</Text>
-              <Text style={styles.summaryLabel}>{t('orders.delivery')}</Text>
-            </View>
-          )}
-          {Number(order.discount) > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryValueGreen}>- {formatPrice(order.discount)} {t('common.egp')}</Text>
-              <Text style={styles.summaryLabelGreen}>{t('common.discount')}</Text>
-            </View>
-          )}
-          <View style={styles.divider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.totalValue}>{formatPrice(order.total)} {t('common.egp')}</Text>
-            <Text style={styles.totalLabel}>{t('common.total')}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.summaryRow}>
-            <View style={[styles.badge, { backgroundColor: '#F1F5F9' }]}>
-              <Text style={[styles.badgeText, { color: '#334155' }]}>
-                {PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}
-              </Text>
-            </View>
-            <Text style={styles.summaryLabel}>{t('orders.paymentMethod')}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <View style={[styles.badge, { backgroundColor: paymentColor.bg }]}>
-              <Text style={[styles.badgeText, { color: paymentColor.text }]}>
-                {PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus}
-              </Text>
-            </View>
-            <Text style={styles.summaryLabel}>{t('orders.paymentStatus')}</Text>
-          </View>
-          {order.couponCode && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryValue}>{order.couponCode}</Text>
-              <Text style={styles.summaryLabel}>{t('orders.couponCode')}</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {payable && (
+      {payable && !capturing && (
         <View style={[styles.bottomCta, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity
             style={styles.payNowButton}
@@ -476,6 +488,7 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: { padding: 16 },
+  captureContainer: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
 
   statusBadgeRow: {
     flexDirection: 'row-reverse', gap: 8, marginBottom: 12,
