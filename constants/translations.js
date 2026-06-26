@@ -208,6 +208,8 @@ const ar = {
     fawryBanner: 'كُود الدَّفْع عَبْر فَوَّرِي',
     fawryHint: 'اسْتَخْدِم هَذَا الْكُود لِلدَّفْع فِي أَي فَرْع فَوَّرِي',
     itemFallback: 'مُنْتَج', deliveryFree: 'مَجَانًا',
+    screenshotShare: 'لَقْطَة شَاشَة وَمُشَارَكَة',
+    screenshotFailed: 'فَشِلَ فِي أَخْذ لَقْطَة الشَاشَة',
   },
   resumePayment: {
     title: 'إِتْمَام الدَّفْع', totalDue: 'الإِجْمَالِي الْمَطْلُوب',
@@ -514,6 +516,8 @@ const en = {
     fawryBanner: 'Fawry Payment Code',
     fawryHint: 'Use this code to pay at any Fawry branch',
     itemFallback: 'Item', deliveryFree: 'Free',
+    screenshotShare: 'Screenshot & Share',
+    screenshotFailed: 'Failed to capture screenshot',
   },
   resumePayment: {
     title: 'Complete Payment', totalDue: 'Total Due',
