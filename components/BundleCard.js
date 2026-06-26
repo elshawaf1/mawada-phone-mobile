@@ -145,7 +145,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
           >
-            <Ionicons name="cart-outline" size={18} color="#FFFFFF" />
+            <Ionicons name="cart-outline" size={18} color="#0F172A" />
             <Text style={styles.ctaText}>{t('home.addToCartBtn')}</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#D4AF37',
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
     paddingVertical: 14,
     gap: 8,
