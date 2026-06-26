@@ -13,13 +13,11 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Trash2, Star } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/AppSettingsContext';
 import { supabase } from '../services/supabase';
-import { COLORS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useDirection } from '../hooks/useDirection';
 
@@ -69,34 +67,16 @@ const StarRating = ({ rating, size = 16 }) => {
   return <View style={styles.starsRow}>{stars}</View>;
 };
 
-const RatingBar = ({ star, count, total, maxBarWidth }) => {
-  const pct = total > 0 ? count / total : 0;
-  const barColor = RATING_COLORS[star] || '#CBD5E1';
-  return (
-    <View style={styles.ratingBarRow}>
-      <Text style={styles.ratingBarLabel}>{star}</Text>
-      <Ionicons name="star" size={11} color="#F59E0B" />
-      <View style={[styles.ratingBarTrack, { width: maxBarWidth }]}>
-        <View style={[styles.ratingBarFill, { width: `${pct * 100}%`, backgroundColor: barColor }]} />
-      </View>
-      <Text style={styles.ratingBarCount}>{count}</Text>
-    </View>
-  );
-};
 
 export default function MyReviewsScreen({ navigation }) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const dir = useDirection();
-  const insets = useSafeAreaInsets();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
-  const [deletingId, setDeletingId] = useState(null);
-
   const animValues = useRef(new Map()).current;
-  const tabAnim = useRef(new Animated.Value(0)).current;
 
   const fetchReviews = useCallback(async () => {
     if (!user?.id) return;
@@ -158,7 +138,6 @@ export default function MyReviewsScreen({ navigation }) {
           text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
-            setDeletingId(review.id);
             try {
               const { error } = await supabase.from('reviews').delete().eq('id', review.id);
               if (error) throw error;
@@ -166,8 +145,6 @@ export default function MyReviewsScreen({ navigation }) {
               animValues.delete(review.id);
             } catch (err) {
               console.error('Error deleting review:', err);
-            } finally {
-              setDeletingId(null);
             }
           },
         },
@@ -181,19 +158,6 @@ export default function MyReviewsScreen({ navigation }) {
     if (!tab || !tab.rating) return reviews;
     return reviews.filter((r) => r.rating === tab.rating);
   }, [reviews, activeTab]);
-
-  const stats = useMemo(() => {
-    if (reviews.length === 0) return null;
-    const total = reviews.length;
-    const sum = reviews.reduce((s, r) => s + (r.rating || 0), 0);
-    const avg = total > 0 ? (sum / total).toFixed(1) : '0.0';
-    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    reviews.forEach((r) => {
-      const star = Math.min(5, Math.max(1, Math.round(r.rating || 0)));
-      distribution[star]++;
-    });
-    return { total, avg, distribution };
-  }, [reviews]);
 
   const primaryImage = (product) => {
     if (!product) return null;
@@ -308,17 +272,7 @@ export default function MyReviewsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      <ScreenHeader
-        title={
-          <View style={{ alignItems: 'center' }}>
-            <Text style={styles.headerTitle}>{t('profile.menuMyReviews')}</Text>
-            {stats && (
-              <Text style={styles.headerSubtitle}>{stats.total} تقييم</Text>
-            )}
-          </View>
-        }
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('profile.menuMyReviews')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -327,28 +281,6 @@ export default function MyReviewsScreen({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0F172A" colors={['#0F172A']} />
         }
       >
-        {/* Stats Card */}
-        {stats && stats.total > 0 && (
-          <View style={styles.statsCard}>
-            <View style={styles.statsLeft}>
-              <Text style={styles.avgNumber}>{stats.avg}</Text>
-              <Star size={22} color="#F59E0B" fill="#F59E0B" strokeWidth={0} />
-              <Text style={styles.statsOutOf}>من 5</Text>
-            </View>
-            <View style={styles.statsRight}>
-              {[5, 4, 3, 2, 1].map((star) => (
-                <RatingBar
-                  key={star}
-                  star={star}
-                  count={stats.distribution[star]}
-                  total={stats.total}
-                  maxBarWidth={140}
-                />
-              ))}
-            </View>
-          </View>
-        )}
-
         {/* Filter Tabs */}
         <ScrollView
           horizontal
@@ -411,75 +343,8 @@ export default function MyReviewsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
-  headerSubtitle: { fontSize: 12, color: '#64748B', marginTop: 2, textAlign: 'center' },
 
   scrollContent: { padding: 16 },
-
-  /* Stats Card */
-  statsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 14,
-    flexDirection: 'row-reverse',
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 16,
-    elevation: 3,
-  },
-  statsLeft: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 18,
-    minWidth: 80,
-  },
-  avgNumber: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#0F172A',
-    lineHeight: 40,
-  },
-  statsOutOf: {
-    fontSize: 11,
-    color: '#94A3B8',
-    marginTop: 2,
-  },
-  statsRight: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 4,
-  },
-  ratingBarRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    gap: 6,
-  },
-  ratingBarLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    width: 12,
-    textAlign: 'center',
-  },
-  ratingBarTrack: {
-    height: 7,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  ratingBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  ratingBarCount: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94A3B8',
-    width: 20,
-    textAlign: 'left',
-  },
 
   /* Tabs */
   tabsRow: {
