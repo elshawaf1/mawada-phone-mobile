@@ -235,7 +235,7 @@ export default function ProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
-  scrollContent: { paddingTop: 85, paddingBottom: 100, alignItems: 'center' },
+  scrollContent: { paddingTop: 100, paddingBottom: 100, alignItems: 'center' },
   profileCard: {
     width: '90%', backgroundColor: '#ffffff', borderRadius: 28,
     paddingHorizontal: 20, paddingBottom: 24,
