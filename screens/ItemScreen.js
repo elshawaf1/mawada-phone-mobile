@@ -241,18 +241,13 @@ export default function ItemScreen({ navigation, route }) {
       return;
     }
 
-    if (!newComment.trim()) {
-      Alert.alert(t('common.error'), t('item.writeComment'));
-      return;
-    }
-
     setSubmitting(true);
     try {
       const { error } = await supabase.from('reviews').insert({
         userId: user.id,
         productId,
         rating: newRating,
-        comment: newComment.trim(),
+        comment: newComment.trim() || null,
         isVisible: true,
       });
 
@@ -263,7 +258,7 @@ export default function ItemScreen({ navigation, route }) {
         userId: user.id,
         productId,
         rating: newRating,
-        comment: newComment.trim(),
+        comment: newComment.trim() || null,
         isVisible: true,
         createdAt: new Date().toISOString(),
         profiles: { name: user.name || '' },
