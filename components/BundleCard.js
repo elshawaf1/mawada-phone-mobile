@@ -112,7 +112,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
                 </View>
 
                 <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={2}>{name}</Text>
+                  <Text style={styles.productName} numberOfLines={4}>{name}</Text>
                   <View style={styles.priceRow}>
                     {hasDiscount && (
                       <Text style={styles.originalItemPrice}>{formatPrice(origPrice)} {t('common.currency')}</Text>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   gradientBg: {
     backgroundColor: '#0F172A',
     borderRadius: RADIUS.xxl || 24,
-    padding: 20,
+    padding: 24,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
   productRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    padding: 12,
-    gap: 12,
+    padding: 14,
+    gap: 14,
   },
   productRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -228,14 +228,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   productImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
+    width: 72,
+    height: 72,
+    borderRadius: 14,
   },
   imagePlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
+    width: 72,
+    height: 72,
+    borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -261,10 +261,11 @@ const styles = StyleSheet.create({
   },
   productName: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     marginBottom: 4,
     textAlign: 'right',
+    lineHeight: 21,
   },
   priceRow: {
     flexDirection: 'row-reverse',
