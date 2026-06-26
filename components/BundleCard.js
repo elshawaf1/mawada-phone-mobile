@@ -114,7 +114,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
                 </View>
 
                 <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={2}>{name}</Text>
+                  <Text style={styles.productName} numberOfLines={5}>{name}</Text>
                   <View style={styles.priceRow}>
                     {hasDiscount && (
                       <Text style={styles.originalItemPrice}>{formatPrice(origPrice)} {t('common.currency')}</Text>
