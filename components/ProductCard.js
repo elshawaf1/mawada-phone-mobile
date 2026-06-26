@@ -103,7 +103,7 @@ export default function ProductCard({
 
   const images = item.product_images || [];
   const primaryImage = images.find(img => img.isPrimary)?.url || images[0]?.url;
-  const isNew = item.createdAt && Date.now() - new Date(item.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
+
   const isPriceRange = item.usePriceRange && item.minPrice != null && item.maxPrice != null;
   const price = isPriceRange ? null : (item.isOnSale && item.salePrice ? item.salePrice : item.basePrice);
   const oldPrice = !isPriceRange && item.isOnSale && item.salePrice ? item.basePrice : null;
@@ -171,12 +171,6 @@ export default function ProductCard({
             </View>
           )}
 
-          {isNew && !discountPercent && (
-            <View style={styles.badgeNew}>
-              <View style={styles.badgeNewDot} />
-              <Text style={styles.badgeNewText}>{t('item.new')}</Text>
-            </View>
-          )}
 
           {lowStock && (
             <View style={styles.stockBadge}>
@@ -287,30 +281,6 @@ const styles = StyleSheet.create({
   ribbonText: {
     color: COLORS.white,
     fontSize: 10,
-    fontWeight: '700',
-  },
-
-  badgeNew: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    backgroundColor: 'rgba(34,197,94,0.12)',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    gap: 4,
-  },
-  badgeNewDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#22C55E',
-  },
-  badgeNewText: {
-    color: '#15803D',
-    fontSize: 9,
     fontWeight: '700',
   },
 
