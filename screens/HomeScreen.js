@@ -214,24 +214,23 @@ function CategoryGrid({ categories, navigation, t }) {
 
 function QuickActions({ navigation, t }) {
   const actions = [
-    { key: 'wishlist', icon: Heart, label: t('wishlist.title') || 'المفضلة', screen: 'Wishlist' },
-    { key: 'recent', icon: Clock, label: t('recentlyViewed.title') || 'تم العرض مؤخراً', screen: 'RecentlyViewed' },
-    { key: 'offers', icon: Tag, label: t('offers.title') || 'العروض', screen: 'Offers' },
+    { key: 'wishlist', icon: Heart, label: t('wishlist.title') || 'المفضلة', screen: 'Wishlist', bg: '#FEE2E2', iconColor: '#DC2626' },
+    { key: 'recent', icon: Clock, label: t('recentlyViewed.title') || 'تم العرض مؤخراً', screen: 'RecentlyViewed', bg: '#DBEAFE', iconColor: '#2563EB' },
+    { key: 'offers', icon: Tag, label: t('offers.title') || 'العروض', screen: 'Offers', bg: '#FEF3C7', iconColor: '#D97706' },
   ];
-  const iconColor = '#0F172A';
 
   return (
     <View style={styles.quickActionsSection}>
       <View style={styles.quickActionsGrid}>
-        {actions.map((action, i) => (
+        {actions.map((action) => (
           <TouchableOpacity
             key={action.key}
             style={styles.quickActionCard}
             onPress={() => navigation.navigate(action.screen)}
             activeOpacity={0.7}
           >
-            <View style={styles.quickActionIconWrap}>
-              <action.icon size={18} color={iconColor} />
+            <View style={[styles.quickActionIconWrap, { backgroundColor: action.bg }]}>
+              <action.icon size={22} color={action.iconColor} />
             </View>
             <Text style={styles.quickActionLabel}>{action.label}</Text>
           </TouchableOpacity>
@@ -790,8 +789,16 @@ const styles = StyleSheet.create({
   },
 
   quickActionsSection: { marginBottom: 16, paddingTop: 8 },
-  quickActionsGrid: { flexDirection: 'row-reverse', justifyContent: 'space-around', paddingHorizontal: 16 },
-  quickActionCard: { flexDirection: 'column', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 14, minWidth: 100, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: COLORS.gray100 },
-  quickActionIconWrap: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.gray50, justifyContent: 'center', alignItems: 'center' },
-  quickActionLabel: { fontSize: 12, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.text, textAlign: 'center' },
+  quickActionsGrid: { flexDirection: 'row-reverse', gap: 10, paddingHorizontal: 16 },
+  quickActionCard: {
+    flex: 1, alignItems: 'center', gap: 10,
+    paddingVertical: 18, borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
+  },
+  quickActionIconWrap: {
+    width: 48, height: 48, borderRadius: 16,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  quickActionLabel: { fontSize: 13, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.text, textAlign: 'center' },
 });
