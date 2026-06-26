@@ -11,6 +11,7 @@ export default function RelatedProductsGrid({
   label,
   onProductPress,
   onAddToCart,
+  onRemoveFromCart,
   inCartMap,
   addedMap,
 }) {
@@ -34,6 +35,7 @@ export default function RelatedProductsGrid({
             item={item}
             onPress={() => onProductPress?.(item)}
             onAddToCart={() => onAddToCart?.(item)}
+            onRemoveFromCart={() => onRemoveFromCart?.(item)}
             inCart={inCartMap?.[item.id]}
             justAdded={addedMap?.[item.id]}
           />

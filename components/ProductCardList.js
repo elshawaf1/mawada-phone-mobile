@@ -9,7 +9,7 @@ function formatPrice(n) {
   return Number(n || 0).toLocaleString();
 }
 
-export default function ProductCardList({ item, onPress, onAddToCart, inCart, justAdded }) {
+export default function ProductCardList({ item, onPress, onAddToCart, onRemoveFromCart, inCart, justAdded }) {
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const cartScale = useRef(new Animated.Value(1)).current;
@@ -35,7 +35,11 @@ export default function ProductCardList({ item, onPress, onAddToCart, inCart, ju
       Animated.spring(cartScale, { toValue: 1.25, useNativeDriver: true, friction: 3 }),
       Animated.spring(cartScale, { toValue: 1, useNativeDriver: true, friction: 3 }),
     ]).start();
-    onAddToCart?.();
+    if (inCart || justAdded) {
+      onRemoveFromCart?.();
+    } else {
+      onAddToCart?.();
+    }
   };
 
   const priceText = isPriceRange
@@ -65,7 +69,7 @@ export default function ProductCardList({ item, onPress, onAddToCart, inCart, ju
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 activeOpacity={1}
               >
-                <Ionicons name={inCart || justAdded ? 'checkmark' : 'cart-outline'} size={20} color={(inCart || justAdded) ? '#FFF' : COLORS.gray600} />
+                <Ionicons name={inCart || justAdded ? 'checkmark-circle' : 'add-circle-outline'} size={24} color={(inCart || justAdded) ? '#22C55E' : COLORS.gray600} />
               </TouchableOpacity>
             </Animated.View>
           )}
@@ -130,8 +134,8 @@ const styles = StyleSheet.create({
   },
   ribbon: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    bottom: 4,
+    left: 4,
     backgroundColor: '#E63946',
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -201,7 +205,7 @@ const styles = StyleSheet.create({
   cartWrap: {
     position: 'absolute',
     top: 4,
-    left: 4,
+    right: 4,
     zIndex: 5,
   },
   cartBtn: {
@@ -215,7 +219,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.06)',
   },
   cartBtnDone: {
-    backgroundColor: '#22C55E',
-    borderColor: '#22C55E',
+    backgroundColor: 'rgba(34,197,94,0.1)',
   },
 });

@@ -78,7 +78,7 @@ function formatTime(dateStr, t, locale) {
 }
 
 export default function ItemScreen({ navigation, route }) {
-  const { addToCart, isFavorite, toggleFavorite, isInCart } = useApp();
+  const { addToCart, removeFromCart, isFavorite, toggleFavorite, isInCart } = useApp();
   const { user } = useAuth();
   const { t, locale } = useTranslation();
   const dir = useDirection();
@@ -563,6 +563,9 @@ export default function ItemScreen({ navigation, route }) {
                   });
                   setAddedMap((prev) => ({ ...prev, [item.id]: true }));
                   setTimeout(() => setAddedMap((prev) => ({ ...prev, [item.id]: false })), 1200);
+                }}
+                onRemoveFromCart={(item) => {
+                  removeFromCart(item.id);
                 }}
                 inCartMap={relatedProducts.reduce((m, p) => ({ ...m, [p.id]: isInCart(p.id) }), {})}
                 addedMap={addedMap}
