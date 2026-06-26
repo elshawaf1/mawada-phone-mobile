@@ -314,38 +314,26 @@ export const db = {
     return enriched;
   },
 
-  async getRelatedProducts(categoryId, excludeId, limit = 6) {
+  async getRelatedProducts(productId, limit = 6) {
+    if (!productId) return [];
     try {
-      // First: check for manually curated related products
-      const { data: curated, error: curErr } = await supabase
+      const { data: curated, error } = await supabase
         .from('product_related')
         .select('relatedProductId, products!product_related_relatedProductId_fkey(*, product_images(*), brands(name, nameAr))')
-        .eq('productId', excludeId)
+        .eq('productId', productId)
         .order('sortOrder');
 
-      if (!curErr && curated && curated.length > 0) {
-        const products = curated
-          .map(r => r.products)
-          .filter(p => p && p.isActive !== false && p.id !== excludeId)
-          .slice(0, limit);
-        if (products.length > 0) return products;
-      }
-    } catch (e) {
-      // Fallback to category-based
-    }
+      if (error) throw error;
+      if (!curated || curated.length === 0) return [];
 
-    // Fallback: category-based related products
-    if (!categoryId) return [];
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, product_images(*), brands(name, nameAr)')
-      .eq('categoryId', categoryId)
-      .eq('isActive', true)
-      .neq('id', excludeId)
-      .order('createdAt', { ascending: false })
-      .limit(limit);
-    if (error) throw new Error(error.message);
-    return data || [];
+      return curated
+        .map(r => r.products)
+        .filter(p => p && p.isActive !== false && p.id !== productId)
+        .slice(0, limit);
+    } catch (e) {
+      console.error('getRelatedProducts error:', e);
+      return [];
+    }
   },
 };
 

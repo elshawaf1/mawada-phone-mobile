@@ -200,10 +200,13 @@ export default function ItemScreen({ navigation, route }) {
 
   const fetchBundleAndRelated = async () => {
     try {
-      const [bundleData, relatedData] = await Promise.all([
-        db.getBundleByProduct(product.id),
-        db.getRelatedProducts(product.categoryId, product.id, 6),
-      ]);
+      const promises = [db.getBundleByProduct(product.id)];
+      if (product.showRelatedProducts) {
+        promises.push(db.getRelatedProducts(product.id, 6));
+      } else {
+        promises.push(Promise.resolve([]));
+      }
+      const [bundleData, relatedData] = await Promise.all(promises);
       setBundle(bundleData);
       setRelatedProducts(relatedData);
     } catch (error) {
