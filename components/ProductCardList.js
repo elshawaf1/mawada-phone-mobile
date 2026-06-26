@@ -57,6 +57,18 @@ export default function ProductCardList({ item, onPress, onAddToCart, inCart, ju
               <Text style={styles.ribbonText}>-{discountPercent}%</Text>
             </View>
           )}
+          {onAddToCart && (
+            <Animated.View style={[styles.cartWrap, { transform: [{ scale: cartScale }] }]}>
+              <TouchableOpacity
+                style={[styles.cartBtn, (inCart || justAdded) && styles.cartBtnDone]}
+                onPress={handleCartPress}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={1}
+              >
+                <Ionicons name={inCart || justAdded ? 'checkmark' : 'cart-outline'} size={20} color={(inCart || justAdded) ? '#FFF' : COLORS.gray600} />
+              </TouchableOpacity>
+            </Animated.View>
+          )}
         </View>
 
         {/* Left: Info */}
@@ -84,20 +96,6 @@ export default function ProductCardList({ item, onPress, onAddToCart, inCart, ju
             <Text style={styles.price} numberOfLines={1}>{priceText}</Text>
           </View>
         </View>
-
-        {/* Cart Button */}
-        {onAddToCart && (
-          <Animated.View style={[styles.cartWrap, { transform: [{ scale: cartScale }] }]}>
-            <TouchableOpacity
-              style={[styles.cartBtn, (inCart || justAdded) && styles.cartBtnDone]}
-              onPress={handleCartPress}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              activeOpacity={1}
-            >
-              <Ionicons name={inCart || justAdded ? 'checkmark' : 'cart-outline'} size={16} color={(inCart || justAdded) ? '#FFF' : COLORS.gray600} />
-            </TouchableOpacity>
-          </Animated.View>
-        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -201,17 +199,23 @@ const styles = StyleSheet.create({
   },
 
   cartWrap: {
-    marginLeft: 10,
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    zIndex: 5,
   },
   cartBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#F2F2F7',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.06)',
   },
   cartBtnDone: {
     backgroundColor: '#22C55E',
+    borderColor: '#22C55E',
   },
 });
