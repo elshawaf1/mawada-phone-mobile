@@ -315,6 +315,26 @@ export const db = {
   },
 
   async getRelatedProducts(categoryId, excludeId, limit = 6) {
+    try {
+      // First: check for manually curated related products
+      const { data: curated, error: curErr } = await supabase
+        .from('product_related')
+        .select('relatedProductId, products!product_related_relatedProductId_fkey(*, product_images(*), brands(name, nameAr))')
+        .eq('productId', excludeId)
+        .order('sortOrder');
+
+      if (!curErr && curated && curated.length > 0) {
+        const products = curated
+          .map(r => r.products)
+          .filter(p => p && p.isActive !== false && p.id !== excludeId)
+          .slice(0, limit);
+        if (products.length > 0) return products;
+      }
+    } catch (e) {
+      // Fallback to category-based
+    }
+
+    // Fallback: category-based related products
     if (!categoryId) return [];
     const { data, error } = await supabase
       .from('products')
