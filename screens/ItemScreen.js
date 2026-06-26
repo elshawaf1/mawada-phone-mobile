@@ -510,8 +510,8 @@ export default function ItemScreen({ navigation, route }) {
                             index < filtered.length - 1 && styles.specDivider,
                           ]}
                         >
-                          <Text style={styles.specLabel} numberOfLines={2}>{spec.key}</Text>
-                          <Text style={styles.specValue} numberOfLines={3}>{spec.value}</Text>
+                          <Text style={styles.specLabel}>{spec.key}</Text>
+                          <Text style={styles.specValue}>{spec.value}</Text>
                         </View>
                       ))}
                     </View>
