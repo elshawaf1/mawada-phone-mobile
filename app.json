@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Mawada Phone",
+    "slug": "mobile",
+    "version": "1.0.0",
+    "scheme": "mawada",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.mawadaphone",
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "Notifications about your orders and new offers.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F2A44"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.mawadaphone.app",
+      "color": "#0F2A44",
+      "useNextNotificationsApi": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+      "plugins": [
+      "./plugins/withKoin",
+      "./plugins/withSdp",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#0F2A44"
+        }
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#0F2A44"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "52453ee1-08a7-48c4-8c13-5c1c97fb1edd"
+      }
+    }
+  }
+}
