@@ -230,7 +230,7 @@ export default function MyReviewsScreen({ navigation }) {
 
             <View style={[styles.cardBottom, { flexDirection: dir.row }]}>
               <View style={[styles.ratingPill, { backgroundColor: `${accentColor}18` }]}>
-                <Star size={11} color={accentColor} fill={accentColor} strokeWidth={0} />
+                <Ionicons name="star" size={11} color={accentColor} />
                 <Text style={[styles.ratingPillText, { color: accentColor }]}>
                   {Number(review.rating).toFixed(1)}
                 </Text>
