@@ -113,7 +113,7 @@ export const db = {
   async getOrders(userId) {
     const { data, error } = await supabase
       .from('orders')
-      .select('*, order_items(*, products(*, product_images(*)), product_variants:variantId(*))')
+      .select('*, order_items(*, products(*, product_images(*)))')
       .eq('userId', userId)
       .order('createdAt', { ascending: false });
     if (error) throw new Error(error.message);
@@ -127,7 +127,7 @@ export const db = {
   async getOrder(id, userId) {
     let query = supabase
       .from('orders')
-      .select('*, order_items(*, products(*, product_images(*)), product_variants:variantId(*)), addresses(*)')
+      .select('*, order_items(*, products(*, product_images(*))), addresses(*)')
       .eq('id', id);
     if (userId) query = query.eq('userId', userId);
     const { data, error } = await query.single();
