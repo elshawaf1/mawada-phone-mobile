@@ -191,6 +191,9 @@ function CategoryGrid({ categories, navigation, t }) {
     <View style={styles.categorySection}>
       <View style={styles.catSectionHeader}>
         <Text style={styles.catSectionTitle}>{t('home.categories')}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('AllCategories')} activeOpacity={0.7}>
+          <Text style={styles.sectionSeeAll}>{t('home.seeAllCategories')}</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.catGrid}>
         <View style={styles.catCol}>
@@ -687,7 +690,7 @@ const styles = StyleSheet.create({
   paginationDotActive: { width: 16, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
 
   categorySection: { marginBottom: 8, paddingTop: 24, paddingBottom: 12 },
-  catSectionHeader: { alignItems: 'center', paddingHorizontal: 8, marginBottom: 28 },
+  catSectionHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 28 },
   catSectionTitle: {
     fontSize: 20,
     fontWeight: FONT_WEIGHTS.extrabold,
