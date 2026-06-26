@@ -104,11 +104,6 @@ export default function BundleCard({ bundle, onAddBundle }) {
                       <Ionicons name="phone-portrait-outline" size={20} color="rgba(255,255,255,0.3)" />
                     </View>
                   )}
-                  {item.role === 'main' && (
-                    <View style={styles.mainBadge}>
-                      <Text style={styles.mainBadgeText}>R</Text>
-                    </View>
-                  )}
                 </View>
 
                 <View style={styles.productInfo}>
@@ -161,7 +156,7 @@ const styles = StyleSheet.create({
   gradientBg: {
     backgroundColor: '#0F172A',
     borderRadius: RADIUS.xxl || 24,
-    padding: 20,
+    padding: 16,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -212,7 +207,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   productRow: {
     flexDirection: 'row-reverse',
