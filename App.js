@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, View, Linking } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { AppProvider } from './context/AppContext';
 import { AppSettingsProvider } from './context/AppSettingsContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { supabase } from './services/supabase';
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/auth/WelcomeScreen';
 import LoginScreen from './screens/auth/LoginScreen';
@@ -31,7 +30,6 @@ import ResumePaymentScreen from './screens/ResumePaymentScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import UpdatePasswordScreen from './screens/UpdatePasswordScreen';
 import MyOrdersScreen from './screens/MyOrdersScreen';
-import EmailConfirmationScreen from './screens/auth/EmailConfirmationScreen';
 import ForgotPasswordScreen from './screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
 import BrandsScreen from './screens/BrandsScreen';
@@ -69,7 +67,6 @@ const screenRegistry = {
   EditProfile: EditProfileScreen,
   UpdatePassword: UpdatePasswordScreen,
   MyOrders: MyOrdersScreen,
-  EmailConfirmation: EmailConfirmationScreen,
   ForgotPassword: ForgotPasswordScreen,
   ResetPassword: ResetPasswordScreen,
   Brands: BrandsScreen,
@@ -93,55 +90,6 @@ function AppInner() {
     phone: '',
     email: '',
   });
-
-  useEffect(() => {
-    const handleUrl = async (event) => {
-      const url = event?.url || event;
-      if (!url) return;
-      if (url.includes('reset-password') || url.includes('type=recovery')) {
-        try {
-          const hashIdx = url.indexOf('#');
-          const queryIdx = url.indexOf('?');
-          let paramStr = '';
-          if (hashIdx > -1) {
-            paramStr = url.slice(hashIdx + 1);
-          } else if (queryIdx > -1) {
-            paramStr = url.slice(queryIdx + 1);
-          }
-          const params = new URLSearchParams(paramStr);
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
-          if (accessToken && refreshToken) {
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-            if (!error) {
-              replace('ResetPassword');
-            }
-          }
-        } catch (e) {
-          console.error('Reset password deep link error:', e);
-        }
-      }
-    };
-    Linking.getInitialURL().then((url) => {
-      if (url) handleUrl({ url });
-    });
-    const sub = Linking.addEventListener('url', handleUrl);
-    return () => sub?.remove();
-  }, []);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          replace('ResetPassword');
-        }
-      }
-    );
-    return () => subscription?.unsubscribe();
-  }, []);
 
   const navigate = (screen, params) => {
     setHistory((prev) => [...prev, currentScreen]);
@@ -173,18 +121,6 @@ function AppInner() {
     }
   };
 
-  const completeAuth = (payload = {}) => {
-    setAuthState((prev) => ({ ...prev, ...payload, isAuthenticated: true }));
-    updateUser({
-      id: payload?.id || 'mock-user-id',
-      name: payload?.userName || payload?.name || 'علي',
-      email: payload?.email || '',
-      phone: payload?.phone || '',
-      role: 'CUSTOMER',
-    });
-    if (currentScreen !== 'Home') replace('Home');
-  };
-
   const navigation = useMemo(
     () => ({ navigate, replace, goBack, reset }),
     [history, currentScreen, routeParams]
@@ -213,7 +149,6 @@ function AppInner() {
           navigation={navigation}
           route={{ params: routeParams }}
           authState={authState}
-          completeAuth={completeAuth}
         />
       </View>
     </SafeAreaView>

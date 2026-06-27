@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native';
-import { Mail, ArrowLeft } from 'lucide-react-native';
+import { Mail, ChevronRight } from 'lucide-react-native';
 import { supabase } from '../../services/supabase';
 import { useTranslation } from '../../context/AppSettingsContext';
 import { useDirection } from '../../hooks/useDirection';
@@ -12,7 +12,6 @@ export default function ForgotPasswordScreen({ navigation }) {
   const dir = useDirection();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
   const handleReset = async () => {
     if (!email) {
@@ -26,11 +25,9 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://elshawaf1.github.io/mawada-redirect/',
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
-      setSent(true);
+      navigation.navigate('Otp', { email, type: 'recovery' });
     } catch (err) {
       Alert.alert(t('common.error'), err.message);
     } finally {
@@ -43,52 +40,44 @@ export default function ForgotPasswordScreen({ navigation }) {
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
         <SafeAreaView>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color="#0F172A" />
+            <ChevronRight size={22} color="#0F172A" />
           </TouchableOpacity>
         </SafeAreaView>
 
         <View style={styles.content}>
-          <Text style={[styles.title, { textAlign: dir.textAlign }]}>{sent ? t('auth.checkEmail') : t('auth.resetPassword')}</Text>
+          <Text style={[styles.title, { textAlign: dir.textAlign }]}>{t('auth.resetPassword')}</Text>
           <Text style={[styles.desc, { textAlign: dir.textAlign }]}>
-            {sent ? t('auth.resetLinkSent') : t('auth.resetPasswordDesc')}
+            {t('auth.resetPasswordDesc')}
           </Text>
 
-          {!sent ? (
-            <>
-              <View style={styles.inputWrapper}>
-                <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.email')}</Text>
-                <View style={styles.inputRow}>
-                  <Mail size={20} color="#94A3B8" />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="example@mail.com"
-                    placeholderTextColor="#94A3B8"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    textAlign={dir.textAlign}
-                    value={email}
-                    onChangeText={setEmail}
-                  />
-                </View>
-              </View>
-
-              <Button
-                title={t('auth.sendResetLink')}
-                onPress={handleReset}
-                loading={loading}
-                disabled={loading}
-                fullWidth
+          <View style={styles.inputWrapper}>
+            <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.email')}</Text>
+            <View style={styles.inputRow}>
+              <Mail size={20} color="#94A3B8" />
+              <TextInput
+                style={styles.input}
+                placeholder="example@mail.com"
+                placeholderTextColor="#94A3B8"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                textAlign={dir.textAlign}
+                value={email}
+                onChangeText={setEmail}
               />
+            </View>
+          </View>
 
-              <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
-                <Text style={styles.backLinkText}>{t('common.back')}</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
-              <Text style={styles.backLinkText}>{t('common.back')}</Text>
-            </TouchableOpacity>
-          )}
+          <Button
+            title={loading ? t('common.loading') : t('auth.sendResetCode')}
+            onPress={handleReset}
+            loading={loading}
+            disabled={loading}
+            fullWidth
+          />
+
+          <TouchableOpacity style={styles.backLink} onPress={() => navigation.goBack()}>
+            <Text style={styles.backLinkText}>{t('common.back')}</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

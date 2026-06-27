@@ -132,6 +132,35 @@ export function AuthProvider({ children }) {
     return profile;
   }, []);
 
+  const verifyEmailOtp = useCallback(async (email, token, type = 'signup', profileData = {}) => {
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type });
+    if (error) {
+      if (error.message.includes('expired') || error.message.includes('expired')) {
+        throw new Error('otpExpired');
+      }
+      if (error.message.includes('invalid') || error.message.includes('Token') || error.message.includes('token')) {
+        throw new Error('otpInvalid');
+      }
+      throw error;
+    }
+
+    if (type === 'signup' && data.session?.user) {
+      const { name, phone } = profileData;
+      let profile = await waitForProfile(data.session.user.id);
+      if (!profile) {
+        profile = await createProfile(data.session.user.id, name, email, phone);
+      }
+      if (!profile) {
+        throw new Error('فشل إنشاء الحساب');
+      }
+      setUser(profile);
+      savePushTokenForUser(profile.id);
+      return profile;
+    }
+
+    return data;
+  }, []);
+
   const logout = useCallback(async () => {
     if (user?.id) {
       await removePushTokenForUser(user.id);
@@ -193,7 +222,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, verifyEmailOtp, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

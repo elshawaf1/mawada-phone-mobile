@@ -75,7 +75,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       const result = await register(name, email, phone, password);
       if (result?.emailConfirmed === false) {
-        navigation.navigate('EmailConfirmation', { email });
+        navigation.navigate('Otp', { email, type: 'signup', name, phone });
       } else if (result) {
         navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
       }
