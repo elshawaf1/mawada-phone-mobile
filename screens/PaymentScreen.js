@@ -11,13 +11,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { ChevronLeft, ChevronRight, MapPin, CreditCard, Wallet } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/AppSettingsContext';
-import { useDirection } from '../hooks/useDirection';
 import { db } from '../services/api';
 import { COLORS } from '../constants';
 import { supabase, supabaseUrl } from '../services/supabase';
@@ -28,14 +27,18 @@ const PAYMENT_METHODS = [
     type: 'COD',
     labelKey: 'payment.cod',
     hintKey: 'payment.codHint',
-    icon: 'cash',
+    Icon: Banknote,
+    color: '#16A34A',
+    bgColor: '#F0FDF4',
   },
   {
     id: 'card',
     type: 'VISA',
     labelKey: 'payment.card',
     hintKey: 'payment.cardHint',
-    icon: 'card',
+    Icon: CreditCard,
+    color: '#2563EB',
+    bgColor: '#EFF6FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID',
   },
   {
@@ -43,23 +46,28 @@ const PAYMENT_METHODS = [
     type: 'WALLET',
     labelKey: 'payment.wallet',
     hintKey: 'payment.codHint',
-    icon: 'wallet',
+    Icon: Wallet,
+    color: '#7C3AED',
+    bgColor: '#F5F3FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID',
   },
 ];
 
-const MethodIcon = ({ type, size = 22, color = '#64748B' }) => {
-  switch (type) {
-    case 'card': return <CreditCard size={size} color={color} />;
-    case 'wallet': return <Wallet size={size} color={color} />;
-    case 'valu': return <Smartphone size={size} color={color} />;
-    default: return <Text style={{ fontSize: size - 2 }}>💵</Text>;
-  }
-};
+const StepIndicator = ({ step, total }) => (
+  <View style={styles.stepRow}>
+    {Array.from({ length: total }, (_, i) => (
+      <React.Fragment key={i}>
+        <View style={[styles.stepDot, i < step && styles.stepDotActive, i === step && styles.stepDotCurrent]}>
+          {i < step ? <Check size={10} color="#fff" /> : <Text style={[styles.stepNum, i === step && styles.stepNumActive]}>{i + 1}</Text>}
+        </View>
+        {i < total - 1 && <View style={[styles.stepLine, i < step && styles.stepLineActive]} />}
+      </React.Fragment>
+    ))}
+  </View>
+);
 
 export default function PaymentScreen({ navigation, route }) {
   const { t } = useTranslation();
-  const dir = useDirection();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { clearCart: clearAppCart, coupon } = useApp();
@@ -99,27 +107,19 @@ export default function PaymentScreen({ navigation, route }) {
     }
   };
 
-  const openEditAddress = () => {
-    navigation.navigate('DeliveryLocations', { onReturn: (address) => setDeliveryAddress(address) });
-  };
-
-  const openChangeBranch = () => {
-    navigation.navigate('Locations', { onReturn: (branch) => setSelectedBranch(branch) });
-  };
+  const routeParams = route?.params;
+  const items = routeParams?.selectedItems || [];
+  const orderNotes = routeParams?.notes || '';
+  const subtotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (item.quantity || 1), 0);
+  const shippingCost = deliveryType === 'delivery' ? 90 : 0;
+  const discount = coupon?.discount ? Math.round(subtotal * (coupon.discount / 100)) : 0;
+  const total = subtotal - discount + shippingCost;
 
   const handleCheckout = async () => {
     if (!user?.id) {
       Alert.alert(t('auth.login'), t('auth.mustLogin'));
       return;
     }
-
-    const routeParams = route?.params;
-    const items = routeParams?.selectedItems || [];
-    const orderNotes = routeParams?.notes || '';
-    const subtotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (item.quantity || 1), 0);
-    const shippingCost = deliveryType === 'delivery' ? 90 : 0;
-    const discount = coupon?.discount ? Math.round(subtotal * (coupon.discount / 100)) : 0;
-    const total = subtotal - discount + shippingCost;
 
     if (!items || items.length === 0) {
       Alert.alert(t('payment.cartEmpty'), t('payment.addProductsFirst'));
@@ -246,61 +246,80 @@ export default function PaymentScreen({ navigation, route }) {
     }
   };
 
+  const formatPrice = (n) => Number(n || 0).toLocaleString();
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
         <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
         <View style={styles.headerContent}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <ChevronLeft color={COLORS.text} size={24} />
+            <ChevronLeft color={COLORS.text} size={22} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('payment.title')}</Text>
           <View style={styles.spacer} />
         </View>
+        <StepIndicator step={2} total={3} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        <View style={styles.segmentedControlContainer}>
+        {/* Delivery Type */}
+        <View style={styles.sectionLabel}>
+          <Text style={styles.sectionLabelText}>{t('payment.chooseMethod')}</Text>
+        </View>
+
+        <View style={styles.segmentedControl}>
           <TouchableOpacity
-            style={[styles.segmentTab, deliveryType === 'branch' && styles.activeSegmentTab]}
-            onPress={() => setDeliveryType('branch')}
+            style={[styles.segmentTab, deliveryType === 'delivery' && styles.segmentTabActive]}
+            onPress={() => setDeliveryType('delivery')}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.segmentText, deliveryType === 'branch' && styles.activeSegmentText]}>
-              {t('payment.pickup')}
+            <MapPin size={16} color={deliveryType === 'delivery' ? '#fff' : '#64748B'} />
+            <Text style={[styles.segmentText, deliveryType === 'delivery' && styles.segmentTextActive]}>
+              {t('payment.delivery')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.segmentTab, deliveryType === 'delivery' && styles.activeSegmentTab]}
-            onPress={() => setDeliveryType('delivery')}
+            style={[styles.segmentTab, deliveryType === 'branch' && styles.segmentTabActive]}
+            onPress={() => setDeliveryType('branch')}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.segmentText, deliveryType === 'delivery' && styles.activeSegmentText]}>
-              {t('payment.delivery')}
+            <MapPin size={16} color={deliveryType === 'branch' ? '#fff' : '#64748B'} />
+            <Text style={[styles.segmentText, deliveryType === 'branch' && styles.segmentTextActive]}>
+              {t('payment.pickup')}
             </Text>
           </TouchableOpacity>
         </View>
 
+        {/* Address / Branch */}
         {deliveryType === 'delivery' && (
-          <View style={styles.addressCard}>
+          <View style={styles.card}>
             {loading ? (
-              <ActivityIndicator size="small" color="#64748B" />
+              <View style={styles.cardLoading}>
+                <ActivityIndicator size="small" color="#94A3B8" />
+              </View>
             ) : deliveryAddress ? (
-              <>
-                <View style={styles.addressInfoRow}>
-                  <View style={styles.radioOuter}><View style={styles.radioInner} /></View>
-                  <View style={styles.addressTextContainer}>
-                    <Text style={styles.addressTextBold}>{deliveryAddress.label || deliveryAddress.city}</Text>
-                    <Text style={styles.addressText}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
-                    <Text style={styles.addressTextPhone}>+20 {deliveryAddress.phone}</Text>
+              <View style={styles.addressContent}>
+                <View style={styles.addressRow}>
+                  <View style={styles.addressIconWrap}>
+                    <MapPin size={18} color="#fff" />
+                  </View>
+                  <View style={styles.addressTextWrap}>
+                    <Text style={styles.addressLabel}>{deliveryAddress.label || deliveryAddress.city}</Text>
+                    <Text style={styles.addressDetail}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
+                    <Text style={styles.addressPhone}>+20 {deliveryAddress.phone}</Text>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.editButton} onPress={openEditAddress}>
-                  <Text style={styles.editButtonText}>{t('payment.editAddress')}</Text>
+                <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
+                  <Text style={styles.editBtnText}>{t('payment.editAddress')}</Text>
                 </TouchableOpacity>
-              </>
+              </View>
             ) : (
-              <TouchableOpacity style={styles.addAddressBtn} onPress={openEditAddress}>
-                <MapPin size={20} color="#3B82F6" />
+              <TouchableOpacity style={styles.addAddressBtn} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
+                <View style={styles.addIconWrap}>
+                  <MapPin size={20} color="#3B82F6" />
+                </View>
                 <Text style={styles.addAddressText}>{t('payment.addAddress')}</Text>
               </TouchableOpacity>
             )}
@@ -308,42 +327,81 @@ export default function PaymentScreen({ navigation, route }) {
         )}
 
         {deliveryType === 'branch' && (
-          <View style={styles.branchCard}>
-            <MapPin size={24} color="#3B82F6" />
-            <Text style={styles.branchText}>
-              {t('payment.branchInfo', { name: selectedBranch?.nameAr || selectedBranch?.name || 'الفرع' })}
-            </Text>
-            <Text style={styles.branchSubtext}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
-            <TouchableOpacity style={styles.changeBranchBtn} onPress={openChangeBranch}>
-              <Text style={styles.changeBranchText}>{t('payment.changeBranch')}</Text>
+          <View style={styles.card}>
+            <View style={styles.branchContent}>
+              <View style={styles.branchIconWrap}>
+                <MapPin size={22} color="#3B82F6" />
+              </View>
+              <View style={styles.branchTextWrap}>
+                <Text style={styles.branchName}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
+                <Text style={styles.branchAddr}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.changeBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
+              <Text style={styles.changeBtnText}>{t('payment.changeBranch')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <View style={styles.paymentMethodsCard}>
-          <Text style={styles.paymentSectionTitle}>{t('payment.chooseMethod')}</Text>
+        {/* Payment Methods */}
+        <View style={styles.sectionLabel}>
+          <Text style={styles.sectionLabelText}>{t('payment.supportedMethods')}</Text>
+        </View>
 
-          {PAYMENT_METHODS.map((method) => (
-            <TouchableOpacity
-              key={method.id}
-              style={[styles.methodRow, selectedMethod === method.id && styles.selectedMethodRow]}
-              onPress={() => setSelectedMethod(method.id)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.methodInner}>
-                <MethodIcon type={method.icon} color={selectedMethod === method.id ? '#0F172A' : '#94A3B8'} />
-                <View style={styles.methodTextContainer}>
-                  <Text style={[styles.methodLabel, selectedMethod === method.id && styles.methodLabelActive]}>
-                    {t(method.labelKey)}
-                  </Text>
+        <View style={styles.methodsWrap}>
+          {PAYMENT_METHODS.map((method) => {
+            const isSelected = selectedMethod === method.id;
+            const { Icon, color, bgColor } = method;
+            return (
+              <TouchableOpacity
+                key={method.id}
+                style={[styles.methodCard, isSelected && { borderColor: color, backgroundColor: bgColor }]}
+                onPress={() => setSelectedMethod(method.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.methodIconWrap, { backgroundColor: isSelected ? color : '#F1F5F9' }]}>
+                  <Icon size={22} color={isSelected ? '#fff' : '#64748B'} />
+                </View>
+                <View style={styles.methodInfo}>
+                  <Text style={[styles.methodLabel, isSelected && { color }]}>{t(method.labelKey)}</Text>
                   <Text style={styles.methodHint}>{t(method.hintKey)}</Text>
                 </View>
-                <View style={[styles.radioOuter, selectedMethod === method.id && styles.radioOuterActive]}>
-                  {selectedMethod === method.id && <View style={styles.radioInner} />}
+                <View style={[styles.radio, isSelected && { borderColor: color }]}>
+                  {isSelected && <View style={[styles.radioFill, { backgroundColor: color }]} />}
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Order Summary */}
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>{t('orders.total')}</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
+            <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
+          </View>
+          {discount > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryValue, { color: '#16A34A' }]}>-{formatPrice(discount)} {t('common.egp')}</Text>
+              <Text style={styles.summaryLabel}>{t('common.discount')}</Text>
+            </View>
+          )}
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryValue}>{shippingCost > 0 ? `${formatPrice(shippingCost)} ${t('common.egp')}` : t('common.free')}</Text>
+            <Text style={styles.summaryLabel}>{t('common.shipping')}</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
+            <Text style={styles.totalLabel}>{t('common.total')}</Text>
+          </View>
+        </View>
+
+        {/* Security Badge */}
+        <View style={styles.securityBadge}>
+          <Shield size={14} color="#94A3B8" />
+          <Text style={styles.securityText}>{t('payment.codHint')}</Text>
         </View>
 
         {processing && (
@@ -367,15 +425,15 @@ export default function PaymentScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.white },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   headerContainer: {
-    backgroundColor: COLORS.white,
-    paddingBottom: 12,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: '#fff',
+    paddingBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerContent: {
     flexDirection: 'row-reverse',
@@ -385,81 +443,146 @@ const styles = StyleSheet.create({
     height: 44,
   },
   backButton: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: COLORS.gray50, alignItems: 'center', justifyContent: 'center',
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
-  spacer: { width: 40 },
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
-  segmentedControlContainer: {
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
+  spacer: { width: 38 },
+
+  stepRow: {
     flexDirection: 'row-reverse',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 20,
-    padding: 4,
-    marginVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 0,
+  },
+  stepDot: {
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepDotActive: { backgroundColor: '#0F172A' },
+  stepDotCurrent: { backgroundColor: '#0F172A', shadowColor: '#0F172A', shadowOpacity: 0.3, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 3 },
+  stepNum: { fontSize: 11, fontWeight: '700', color: '#94A3B8' },
+  stepNumActive: { color: '#fff' },
+  stepLine: { width: 40, height: 2, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
+  stepLineActive: { backgroundColor: '#0F172A' },
+
+  scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
+
+  sectionLabel: { marginBottom: 10, marginTop: 4 },
+  sectionLabelText: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
+
+  segmentedControl: {
+    flexDirection: 'row-reverse',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 14,
+    padding: 3,
+    marginBottom: 16,
   },
   segmentTab: {
     flex: 1, paddingVertical: 10,
-    justifyContent: 'center', alignItems: 'center', borderRadius: 16,
+    flexDirection: 'row-reverse',
+    justifyContent: 'center', alignItems: 'center',
+    borderRadius: 11, gap: 6,
   },
-  activeSegmentTab: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000', shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 2,
+  segmentTabActive: {
+    backgroundColor: '#0F172A',
   },
-  segmentText: { fontSize: 14, fontWeight: '500', color: '#64748B' },
-  activeSegmentText: { color: '#0F172A', fontWeight: '700' },
-  addressCard: {
-    backgroundColor: '#0F172A', borderRadius: 16,
-    overflow: 'hidden', marginBottom: 20,
+  segmentText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  segmentTextActive: { color: '#fff' },
+
+  card: {
+    backgroundColor: '#fff', borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1,
   },
-  addressInfoRow: { flexDirection: 'row-reverse', padding: 16, alignItems: 'flex-start' },
-  radioOuter: {
+  cardLoading: { padding: 24, alignItems: 'center' },
+
+  addressContent: {},
+  addressRow: { flexDirection: 'row-reverse', padding: 16, alignItems: 'flex-start', gap: 12 },
+  addressIconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center',
+    marginTop: 2,
+  },
+  addressTextWrap: { flex: 1, alignItems: 'flex-end' },
+  addressLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 4 },
+  addressDetail: { fontSize: 13, color: '#64748B', textAlign: 'right', lineHeight: 18 },
+  addressPhone: { fontSize: 13, color: '#94A3B8', textAlign: 'right', marginTop: 4 },
+  editBtn: {
+    backgroundColor: '#F8FAFC', paddingVertical: 12,
+    justifyContent: 'center', alignItems: 'center',
+    borderTopWidth: 1, borderTopColor: '#F1F5F9',
+  },
+  editBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
+
+  addAddressBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 },
+  addIconWrap: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+  },
+  addAddressText: { color: '#3B82F6', fontSize: 15, fontWeight: '600' },
+
+  branchContent: { flexDirection: 'row-reverse', padding: 16, alignItems: 'center', gap: 12 },
+  branchIconWrap: {
+    width: 44, height: 44, borderRadius: 12,
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+  },
+  branchTextWrap: { flex: 1, alignItems: 'flex-end' },
+  branchName: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 2 },
+  branchAddr: { fontSize: 13, color: '#64748B', textAlign: 'right' },
+  changeBtn: {
+    backgroundColor: '#F8FAFC', paddingVertical: 12,
+    justifyContent: 'center', alignItems: 'center',
+    borderTopWidth: 1, borderTopColor: '#F1F5F9',
+  },
+  changeBtnText: { color: '#3B82F6', fontSize: 14, fontWeight: '600' },
+
+  methodsWrap: { gap: 10, marginBottom: 20 },
+  methodCard: {
+    flexDirection: 'row-reverse', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 16,
+    padding: 14, gap: 12,
+    borderWidth: 1.5, borderColor: '#E2E8F0',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+  },
+  methodIconWrap: {
+    width: 44, height: 44, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  methodInfo: { flex: 1, alignItems: 'flex-end' },
+  methodLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
+  methodHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2 },
+  radio: {
     width: 20, height: 20, borderRadius: 10,
     borderWidth: 2, borderColor: '#CBD5E1',
-    justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2,
+    alignItems: 'center', justifyContent: 'center',
   },
-  radioOuterActive: { borderColor: '#0F172A' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#0F172A' },
-  addressTextContainer: { flex: 1, alignItems: 'flex-end' },
-  addressTextBold: { fontSize: 15, fontWeight: '700', color: COLORS.white, textAlign: 'right', marginBottom: 4 },
-  addressText: { fontSize: 13, color: '#94A3B8', textAlign: 'right', marginBottom: 2 },
-  addressTextPhone: { fontSize: 13, color: '#94A3B8', marginTop: 4 },
-  editButton: {
-    backgroundColor: 'rgba(255,255,255,0.08)', paddingVertical: 12,
-    justifyContent: 'center', alignItems: 'center',
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)',
+  radioFill: { width: 10, height: 10, borderRadius: 5 },
+
+  summaryCard: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
   },
-  editButtonText: { color: COLORS.white, fontSize: 15, fontWeight: '600' },
-  addAddressBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', padding: 20, gap: 10 },
-  addAddressText: { color: '#3B82F6', fontSize: 15, fontWeight: '600' },
-  branchCard: {
-    backgroundColor: '#F0F7FF', borderRadius: 16, padding: 20, marginBottom: 20,
-    alignItems: 'center', borderWidth: 1.5, borderColor: '#BFDBFE',
+  summaryTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12 },
+  summaryRow: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 6,
   },
-  branchText: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'center', marginTop: 12, marginBottom: 4 },
-  branchSubtext: { fontSize: 13, color: '#64748B', textAlign: 'center', marginBottom: 12 },
-  changeBranchBtn: { backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: '#E2E8F0' },
-  changeBranchText: { fontSize: 13, fontWeight: '600', color: '#3B82F6' },
-  paymentMethodsCard: { backgroundColor: '#F8FAFC', borderRadius: 24, padding: 16, marginBottom: 20 },
-  paymentSectionTitle: {
-    fontSize: 16, fontWeight: '700', color: '#0F172A',
-    textAlign: 'right', marginBottom: 16,
+  summaryLabel: { fontSize: 13, color: '#64748B' },
+  summaryValue: { fontSize: 13, fontWeight: '600', color: '#0F172A' },
+  summaryDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 8 },
+  totalLabel: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  totalValue: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+
+  securityBadge: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    gap: 6, marginBottom: 12, paddingVertical: 8,
   },
-  methodRow: {
-    backgroundColor: COLORS.white, borderRadius: 14,
-    paddingVertical: 14, paddingHorizontal: 16,
-    marginVertical: 5, borderWidth: 1.5, borderColor: '#E2E8F0',
-  },
-  selectedMethodRow: { borderColor: '#0F172A', backgroundColor: '#F8FAFC' },
-  methodInner: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 12,
-  },
-  methodTextContainer: { flex: 1, alignItems: 'flex-end' },
-  methodLabel: { fontSize: 14, fontWeight: '600', color: '#64748B', textAlign: 'right' },
-  methodLabelActive: { color: '#0F172A' },
-  methodHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2 },
-  checkoutButton: { marginTop: 8, marginBottom: 20 },
+  securityText: { fontSize: 12, color: '#94A3B8' },
+
+  checkoutButton: { marginBottom: 20 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
 });
