@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, MapPin, CreditCard, Wallet, Smartphone } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
@@ -25,10 +25,45 @@ import { supabase, supabaseUrl } from '../services/supabase';
 const PAYMENT_METHODS = [
   {
     id: 'cod',
-    label: 'الدفع عند الاستلام (كاش)',
-    hint: 'ادفع نقداً عند استلام الطلب',
+    type: 'COD',
+    labelKey: 'payment.cod',
+    hintKey: 'payment.codHint',
+    icon: 'cash',
+  },
+  {
+    id: 'card',
+    type: 'VISA',
+    labelKey: 'payment.card',
+    hintKey: 'payment.cardHint',
+    icon: 'card',
+    integrationIdKey: 'EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID',
+  },
+  {
+    id: 'wallet',
+    type: 'WALLET',
+    labelKey: 'payment.wallet',
+    hintKey: 'payment.codHint',
+    icon: 'wallet',
+    integrationIdKey: 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID',
+  },
+  {
+    id: 'valu',
+    type: 'VALU',
+    labelKey: 'payment.valu',
+    hintKey: 'payment.valuHint',
+    icon: 'valu',
+    integrationIdKey: 'EXPO_PUBLIC_PAYMOB_VALU_INTEGRATION_ID',
   },
 ];
+
+const MethodIcon = ({ type, size = 22, color = '#64748B' }) => {
+  switch (type) {
+    case 'card': return <CreditCard size={size} color={color} />;
+    case 'wallet': return <Wallet size={size} color={color} />;
+    case 'valu': return <Smartphone size={size} color={color} />;
+    default: return <Text style={{ fontSize: size - 2 }}>💵</Text>;
+  }
+};
 
 export default function PaymentScreen({ navigation, route }) {
   const { t } = useTranslation();
@@ -37,6 +72,7 @@ export default function PaymentScreen({ navigation, route }) {
   const { user } = useAuth();
   const { clearCart: clearAppCart, coupon } = useApp();
   const [deliveryType, setDeliveryType] = useState('delivery');
+  const [selectedMethod, setSelectedMethod] = useState('cod');
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -53,9 +89,7 @@ export default function PaymentScreen({ navigation, route }) {
     try {
       const addresses = await db.getAddresses(user.id);
       const defaultAddr = addresses?.find(a => a.isDefault) || addresses?.[0];
-      if (defaultAddr) {
-        setDeliveryAddress(defaultAddr);
-      }
+      if (defaultAddr) setDeliveryAddress(defaultAddr);
     } catch (error) {
       console.error('Error fetching addresses:', error);
     } finally {
@@ -74,19 +108,11 @@ export default function PaymentScreen({ navigation, route }) {
   };
 
   const openEditAddress = () => {
-    navigation.navigate('DeliveryLocations', {
-      onReturn: (address) => {
-        setDeliveryAddress(address);
-      },
-    });
+    navigation.navigate('DeliveryLocations', { onReturn: (address) => setDeliveryAddress(address) });
   };
 
   const openChangeBranch = () => {
-    navigation.navigate('Locations', {
-      onReturn: (branch) => {
-        setSelectedBranch(branch);
-      },
-    });
+    navigation.navigate('Locations', { onReturn: (branch) => setSelectedBranch(branch) });
   };
 
   const handleCheckout = async () => {
@@ -95,31 +121,57 @@ export default function PaymentScreen({ navigation, route }) {
       return;
     }
 
-    try {
-      const routeParams = route?.params;
-      const items = routeParams?.selectedItems || [];
-      const orderNotes = routeParams?.notes || '';
-      const subtotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (item.quantity || 1), 0);
-      const shippingCost = deliveryType === 'delivery' ? 90 : 0;
-      const discount = coupon?.discount ? Math.round(subtotal * (coupon.discount / 100)) : 0;
-      const total = subtotal - discount + shippingCost;
+    const routeParams = route?.params;
+    const items = routeParams?.selectedItems || [];
+    const orderNotes = routeParams?.notes || '';
+    const subtotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (item.quantity || 1), 0);
+    const shippingCost = deliveryType === 'delivery' ? 90 : 0;
+    const discount = coupon?.discount ? Math.round(subtotal * (coupon.discount / 100)) : 0;
+    const total = subtotal - discount + shippingCost;
 
-      if (!items || items.length === 0) {
-        Alert.alert(t('payment.cartEmpty'), t('payment.addProductsFirst'));
+    if (!items || items.length === 0) {
+      Alert.alert(t('payment.cartEmpty'), t('payment.addProductsFirst'));
+      return;
+    }
+
+    if (deliveryType === 'delivery' && !deliveryAddress) {
+      Alert.alert(t('common.error'), t('payment.addAddress'));
+      return;
+    }
+
+    if (deliveryType === 'branch' && !selectedBranch) {
+      Alert.alert(t('common.error'), t('payment.changeBranch'));
+      return;
+    }
+
+    const method = PAYMENT_METHODS.find(m => m.id === selectedMethod);
+    if (!method) {
+      Alert.alert(t('common.error'), t('payment.choosePayment'));
+      return;
+    }
+
+    const isOnline = method.type !== 'COD';
+    if (isOnline) {
+      const integrationId = process.env[method.integrationIdKey];
+      if (!integrationId) {
+        Alert.alert(t('common.error'), t('payment.methodUnavailable'));
         return;
       }
+    }
 
-      setProcessing(true);
+    setProcessing(true);
 
+    try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
-
       const idempotencyKey = Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+      const paymentMethodIds = isOnline ? [parseInt(process.env[method.integrationIdKey])] : [];
 
       const edgeBody = {
         idempotencyKey,
-        paymentMethod: 'COD',
-        paymentMethodIds: [],
+        paymentMethod: method.type,
+        paymentMethodIds,
         cartItems: items,
         userEmail: user.email || '',
         userFirstName: user.name?.split(' ')[0] || user.email?.split('@')[0] || 'عميل',
@@ -143,38 +195,58 @@ export default function PaymentScreen({ navigation, route }) {
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || data?.error) {
         setProcessing(false);
-        Alert.alert(t('common.error'), data?.error || data?.message || t('payment.serverError', { code: res.status }));
+        Alert.alert(t('common.error'), data?.error || t('payment.serverError', { code: res.status }));
         return;
       }
 
-      if (data?.error) {
+      if (isOnline) {
         setProcessing(false);
-        Alert.alert(t('common.error'), data.error);
-        return;
-      }
-
-      await db.clearCart(user.id);
-      clearAppCart();
-      setProcessing(false);
-      navigation.navigate('OrderConfirm', {
-        order: {
-          id: data.orderId,
+        await db.clearCart(user.id);
+        clearAppCart();
+        navigation.navigate('PaymobPayment', {
+          clientSecret: data.clientSecret,
+          orderId: data.orderId,
           orderNumber: data.orderNumber,
-          paymentMethod: 'COD',
-          paymentStatus: 'UNPAID',
-          subtotal,
-          shippingCost,
-          discount,
-          total,
-          order_items: items.map((item) => ({
-            ...item,
-            nameAr: item.name || t('common.product'),
-            unitPrice: item.unitPrice,
-          })),
-        },
-      });
+          paymentMethod: method.type,
+          order: {
+            id: data.orderId,
+            orderNumber: data.orderNumber,
+            paymentMethod: method.type,
+            subtotal,
+            shippingCost,
+            discount,
+            total,
+            order_items: items.map((item) => ({
+              ...item,
+              nameAr: item.name || t('common.product'),
+              unitPrice: item.unitPrice,
+            })),
+          },
+        });
+      } else {
+        await db.clearCart(user.id);
+        clearAppCart();
+        setProcessing(false);
+        navigation.navigate('OrderConfirm', {
+          order: {
+            id: data.orderId,
+            orderNumber: data.orderNumber,
+            paymentMethod: 'COD',
+            paymentStatus: 'UNPAID',
+            subtotal,
+            shippingCost,
+            discount,
+            total,
+            order_items: items.map((item) => ({
+              ...item,
+              nameAr: item.name || t('common.product'),
+              unitPrice: item.unitPrice,
+            })),
+          },
+        });
+      }
     } catch (error) {
       setProcessing(false);
       console.error('Checkout error:', error);
@@ -262,10 +334,21 @@ export default function PaymentScreen({ navigation, route }) {
           {PAYMENT_METHODS.map((method) => (
             <TouchableOpacity
               key={method.id}
-              style={[styles.methodRow, styles.selectedMethodRow]}
+              style={[styles.methodRow, selectedMethod === method.id && styles.selectedMethodRow]}
+              onPress={() => setSelectedMethod(method.id)}
+              activeOpacity={0.7}
             >
               <View style={styles.methodInner}>
-                <Text style={styles.codText}>{t('payment.cod')}</Text>
+                <MethodIcon type={method.icon} color={selectedMethod === method.id ? '#0F172A' : '#94A3B8'} />
+                <View style={styles.methodTextContainer}>
+                  <Text style={[styles.methodLabel, selectedMethod === method.id && styles.methodLabelActive]}>
+                    {t(method.labelKey)}
+                  </Text>
+                  <Text style={styles.methodHint}>{t(method.hintKey)}</Text>
+                </View>
+                <View style={[styles.radioOuter, selectedMethod === method.id && styles.radioOuterActive]}>
+                  {selectedMethod === method.id && <View style={styles.radioInner} />}
+                </View>
               </View>
             </TouchableOpacity>
           ))}
@@ -341,10 +424,11 @@ const styles = StyleSheet.create({
   addressInfoRow: { flexDirection: 'row-reverse', padding: 16, alignItems: 'flex-start' },
   radioOuter: {
     width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: COLORS.white,
+    borderWidth: 2, borderColor: '#CBD5E1',
     justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2,
   },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.white },
+  radioOuterActive: { borderColor: '#0F172A' },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#0F172A' },
   addressTextContainer: { flex: 1, alignItems: 'flex-end' },
   addressTextBold: { fontSize: 15, fontWeight: '700', color: COLORS.white, textAlign: 'right', marginBottom: 4 },
   addressText: { fontSize: 13, color: '#94A3B8', textAlign: 'right', marginBottom: 2 },
@@ -377,9 +461,12 @@ const styles = StyleSheet.create({
   },
   selectedMethodRow: { borderColor: '#0F172A', backgroundColor: '#F8FAFC' },
   methodInner: {
-    flexDirection: 'row-reverse', justifyContent: 'center', alignItems: 'center',
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 12,
   },
-  codText: { fontSize: 14, fontWeight: '600', color: '#0F172A', textAlign: 'center', flex: 1 },
+  methodTextContainer: { flex: 1, alignItems: 'flex-end' },
+  methodLabel: { fontSize: 14, fontWeight: '600', color: '#64748B', textAlign: 'right' },
+  methodLabelActive: { color: '#0F172A' },
+  methodHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2 },
   checkoutButton: { marginTop: 8, marginBottom: 20 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },

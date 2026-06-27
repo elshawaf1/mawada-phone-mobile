@@ -15,6 +15,7 @@ import SearchScreen from './screens/SearchScreen';
 import ItemScreen from './screens/ItemScreen';
 import CartScreen from './screens/CartScreen';
 import PaymentScreen from './screens/PaymentScreen';
+import PaymobPaymentScreen from './screens/PaymobPaymentScreen';
 import VisaScreen from './screens/VisaScreen';
 import OrderConfirmScreen from './screens/OrderConfirm';
 
@@ -52,6 +53,7 @@ const screenRegistry = {
   Item: ItemScreen,
   Cart: CartScreen,
   Payment: PaymentScreen,
+  PaymobPayment: PaymobPaymentScreen,
   Visa: VisaScreen,
   OrderConfirm: OrderConfirmScreen,
   Favorites: WishlistScreen,
@@ -128,7 +130,7 @@ function AppInner() {
 
   const ActiveScreen = screenRegistry[currentScreen] || SplashScreen;
 
-  const isDarkScreen = ['Splash'].includes(currentScreen);
+  const isDarkScreen = ['Splash', 'PaymobPayment'].includes(currentScreen);
   const isNavyScreen = ['Cart', 'OrderConfirm'].includes(currentScreen);
   const isChatScreen = currentScreen === 'Chat';
   const statusBg = isDarkScreen

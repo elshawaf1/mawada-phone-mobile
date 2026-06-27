@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,6 +17,8 @@ import { db } from '../services/api';
 import { supabase, supabaseUrl } from '../services/supabase';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
+
+const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || '';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -99,10 +101,25 @@ export default function ResumePaymentScreen({ navigation, route }) {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
 
+      const isOnline = order.paymentMethod !== 'COD';
+
+      const integrationIdKey = order.paymentMethod === 'VISA'
+        ? 'EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID'
+        : order.paymentMethod === 'WALLET'
+          ? 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID'
+          : order.paymentMethod === 'VALU'
+            ? 'EXPO_PUBLIC_PAYMOB_VALU_INTEGRATION_ID'
+            : null;
+
+      const paymentMethodIds = isOnline && integrationIdKey
+        ? [parseInt(process.env[integrationIdKey])]
+        : [];
+
       const edgeBody = {
         existingOrderNumber: order?.orderNumber || null,
         existingOrderId: orderId,
-        paymentMethod: 'COD',
+        paymentMethod: isOnline ? order.paymentMethod : 'COD',
+        paymentMethodIds,
         userId: user.id,
       };
 
@@ -123,19 +140,39 @@ export default function ResumePaymentScreen({ navigation, route }) {
       }
 
       setProcessing(false);
-      const refetched = await db.getOrder(orderId).catch(() => null);
-      const orderForConfirm = refetched || {
-        ...order,
-        paymentMethod: 'COD',
-        paymentStatus: 'UNPAID',
-      };
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'OrderConfirm', params: { order: orderForConfirm } }],
-      });
+
+      if (isOnline && data?.clientSecret) {
+        navigation.navigate('PaymobPayment', {
+          clientSecret: data.clientSecret,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          paymentMethod: order.paymentMethod,
+          order: {
+            id: order.id,
+            orderNumber: order.orderNumber,
+            paymentMethod: order.paymentMethod,
+            subtotal: order.subtotal,
+            shippingCost: order.shippingCost,
+            discount: order.discount,
+            total: order.total,
+            order_items: order.order_items || [],
+          },
+        });
+      } else {
+        const refetched = await db.getOrder(orderId).catch(() => null);
+        const orderForConfirm = refetched || {
+          ...order,
+          paymentMethod: 'COD',
+          paymentStatus: 'UNPAID',
+        };
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'OrderConfirm', params: { order: orderForConfirm } }],
+        });
+      }
     } catch (error) {
       setProcessing(false);
-      console.error('COD confirm error:', error);
+      console.error('Resume payment error:', error);
       Alert.alert(t('common.error'), t('resumePayment.codConfirmError'));
     }
   };
