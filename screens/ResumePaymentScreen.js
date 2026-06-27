@@ -311,8 +311,17 @@ export default function ResumePaymentScreen({ navigation, route }) {
           console.log('[Paymob] Resume status:', status);
 
           if (status === PaymentStatus.SUCCESS) {
-            await verifyWithServer(order.id);
-            navigateToSuccess();
+            console.log('[Paymob] Resume SDK SUCCESS — verifying with Paymob API');
+            const serverStatus = await verifyWithServer(order.id);
+            if (serverStatus === 'PAID') {
+              navigateToSuccess();
+            } else {
+              console.log('[Paymob] After Resume SUCCESS verify, status:', serverStatus, '— polling');
+              if (!pollingStarted.current) {
+                pollingStarted.current = true;
+                startPolling();
+              }
+            }
           } else {
             console.log('[Paymob] Resume SDK not SUCCESS — verifying via server');
             const serverStatus = await verifyWithServer(order.id);

@@ -40,9 +40,9 @@ const PAYMENT_METHODS = [
   {
     id: 'card',
     type: 'VISA',
-    label: 'مَحْفَظَة إِلِكْتُرُونِيَّة',
-    hint: 'الدَّفْع عَبْر مَحْفَظَة إِلِكْتُرُونِيَّة',
-    Icon: Wallet,
+    label: 'بِطَاقَة بَنْكِيَّة',
+    hint: 'الدَّفْع عَبْر بِطَاقَة بَنْكِيَّة',
+    Icon: CreditCard,
     color: '#7C3AED',
     bgColor: '#F5F3FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID',
@@ -50,9 +50,9 @@ const PAYMENT_METHODS = [
   {
     id: 'wallet',
     type: 'WALLET',
-    label: 'بِطَاقَة (اختبار)',
-    hint: 'الدَّفْع عَبْر بِطَاقَة بَنْكِيَّة',
-    Icon: CreditCard,
+    label: 'مَحْفَظَة إِلِكْتُرُونِيَّة',
+    hint: 'الدَّفْع عَبْر مَحْفَظَة إِلِكْتُرُونِيَّة',
+    Icon: Wallet,
     color: '#2563EB',
     bgColor: '#EFF6FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID',
@@ -295,9 +295,18 @@ export default function PaymentScreen({ navigation, route }) {
       console.log('[Paymob] Status:', status);
 
       if (status === PaymentStatus.SUCCESS) {
-        // Even on SUCCESS, verify server-side to update DB
-        await verifyWithServer(orderData.orderId);
-        navigateToSuccess();
+        console.log('[Paymob] SDK SUCCESS — verifying with Paymob API');
+        const serverStatus = await verifyWithServer(orderData.orderId);
+        if (serverStatus === 'PAID') {
+          navigateToSuccess();
+        } else {
+          // DB not updated yet, start polling
+          console.log('[Paymob] After SUCCESS verify, status:', serverStatus, '— polling');
+          if (!pollingStarted.current) {
+            pollingStarted.current = true;
+            startPolling();
+          }
+        }
       } else {
         // SDK returned Fail/Cancel/etc — verify with Paymob API directly
         console.log('[Paymob] SDK not SUCCESS — verifying via server');

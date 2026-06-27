@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import Button from '../components/Button';
-import { supabase } from '../services/supabase';
+import { supabase, supabaseUrl } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -66,6 +66,38 @@ export default function OrderConfirmScreen({ navigation, route }) {
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [order?.id]);
+
+  // Safety net: verify payment with Paymob API if status is not yet PAID
+  useEffect(() => {
+    if (!order?.id || paymentMethod === 'COD') return;
+    if (paymentStatus === 'PAID' || paymentStatus === 'FAILED') return;
+
+    const verifyPayment = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || '';
+        const res = await fetch(`${supabaseUrl}/functions/v1/paymob-verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        const data = await res.json();
+        console.log('[OrderConfirm] verify result:', data?.status);
+        if (data?.status === 'PAID') {
+          setPaymentStatus('PAID');
+        } else if (data?.status === 'FAILED') {
+          setPaymentStatus('FAILED');
+        }
+      } catch (err) {
+        console.error('[OrderConfirm] verify error:', err);
+      }
+    };
+
+    verifyPayment();
+  }, [order?.id, paymentMethod, paymentStatus]);
 
   const timelineSteps = [
     { key: 'CONFIRMED', label: t('orders.stepConfirmed'), done: true },
