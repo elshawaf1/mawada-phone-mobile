@@ -31,11 +31,12 @@ export default function OtpVerificationScreen({ navigation, route }) {
   const [success, setSuccess] = useState(false);
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const inputs = Array.from({ length: 6 }, () => useRef(null));
+  const inputs = useRef([]);
 
   useEffect(() => {
-    const timer = inputs[0].current;
-    if (timer) setTimeout(() => timer.focus(), 400);
+    if (inputs.current[0]) {
+      setTimeout(() => inputs.current[0]?.focus(), 400);
+    }
   }, []);
 
   useEffect(() => {
@@ -54,35 +55,35 @@ export default function OtpVerificationScreen({ navigation, route }) {
     ]).start();
   }, [shakeAnim]);
 
-  const handleChange = (value, index) => {
-    const trimmed = value.replace(/[^0-9]/g, '');
-    const next = [...code];
-    next[index] = trimmed.slice(-1);
-    setCode(next);
+  const handleChange = (text, index) => {
+    const trimmed = text.replace(/[^0-9]/g, '');
     setError('');
 
-    if (trimmed && index < 5) {
-      inputs[index + 1].current?.focus();
+    if (trimmed.length > 1) {
+      const digits = trimmed.slice(0, 6).split('');
+      const next = [...code];
+      digits.forEach((d, i) => {
+        if (index + i < 6) next[index + i] = d;
+      });
+      setCode(next);
+      const focusIdx = Math.min(index + digits.length, 5);
+      setTimeout(() => inputs.current[focusIdx]?.focus(), 50);
+      return;
     }
-    if (!trimmed && index > 0) {
-      inputs[index - 1].current?.focus();
+
+    const next = [...code];
+    next[index] = trimmed;
+    setCode(next);
+
+    if (trimmed && index < 5) {
+      setTimeout(() => inputs.current[index + 1]?.focus(), 50);
     }
   };
 
   const handleKeyPress = (e, index) => {
     if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
-      inputs[index - 1].current?.focus();
+      inputs.current[index - 1]?.focus();
     }
-  };
-
-  const handlePaste = (text) => {
-    const digits = text.replace(/[^0-9]/g, '').slice(0, 6).split('');
-    if (digits.length === 0) return;
-    const next = [...code];
-    digits.forEach((d, i) => { if (i < 6) next[i] = d; });
-    setCode(next);
-    const focusIdx = Math.min(digits.length, 5);
-    inputs[focusIdx].current?.focus();
   };
 
   const handleSubmit = async () => {
@@ -97,7 +98,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
     setLoading(true);
     setError('');
     try {
-      const result = await verifyEmailOtp(email, token, type, { name, phone });
+      await verifyEmailOtp(email, token, type, { name, phone });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSuccess(true);
@@ -121,7 +122,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
         setError(err.message || t('auth.otpInvalid'));
       }
       setCode(['', '', '', '', '', '']);
-      inputs[0].current?.focus();
+      setTimeout(() => inputs.current[0]?.focus(), 100);
     } finally {
       setLoading(false);
     }
@@ -138,7 +139,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
       setCooldown(RESEND_COOLDOWN);
       setCode(['', '', '', '', '', '']);
       setError('');
-      inputs[0].current?.focus();
+      setTimeout(() => inputs.current[0]?.focus(), 100);
     } catch (err) {
       setError(err.message);
     }
@@ -177,18 +178,22 @@ export default function OtpVerificationScreen({ navigation, route }) {
           {code.map((value, index) => (
             <TextInput
               key={index}
-              ref={(el) => { inputs[index].current = el; }}
-              style={[styles.codeInput, error ? styles.codeInputError : null, value ? styles.codeInputFilled : null]}
+              ref={(el) => { inputs.current[index] = el; }}
+              style={[
+                styles.codeInput,
+                error ? styles.codeInputError : null,
+                value ? styles.codeInputFilled : null,
+              ]}
               keyboardType="number-pad"
-              maxLength={2}
+              maxLength={1}
               value={value}
               onChangeText={(text) => handleChange(text, index)}
               onKeyPress={(e) => handleKeyPress(e, index)}
-              onTextInput={(e) => handlePaste(e.nativeEvent.text)}
               textAlign="center"
               selectionColor="#0F172A"
               textContentType={Platform.OS === 'ios' ? 'oneTimeCode' : 'none'}
               autoFocus={index === 0}
+              selectTextOnFocus
             />
           ))}
         </Animated.View>
@@ -281,9 +286,10 @@ const styles = StyleSheet.create({
     writingDirection: 'ltr',
   },
   codeRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
+    paddingHorizontal: 4,
   },
   codeInput: {
     width: 50,
@@ -295,6 +301,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0F172A',
     backgroundColor: '#F8FAFC',
+    textAlign: 'center',
+    writingDirection: 'ltr',
   },
   codeInputError: {
     borderColor: '#EF4444',
