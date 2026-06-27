@@ -105,13 +105,22 @@ export function AuthProvider({ children }) {
     });
 
     if (error) {
-      if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+      const msg = error.message || '';
+      if (msg.includes('already') || msg.includes('registered') || msg.includes('already been')) {
         throw new Error('هذا البريد الإلكتروني مسجل بالفعل');
       }
-      throw new Error(error.message);
+      if (msg.includes('rate') || msg.includes('limit')) {
+        throw new Error('لقد تجاوزت عدد المحاولات. يرجى المحاولة لاحقاً');
+      }
+      throw new Error(msg);
     }
 
-    if (!data.user) throw new Error('فشل إنشاء الحساب');
+    if (!data || !data.user) {
+      if (!data || !data.session) {
+        return { emailConfirmed: false, email };
+      }
+      throw new Error('فشل إنشاء الحساب');
+    }
 
     if (!data.session) {
       return { emailConfirmed: false, email };
