@@ -257,6 +257,8 @@ export default function ResumePaymentScreen({ navigation, route }) {
         Paymob.setAppName('Mawada Phone');
         Paymob.setShowSaveCard(true);
         Paymob.setSaveCardDefault(false);
+        Paymob.setShowConfirmationPage(false);
+        Paymob.setShowTransactionResult(false);
 
         Paymob.setSdkListener((response) => {
           console.log('[Paymob] Resume SDK callback:', JSON.stringify(response));
@@ -265,14 +267,12 @@ export default function ResumePaymentScreen({ navigation, route }) {
           console.log('[Paymob] Resume status:', status);
           if (status === PaymentStatus.SUCCESS) {
             navigateToSuccess();
-          } else if (status === PaymentStatus.PENDING) {
+          } else if (status === PaymentStatus.FAIL) {
+            console.log('[Paymob] Resume SDK reported Fail — polling to verify actual status');
             if (!pollingStarted.current) {
               pollingStarted.current = true;
               startPolling();
             }
-          } else if (status === PaymentStatus.FAIL) {
-            setProcessing(false);
-            Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
           } else {
             if (!pollingStarted.current) {
               pollingStarted.current = true;
