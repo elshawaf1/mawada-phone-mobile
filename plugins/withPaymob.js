@@ -20,10 +20,22 @@ module.exports = function withPaymob(config) {
   // 2. Enable dataBinding in app-level build.gradle
   config = withAppBuildGradle(config, (config) => {
     if (!config.modResults.contents.includes('dataBinding')) {
-      config.modResults.contents = config.modResults.contents.replace(
-        /buildFeatures\s*\{/,
-        "buildFeatures {\n        dataBinding true"
-      )
+      // Try existing buildFeatures block first
+      if (config.modResults.contents.includes('buildFeatures')) {
+        config.modResults.contents = config.modResults.contents.replace(
+          /buildFeatures\s*\{/,
+          "buildFeatures {\n        dataBinding true"
+        )
+      } else {
+        // No buildFeatures block exists — add it inside the android block
+        config.modResults.contents = config.modResults.contents.replace(
+          /android\s*\{/,
+          `android {
+    buildFeatures {
+        dataBinding true
+    }`
+        )
+      }
     }
     return config
   })
