@@ -24,8 +24,8 @@ import { COLORS } from '../constants';
 import { supabase, supabaseUrl } from '../services/supabase';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || '';
-const POLL_INTERVAL = 2000;
-const POLL_MAX_ATTEMPTS = 8;
+const POLL_INTERVAL = 3000;
+const POLL_MAX_ATTEMPTS = 20;
 
 const PAYMENT_METHODS = [
   {
@@ -84,6 +84,7 @@ export default function PaymentScreen({ navigation, route }) {
   const [processing, setProcessing] = useState(false);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const [watchOrderId, setWatchOrderId] = useState(null);
 
   const sdkCallbackFired = useRef(false);
   const pollTimer = useRef(null);
@@ -131,10 +132,32 @@ export default function PaymentScreen({ navigation, route }) {
     navigatedRef.current = true;
     const od = orderDataRef.current;
     if (!od) return;
-    navigation.navigate('OrderConfirm', {
-      order: { ...od, paymentMethod: od.paymentMethod, paymentStatus: 'PAID' },
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'OrderConfirm', params: { order: { ...od, paymentMethod: od.paymentMethod, paymentStatus: 'PAID' } } }],
     });
   }, [navigation]);
+
+  const verifyWithServer = useCallback(async (orderId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+      const res = await fetch(`${supabaseUrl}/functions/v1/paymob-verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      console.log('[Paymob] verifyWithServer result:', JSON.stringify(data));
+      return data?.status || null;
+    } catch (err) {
+      console.error('[Paymob] verifyWithServer error:', err);
+      return null;
+    }
+  }, []);
 
   const checkOrderStatus = useCallback(async () => {
     const od = orderDataRef.current;
@@ -170,32 +193,78 @@ export default function PaymentScreen({ navigation, route }) {
         setProcessing(false);
         return;
       }
+      const od = orderDataRef.current;
+      if (!od?.orderId) return;
+
+      // Actively ask server to verify with Paymob API (bypasses broken webhook)
+      if (attempt % 2 === 0) {
+        const serverStatus = await verifyWithServer(od.orderId);
+        if (serverStatus === 'PAID') {
+          navigateToSuccess();
+          return;
+        }
+        if (serverStatus === 'FAILED') {
+          setProcessing(false);
+          Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+          return;
+        }
+      }
+
+      // Also check local DB (in case webhook already updated it)
       const found = await checkOrderStatus();
       if (!found && mountedRef.current && !navigatedRef.current) {
         pollTimer.current = setTimeout(() => doPoll(attempt + 1), POLL_INTERVAL);
       }
     };
-    pollTimer.current = setTimeout(() => doPoll(0), 1500);
-  }, [checkOrderStatus]);
+    pollTimer.current = setTimeout(() => doPoll(0), 2000);
+  }, [checkOrderStatus, verifyWithServer, navigateToSuccess, t]);
 
-  const handleAppStateChange = useCallback((nextState) => {
+  const handleAppStateChange = useCallback(async (nextState) => {
     const prev = appStateRef.current;
     appStateRef.current = nextState;
     if (prev.match(/background|inactive/) && nextState === 'active') {
-      console.log('[Paymob] App returned to foreground — checking order status');
-      if (!navigatedRef.current && orderDataRef.current?.orderId) {
+      console.log('[Paymob] App returned to foreground — verifying payment');
+      const od = orderDataRef.current;
+      if (!navigatedRef.current && od?.orderId) {
+        const serverStatus = await verifyWithServer(od.orderId);
+        if (serverStatus === 'PAID' && !navigatedRef.current) {
+          navigateToSuccess();
+          return;
+        }
         checkOrderStatus();
         if (!pollingStarted.current) {
           startPolling();
         }
       }
     }
-  }, [checkOrderStatus, startPolling]);
+  }, [checkOrderStatus, startPolling, verifyWithServer, navigateToSuccess]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', handleAppStateChange);
     return () => sub?.remove?.();
   }, [handleAppStateChange]);
+
+  useEffect(() => {
+    if (!watchOrderId) return;
+    const channel = supabase
+      .channel(`pay-order-${watchOrderId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${watchOrderId}` },
+        (payload) => {
+          const newStatus = payload.new?.paymentStatus;
+          console.log('[Paymob] Realtime order update:', newStatus);
+          if (newStatus === 'PAID' && !navigatedRef.current) {
+            navigateToSuccess();
+          } else if (newStatus === 'FAILED' && !navigatedRef.current) {
+            setProcessing(false);
+            Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+          }
+        },
+      )
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [watchOrderId, navigateToSuccess, t]);
 
   useEffect(() => {
     return () => {
@@ -209,6 +278,7 @@ export default function PaymentScreen({ navigation, route }) {
     sdkCallbackFired.current = false;
     navigatedRef.current = false;
     pollingStarted.current = false;
+    setWatchOrderId(orderData.orderId);
 
     if (pollTimer.current) { clearTimeout(pollTimer.current); pollTimer.current = null; }
 
@@ -218,23 +288,31 @@ export default function PaymentScreen({ navigation, route }) {
     Paymob.setShowConfirmationPage(false);
     Paymob.setShowTransactionResult(false);
 
-    Paymob.setSdkListener((response) => {
+    Paymob.setSdkListener(async (response) => {
       console.log('[Paymob] SDK callback:', JSON.stringify(response));
       sdkCallbackFired.current = true;
       const status = response?.status || response;
       console.log('[Paymob] Status:', status);
+
       if (status === PaymentStatus.SUCCESS) {
+        // Even on SUCCESS, verify server-side to update DB
+        await verifyWithServer(orderData.orderId);
         navigateToSuccess();
-      } else if (status === PaymentStatus.FAIL) {
-        console.log('[Paymob] SDK reported Fail — polling to verify actual status');
-        if (!pollingStarted.current) {
-          pollingStarted.current = true;
-          startPolling();
-        }
       } else {
-        if (!pollingStarted.current) {
-          pollingStarted.current = true;
-          startPolling();
+        // SDK returned Fail/Cancel/etc — verify with Paymob API directly
+        console.log('[Paymob] SDK not SUCCESS — verifying via server');
+        const serverStatus = await verifyWithServer(orderData.orderId);
+        if (serverStatus === 'PAID') {
+          navigateToSuccess();
+        } else if (serverStatus === 'FAILED') {
+          setProcessing(false);
+          Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+        } else {
+          // Still pending — start polling
+          if (!pollingStarted.current) {
+            pollingStarted.current = true;
+            startPolling();
+          }
         }
       }
     });
@@ -255,7 +333,7 @@ export default function PaymentScreen({ navigation, route }) {
       setProcessing(false);
       Alert.alert(t('common.error'), t('payment.paymentInitFailed'));
     }
-  }, [navigateToSuccess, startPolling, t]);
+  }, [navigateToSuccess, startPolling, verifyWithServer, t]);
 
   const routeParams = route?.params;
   const items = routeParams?.selectedItems || [];
