@@ -10,10 +10,9 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
-  Animated,
   AppState,
 } from 'react-native';
-import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield, CheckCircle2, XCircle, Clock, Smartphone, Loader } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Paymob, { PaymentStatus } from 'paymob-reactnative';
 import Button from '../components/Button';
@@ -41,21 +40,21 @@ const PAYMENT_METHODS = [
   {
     id: 'card',
     type: 'VISA',
-    labelKey: 'payment.card',
-    hintKey: 'payment.cardHint',
-    Icon: CreditCard,
-    color: '#2563EB',
-    bgColor: '#EFF6FF',
+    label: 'مَحْفَظَة إِلِكْتُرُونِيَّة',
+    hint: 'الدَّفْع عَبْر مَحْفَظَة إِلِكْتُرُونِيَّة',
+    Icon: Wallet,
+    color: '#7C3AED',
+    bgColor: '#F5F3FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID',
   },
   {
     id: 'wallet',
     type: 'WALLET',
-    labelKey: 'payment.wallet',
-    hintKey: 'payment.codHint',
-    Icon: Wallet,
-    color: '#7C3AED',
-    bgColor: '#F5F3FF',
+    label: 'بِطَاقَة (اختبار)',
+    hint: 'الدَّفْع عَبْر بِطَاقَة بَنْكِيَّة',
+    Icon: CreditCard,
+    color: '#2563EB',
+    bgColor: '#EFF6FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID',
   },
 ];
@@ -86,16 +85,13 @@ export default function PaymentScreen({ navigation, route }) {
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
 
-  const [sdkPhase, setSdkPhase] = useState(null);
-  const [sdkPollCount, setSdkPollCount] = useState(0);
   const sdkCallbackFired = useRef(false);
   const pollTimer = useRef(null);
   const navigatedRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
   const mountedRef = useRef(true);
   const orderDataRef = useRef(null);
-  const listenerSet = useRef(false);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pollingStarted = useRef(false);
 
   useEffect(() => {
     fetchAddresses();
@@ -130,35 +126,15 @@ export default function PaymentScreen({ navigation, route }) {
     return () => { mountedRef.current = false; };
   }, []);
 
-  useEffect(() => {
-    if (sdkPhase === 'processing') {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 0.3, duration: 900, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
-        ])
-      ).start();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [sdkPhase]);
-
   const navigateToSuccess = useCallback(() => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
     const od = orderDataRef.current;
     if (!od) return;
-    setTimeout(() => {
-      navigation.navigate('OrderConfirm', {
-        order: { ...od, paymentMethod: od.paymentMethod, paymentStatus: 'PAID' },
-      });
-    }, 2000);
+    navigation.navigate('OrderConfirm', {
+      order: { ...od, paymentMethod: od.paymentMethod, paymentStatus: 'PAID' },
+    });
   }, [navigation]);
-
-  const navigateToPending = useCallback(() => {
-    if (navigatedRef.current) return;
-    setSdkPhase('pending_final');
-  }, []);
 
   const checkOrderStatus = useCallback(async () => {
     const od = orderDataRef.current;
@@ -169,54 +145,52 @@ export default function PaymentScreen({ navigation, route }) {
         .select('paymentStatus')
         .eq('id', od.orderId)
         .single();
-      if (error) { console.warn('[Paymob] Poll error:', error.message); return false; }
-      console.log(`[Paymob] Poll — paymentStatus: ${data?.paymentStatus}`);
+      if (error) return false;
       if (data?.paymentStatus === 'PAID') {
-        setSdkPhase('success');
         navigateToSuccess();
         return true;
       }
       if (data?.paymentStatus === 'FAILED') {
-        setSdkPhase('error');
+        setProcessing(false);
+        Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
         return true;
       }
       return false;
-    } catch (err) {
-      console.warn('[Paymob] Poll exception:', err.message);
+    } catch {
       return false;
     }
-  }, [navigateToSuccess]);
+  }, [navigateToSuccess, t]);
 
   const startPolling = useCallback(() => {
-    console.log('[Paymob] Starting order status polling');
-    setSdkPollCount(0);
+    if (pollingStarted.current && pollTimer.current) return;
+    pollingStarted.current = true;
     const doPoll = async (attempt) => {
       if (!mountedRef.current || navigatedRef.current) return;
       if (attempt >= POLL_MAX_ATTEMPTS) {
-        console.log('[Paymob] Polling exhausted — showing pending');
-        navigateToPending();
+        setProcessing(false);
         return;
       }
-      setSdkPollCount(attempt + 1);
       const found = await checkOrderStatus();
       if (!found && mountedRef.current && !navigatedRef.current) {
         pollTimer.current = setTimeout(() => doPoll(attempt + 1), POLL_INTERVAL);
       }
     };
     pollTimer.current = setTimeout(() => doPoll(0), 1500);
-  }, [checkOrderStatus, navigateToPending]);
+  }, [checkOrderStatus]);
 
   const handleAppStateChange = useCallback((nextState) => {
-    console.log('[Paymob] AppState:', appStateRef.current, '→', nextState);
     const prev = appStateRef.current;
     appStateRef.current = nextState;
     if (prev.match(/background|inactive/) && nextState === 'active') {
       console.log('[Paymob] App returned to foreground — checking order status');
-      if (!sdkCallbackFired.current && !navigatedRef.current) {
-        startPolling();
+      if (!navigatedRef.current && orderDataRef.current?.orderId) {
+        checkOrderStatus();
+        if (!pollingStarted.current) {
+          startPolling();
+        }
       }
     }
-  }, [startPolling]);
+  }, [checkOrderStatus, startPolling]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', handleAppStateChange);
@@ -234,64 +208,54 @@ export default function PaymentScreen({ navigation, route }) {
     orderDataRef.current = orderData;
     sdkCallbackFired.current = false;
     navigatedRef.current = false;
-    setSdkPhase('processing');
+    pollingStarted.current = false;
+
+    if (pollTimer.current) { clearTimeout(pollTimer.current); pollTimer.current = null; }
 
     Paymob.setAppName('Mawada Phone');
     Paymob.setShowSaveCard(true);
     Paymob.setSaveCardDefault(false);
 
-    if (!listenerSet.current) {
-      listenerSet.current = true;
-      Paymob.setSdkListener((response) => {
-        console.log('[Paymob] SDK callback:', JSON.stringify(response));
-        sdkCallbackFired.current = true;
-        const status = response?.status || response;
-        if (status === PaymentStatus.SUCCESS) {
-          setSdkPhase('success');
-          navigateToSuccess();
-        } else if (status === PaymentStatus.PENDING) {
-          setSdkPhase('pending_checking');
-          startPolling();
-        } else if (status === PaymentStatus.FAIL) {
-          setSdkPhase('error');
-        } else {
-          setSdkPhase('pending_checking');
+    Paymob.setSdkListener((response) => {
+      console.log('[Paymob] SDK callback:', JSON.stringify(response));
+      sdkCallbackFired.current = true;
+      const status = response?.status || response;
+      console.log('[Paymob] Status:', status);
+      if (status === PaymentStatus.SUCCESS) {
+        navigateToSuccess();
+      } else if (status === PaymentStatus.PENDING) {
+        if (!pollingStarted.current) {
+          pollingStarted.current = true;
           startPolling();
         }
-      });
-    }
-
-    setTimeout(() => {
-      if (mountedRef.current && !sdkCallbackFired.current) {
-        try {
-          Paymob.presentPayVC(clientSecret, PAYMOB_PUBLIC_KEY);
-        } catch (err) {
-          console.error('[Paymob] presentPayVC error:', err);
-          setSdkPhase('error');
+      } else if (status === PaymentStatus.FAIL) {
+        setProcessing(false);
+        Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+      } else {
+        if (!pollingStarted.current) {
+          pollingStarted.current = true;
+          startPolling();
         }
       }
-    }, 500);
-  }, [navigateToSuccess, startPolling]);
+    });
 
-  const handleSdkRetry = () => {
-    navigatedRef.current = false;
-    sdkCallbackFired.current = false;
-    setSdkPollCount(0);
-    const od = orderDataRef.current;
-    if (!od?.clientSecret) { setSdkPhase(null); return; }
-    setSdkPhase('processing');
-    setTimeout(() => {
-      try { Paymob.presentPayVC(od.clientSecret, PAYMOB_PUBLIC_KEY); }
-      catch (err) { setSdkPhase('error'); }
-    }, 600);
-  };
-
-  const handleSdkDismiss = () => {
-    navigatedRef.current = false;
-    sdkCallbackFired.current = false;
-    setSdkPhase(null);
-    setSdkPollCount(0);
-  };
+    try {
+      Paymob.presentPayVC(clientSecret, PAYMOB_PUBLIC_KEY);
+      if (!pollingStarted.current) {
+        pollingStarted.current = true;
+        console.log('[Paymob] Starting immediate polling fallback');
+        pollTimer.current = setTimeout(() => {
+          if (mountedRef.current && !navigatedRef.current) {
+            startPolling();
+          }
+        }, 5000);
+      }
+    } catch (err) {
+      console.error('[Paymob] presentPayVC error:', err);
+      setProcessing(false);
+      Alert.alert(t('common.error'), t('payment.paymentInitFailed'));
+    }
+  }, [navigateToSuccess, startPolling, t]);
 
   const routeParams = route?.params;
   const items = routeParams?.selectedItems || [];
@@ -380,7 +344,6 @@ export default function PaymentScreen({ navigation, route }) {
       }
 
       if (isOnline) {
-        setProcessing(false);
         await db.clearCart(user.id);
         clearAppCart();
         const orderData = {
@@ -534,6 +497,8 @@ export default function PaymentScreen({ navigation, route }) {
           {PAYMENT_METHODS.map((method) => {
             const isSelected = selectedMethod === method.id;
             const { Icon, color, bgColor } = method;
+            const label = method.label ? method.label : t(method.labelKey);
+            const hint = method.hint ? method.hint : t(method.hintKey);
             return (
               <TouchableOpacity
                 key={method.id}
@@ -545,8 +510,8 @@ export default function PaymentScreen({ navigation, route }) {
                   <Icon size={22} color={isSelected ? '#fff' : '#64748B'} />
                 </View>
                 <View style={styles.methodInfo}>
-                  <Text style={[styles.methodLabel, isSelected && { color }]}>{t(method.labelKey)}</Text>
-                  <Text style={styles.methodHint}>{t(method.hintKey)}</Text>
+                  <Text style={[styles.methodLabel, isSelected && { color }]}>{label}</Text>
+                  <Text style={styles.methodHint}>{hint}</Text>
                 </View>
                 <View style={[styles.radio, isSelected && { borderColor: color }]}>
                   {isSelected && <View style={[styles.radioFill, { backgroundColor: color }]} />}
@@ -602,93 +567,6 @@ export default function PaymentScreen({ navigation, route }) {
         />
 
       </ScrollView>
-
-      {sdkPhase && (
-        <View style={styles.sdkOverlay}>
-          <View style={styles.sdkCard}>
-            {sdkPhase === 'processing' && (
-              <View style={styles.sdkStatusContainer}>
-                <View style={styles.sdkRing}>
-                  <Animated.View style={[styles.sdkPulse, { opacity: pulseAnim }]} />
-                  <View style={styles.sdkIcon}>
-                    <Smartphone size={28} color="#0F172A" />
-                  </View>
-                </View>
-                <Text style={styles.sdkTitle}>{t('payment.processing')}</Text>
-                <Text style={styles.sdkSubtext}>أَكْمِل الدَّفْع فِي النَّافِذَة الْمَنفَذَة</Text>
-                <View style={styles.sdkTag}>
-                  <View style={[styles.sdkTagDot, { backgroundColor: '#2563EB' }]} />
-                  <Text style={styles.sdkTagText}>Paymob SDK</Text>
-                </View>
-              </View>
-            )}
-
-            {sdkPhase === 'pending_checking' && (
-              <View style={styles.sdkStatusContainer}>
-                <View style={styles.sdkPendingRing}>
-                  <View style={styles.sdkPendingCircle}>
-                    <Animated.View style={{ transform: [{ rotate: pulseAnim.interpolate({
-                      inputRange: [0.3, 1], outputRange: ['0deg', '360deg'],
-                    }) }] }}>
-                      <Loader size={36} color="#F59E0B" />
-                    </Animated.View>
-                  </View>
-                </View>
-                <Text style={styles.sdkPendingTitle}>جَارِي التَّحْقِيق مِن الدَّفْع...</Text>
-                <Text style={styles.sdkPollText}>جَارِي الْفَحْص ({sdkPollCount}/{POLL_MAX_ATTEMPTS})</Text>
-              </View>
-            )}
-
-            {sdkPhase === 'pending_final' && (
-              <View style={styles.sdkStatusContainer}>
-                <View style={styles.sdkPendingRing}>
-                  <View style={styles.sdkPendingCircle}>
-                    <Clock size={36} color="#F59E0B" />
-                  </View>
-                </View>
-                <Text style={styles.sdkPendingTitle}>{t('payment.paymentPending')}</Text>
-                <Text style={styles.sdkSubtext}>رَقَم الْطَّلَب: #{orderDataRef.current?.orderNumber}</Text>
-                <TouchableOpacity style={styles.sdkDismissBtn} onPress={handleSdkDismiss} activeOpacity={0.7}>
-                  <Text style={styles.sdkDismissText}>تم</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {sdkPhase === 'success' && (
-              <View style={styles.sdkStatusContainer}>
-                <View style={styles.sdkSuccessRing}>
-                  <View style={styles.sdkSuccessCircle}>
-                    <CheckCircle2 size={40} color="#16A34A" />
-                  </View>
-                </View>
-                <Text style={styles.sdkSuccessTitle}>{t('payment.paymentSuccess')}</Text>
-                <Text style={styles.sdkSubtext}>رَقَم الْطَّلَب: #{orderDataRef.current?.orderNumber}</Text>
-              </View>
-            )}
-
-            {sdkPhase === 'error' && (
-              <View style={styles.sdkStatusContainer}>
-                <View style={styles.sdkErrorRing}>
-                  <View style={styles.sdkErrorCircle}>
-                    <XCircle size={40} color="#DC2626" />
-                  </View>
-                </View>
-                <Text style={styles.sdkErrorTitle}>{t('payment.paymentFailed')}</Text>
-                <Text style={styles.sdkSubtext}>عُد واحْتَرِك مَرَّة أُخْرَى</Text>
-                <View style={styles.sdkErrorActions}>
-                  <TouchableOpacity style={styles.sdkRetryBtn} onPress={handleSdkRetry} activeOpacity={0.7}>
-                    <CreditCard size={16} color="#fff" />
-                    <Text style={styles.sdkRetryText}>{t('payment.retryPayment')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.sdkCancelBtn} onPress={handleSdkDismiss} activeOpacity={0.7}>
-                    <Text style={styles.sdkCancelText}>{t('common.cancel')}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-      )}
     </KeyboardAvoidingView>
   );
 }
@@ -854,47 +732,4 @@ const styles = StyleSheet.create({
   checkoutButton: { marginBottom: 20 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
-
-  sdkOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  sdkCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 28,
-    marginHorizontal: 24,
-    width: '100%',
-    alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.15, shadowOffset: { width: 0, height: 8 }, shadowRadius: 24, elevation: 8,
-  },
-  sdkStatusContainer: { alignItems: 'center', gap: 12, width: '100%' },
-  sdkRing: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
-  sdkPulse: { ...StyleSheet.absoluteFillObject, borderRadius: 50, backgroundColor: '#E2E8F0' },
-  sdkIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
-  sdkTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
-  sdkSubtext: { fontSize: 13, color: '#94A3B8', textAlign: 'center' },
-  sdkTag: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, backgroundColor: '#EFF6FF', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5, marginTop: 2 },
-  sdkTagDot: { width: 7, height: 7, borderRadius: 4 },
-  sdkTagText: { fontSize: 11, fontWeight: '600', color: '#2563EB' },
-  sdkPendingRing: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' },
-  sdkPendingCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  sdkPendingTitle: { fontSize: 17, fontWeight: '700', color: '#F59E0B', textAlign: 'center' },
-  sdkPollText: { fontSize: 12, color: '#94A3B8' },
-  sdkDismissBtn: { backgroundColor: '#FEF3C7', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 8, marginTop: 4 },
-  sdkDismissText: { fontSize: 13, fontWeight: '700', color: '#F59E0B' },
-  sdkSuccessRing: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center' },
-  sdkSuccessCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  sdkSuccessTitle: { fontSize: 18, fontWeight: '800', color: '#16A34A', textAlign: 'center' },
-  sdkErrorRing: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center' },
-  sdkErrorCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  sdkErrorTitle: { fontSize: 18, fontWeight: '800', color: '#DC2626', textAlign: 'center' },
-  sdkErrorActions: { flexDirection: 'row-reverse', gap: 10, marginTop: 8 },
-  sdkRetryBtn: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#0F172A', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 20, gap: 6 },
-  sdkRetryText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  sdkCancelBtn: { paddingVertical: 10, paddingHorizontal: 16, justifyContent: 'center' },
-  sdkCancelText: { color: '#64748B', fontSize: 14, fontWeight: '600' },
 });
