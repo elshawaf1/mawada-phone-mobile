@@ -228,7 +228,6 @@ export default function PaymobPaymentScreen({ navigation, route }) {
       clearTimeout(timer);
       if (pollTimer.current) clearTimeout(pollTimer.current);
       Paymob.removeSdkListener();
-      AppState.removeEventListener('change', handleAppStateChange);
     };
   }, []);
 
