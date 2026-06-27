@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { ChevronLeft, ChevronRight, MapPin, CreditCard, Wallet, Smartphone } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, MapPin, CreditCard, Wallet } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
@@ -45,14 +45,6 @@ const PAYMENT_METHODS = [
     hintKey: 'payment.codHint',
     icon: 'wallet',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID',
-  },
-  {
-    id: 'valu',
-    type: 'VALU',
-    labelKey: 'payment.valu',
-    hintKey: 'payment.valuHint',
-    icon: 'valu',
-    integrationIdKey: 'EXPO_PUBLIC_PAYMOB_VALU_INTEGRATION_ID',
   },
 ];
 
