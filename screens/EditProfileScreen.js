@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StatusBar } from 'react-native';
-import { User, Mail, Phone, Camera } from 'lucide-react-native';
+import { StyleSheet, View, Text, TextInput, ScrollView, Alert, StatusBar } from 'react-native';
+import { User, Mail, Phone } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
@@ -42,15 +42,6 @@ export default function EditProfileScreen({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <ScreenHeader title={t('settings.editProfile')} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={styles.avatarWrap}>
-          <View style={styles.avatar}>
-            <User size={36} color="#CBD5E1" />
-          </View>
-          <View style={styles.cameraBadge}>
-            <Camera size={14} color="#fff" />
-          </View>
-        </TouchableOpacity>
-
         <View style={styles.inputWrapper}>
           <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.fullName')}</Text>
           <View style={styles.inputRow}>
@@ -60,7 +51,7 @@ export default function EditProfileScreen({ navigation }) {
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.email')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.email')}</Text>
           <View style={[styles.inputRow, styles.inputDisabled]}>
             <Mail size={20} color="#CBD5E1" />
             <TextInput style={[styles.input, { color: '#94A3B8' }]} value={email} editable={false} textAlign={dir.textAlign} />
@@ -68,7 +59,7 @@ export default function EditProfileScreen({ navigation }) {
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.phone')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.phone')}</Text>
           <View style={styles.inputRow}>
             <Phone size={20} color="#94A3B8" />
             <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textAlign={dir.textAlign} placeholderTextColor="#94A3B8" />
@@ -83,13 +74,19 @@ export default function EditProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  content: { padding: 24, alignItems: 'center' },
-  avatarWrap: { marginBottom: 32, position: 'relative' },
-  avatar: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
-  cameraBadge: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: 14, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' },
+  content: { padding: 24 },
   inputWrapper: { width: '100%', marginBottom: 20 },
   label: { textAlign: 'right', color: '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' },
-  inputRow: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#F1F5F9' },
-  inputDisabled: { backgroundColor: '#F8FAFC' },
+  inputRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  inputDisabled: { backgroundColor: '#F8FAFC', borderColor: '#F1F5F9' },
   input: { flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A', textAlign: 'right' },
 });
