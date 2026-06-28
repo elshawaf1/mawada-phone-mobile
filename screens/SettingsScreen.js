@@ -109,8 +109,6 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.rowDivider} />
           <RowLink icon="card-outline" label={t('settings.savedPaymentMethods')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.comingSoon'))} />
           <View style={styles.rowDivider} />
-          <RowLink icon="star-outline" label={t('settings.myReviews')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.comingSoon'))} />
-          <View style={styles.rowDivider} />
           <RowLink iconType="Feather" icon="log-out" label={t('settings.logout')} onPress={handleLogout} />
           <View style={styles.rowDivider} />
           <RowLink iconType="Feather" icon="trash-2" label={t('settings.deleteAccount')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.deleteAccountNotAvailable'))} isDestructive />

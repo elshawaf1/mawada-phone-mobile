@@ -94,15 +94,6 @@ export default function ProfileScreen({ navigation }) {
       onPress: () => navigation.navigate('Offers'),
     },
     {
-      id: 'myReviews',
-      title: t('profile.menuMyReviews'),
-      iconType: 'Ionicons',
-      iconName: 'star-outline',
-      isDestructive: false,
-      hasChevron: true,
-      onPress: () => navigation.navigate('MyReviews'),
-    },
-    {
       id: 'locations',
       title: t('profile.menuBranches'),
       iconType: 'Ionicons',

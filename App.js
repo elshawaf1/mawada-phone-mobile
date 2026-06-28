@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BackHandler, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { AppProvider } from './context/AppContext';
 import { AppSettingsProvider } from './context/AppSettingsContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import SwipeBack from './components/SwipeBack';
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/auth/WelcomeScreen';
 import LoginScreen from './screens/auth/LoginScreen';
@@ -36,7 +37,6 @@ import BrandsScreen from './screens/BrandsScreen';
 import RecentlyViewedScreen from './screens/RecentlyViewedScreen';
 import WishlistScreen from './screens/WishlistScreen';
 import OffersScreen from './screens/OffersScreen';
-import MyReviewsScreen from './screens/MyReviewsScreen';
 import PaymentMethodsScreen from './screens/PaymentMethodsScreen';
 import SupportScreen from './screens/SupportScreen';
 import AllCategoriesScreen from './screens/AllCategoriesScreen';
@@ -73,7 +73,6 @@ const screenRegistry = {
   RecentlyViewed: RecentlyViewedScreen,
   Wishlist: WishlistScreen,
   Offers: OffersScreen,
-  MyReviews: MyReviewsScreen,
   PaymentMethods: PaymentMethodsScreen,
   Support: SupportScreen,
   AllCategories: AllCategoriesScreen,
@@ -91,8 +90,33 @@ function AppInner() {
     email: '',
   });
 
+  const historyRef = useRef([]);
+  historyRef.current = history;
+  const isNavigatingRef = useRef(false);
+
+  useEffect(() => {
+    const noBackScreens = ['Splash', 'Welcome', 'Login', 'Register', 'Otp',
+      'ForgotPassword', 'ResetPassword', 'Home',
+      'Payment', 'ResumePayment', 'OrderConfirm'];
+    const onBackPress = () => {
+      if (noBackScreens.includes(currentScreen)) return true;
+      if (historyRef.current.length === 0) return true;
+      if (isNavigatingRef.current) return true;
+      isNavigatingRef.current = true;
+      setTimeout(() => { isNavigatingRef.current = false; }, 500);
+      goBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [currentScreen]);
+
   const navigate = (screen, params) => {
-    setHistory((prev) => [...prev, currentScreen]);
+    setHistory((prev) => {
+      const next = [...prev, currentScreen];
+      historyRef.current = next;
+      return next;
+    });
     setRouteParams(params || null);
     setCurrentScreen(screen);
   };
@@ -103,13 +127,14 @@ function AppInner() {
   };
 
   const goBack = () => {
-    let target = null;
-    setHistory((prevHistory) => {
-      if (prevHistory.length === 0) return prevHistory;
-      target = prevHistory[prevHistory.length - 1];
-      return prevHistory.slice(0, prevHistory.length - 1);
-    });
-    if (target) setCurrentScreen(target);
+    const h = historyRef.current;
+    if (h.length === 0) return false;
+    const prev = h[h.length - 1];
+    const next = h.slice(0, h.length - 1);
+    historyRef.current = next;
+    setHistory(next);
+    setCurrentScreen(prev);
+    return true;
   };
 
   const reset = ({ index = 0, routes = [] }) => {
@@ -128,6 +153,12 @@ function AppInner() {
 
   const ActiveScreen = screenRegistry[currentScreen] || SplashScreen;
 
+  const noSwipeBackScreens = [
+    'Splash', 'Welcome', 'Login', 'Register', 'Otp',
+    'ForgotPassword', 'ResetPassword', 'Home',
+    'Payment', 'ResumePayment', 'OrderConfirm',
+  ];
+
   const isDarkScreen = ['Splash'].includes(currentScreen);
   const isNavyScreen = ['Cart', 'OrderConfirm'].includes(currentScreen);
   const isChatScreen = currentScreen === 'Chat';
@@ -145,11 +176,18 @@ function AppInner() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: statusBg }]}>
       <StatusBar barStyle={statusBarStyle} backgroundColor={statusBg} />
       <View style={styles.screenWrapper}>
-        <ActiveScreen
+        <SwipeBack
           navigation={navigation}
-          route={{ params: routeParams }}
-          authState={authState}
-        />
+          canGoBack={history.length > 0}
+          disabled={noSwipeBackScreens.includes(currentScreen)}
+          isNavigatingRef={isNavigatingRef}
+        >
+          <ActiveScreen
+            navigation={navigation}
+            route={{ params: routeParams }}
+            authState={authState}
+          />
+        </SwipeBack>
       </View>
     </SafeAreaView>
   );
