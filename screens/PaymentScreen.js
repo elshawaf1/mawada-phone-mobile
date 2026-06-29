@@ -15,7 +15,8 @@ import {
   LayoutAnimation,
   UIManager,
 } from 'react-native';
-import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield, ChevronDown, Zap } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
 
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -530,60 +531,67 @@ export default function PaymentScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Address / Branch */}
+        {/* Address / Branch — Borderless Layered */}
         {deliveryType === 'delivery' && (
-          <View style={styles.card}>
+          <View style={styles.locModule}>
             {loading ? (
               <View style={styles.cardLoading}>
                 <ActivityIndicator size="small" color="#94A3B8" />
               </View>
             ) : deliveryAddress ? (
-              <View style={styles.navyCard}>
-                <View style={styles.navyTopRow}>
-                  <View style={styles.navyIconCircle}>
-                    <MapPin size={20} color="#fff" strokeWidth={2.2} />
-                  </View>
-                  <View style={styles.navyTextWrap}>
-                    <Text style={styles.navyLabel}>{deliveryAddress.label || deliveryAddress.city}</Text>
-                    <Text style={styles.navyDetail}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
-                    <View style={styles.navyPhoneRow}>
-                      <Text style={styles.navyPhone}>+20 {deliveryAddress.phone}</Text>
-                    </View>
-                  </View>
+              <View style={styles.locLayer}>
+                <View style={styles.locIconWrap}>
+                  <LottieView
+                    source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
+                    autoPlay
+                    loop
+                    style={{ width: 36, height: 36 }}
+                  />
+                </View>
+                <View style={styles.locTextWrap}>
+                  <Text style={styles.locLabel}>{deliveryAddress.label || deliveryAddress.city}</Text>
+                  <Text style={styles.locDetail}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
+                  <Text style={styles.locPhone}>+20 {deliveryAddress.phone}</Text>
                 </View>
                 <TouchableOpacity
-                  style={styles.navyEditBtn}
+                  style={styles.locEditBtn}
                   onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.navyEditBtnText}>{t('payment.editAddress')}</Text>
+                  <Edit3 size={15} color="#3B82F6" strokeWidth={2.2} />
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.addAddressBtnNavy} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
-                <View style={styles.addIconCircleNavy}>
-                  <MapPin size={20} color="#3B82F6" strokeWidth={2} />
-                </View>
-                <Text style={styles.addAddressTextNavy}>{t('payment.addAddress')}</Text>
+              <TouchableOpacity style={styles.locEmpty} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
+                <LottieView
+                  source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 40, height: 40 }}
+                />
+                <Text style={styles.locEmptyText}>{t('payment.addAddress')}</Text>
               </TouchableOpacity>
             )}
           </View>
         )}
 
         {deliveryType === 'branch' && (
-          <View style={styles.card}>
-            <View style={styles.navyCard}>
-              <View style={styles.navyTopRow}>
-                <View style={styles.navyIconCircle}>
-                  <MapPin size={20} color="#fff" strokeWidth={2.2} />
-                </View>
-                <View style={styles.navyTextWrap}>
-                  <Text style={styles.navyLabel}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
-                  <Text style={styles.navyDetail}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
-                </View>
+          <View style={styles.locModule}>
+            <View style={styles.locLayer}>
+              <View style={styles.locIconWrap}>
+                <LottieView
+                  source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 36, height: 36 }}
+                />
               </View>
-              <TouchableOpacity style={styles.navyEditBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
-                <Text style={styles.navyEditText}>{t('payment.changeBranch')}</Text>
+              <View style={styles.locTextWrap}>
+                <Text style={styles.locLabel}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
+                <Text style={styles.locDetail}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
+              </View>
+              <TouchableOpacity style={styles.locEditBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
+                <Edit3 size={15} color="#3B82F6" strokeWidth={2.2} />
               </TouchableOpacity>
             </View>
           </View>
@@ -604,9 +612,8 @@ export default function PaymentScreen({ navigation, route }) {
               <TouchableOpacity
                 key={method.id}
                 style={[
-                  styles.methodCard,
+                  styles.methodItem,
                   isSelected && { borderColor: color, backgroundColor: bgColor },
-                  !isSelected && styles.methodCardIdle,
                 ]}
                 onPress={() => {
                   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -614,15 +621,15 @@ export default function PaymentScreen({ navigation, route }) {
                 }}
                 activeOpacity={0.7}
               >
-                <View style={[styles.methodIconWrap, { backgroundColor: isSelected ? color : '#F1F5F9' }]}>
-                  <Icon size={22} color={isSelected ? '#fff' : '#94A3B8'} />
+                <View style={[styles.methodIconCircle, { backgroundColor: isSelected ? color : '#F1F5F9' }]}>
+                  <Icon size={20} color={isSelected ? '#fff' : '#94A3B8'} />
                 </View>
-                <View style={styles.methodInfo}>
-                  <Text style={[styles.methodLabel, isSelected && { color }, !isSelected && styles.methodLabelIdle]}>{label}</Text>
-                  <Text style={[styles.methodHint, !isSelected && styles.methodHintIdle]}>{hint}</Text>
+                <View style={styles.methodTextCol}>
+                  <Text style={[styles.methodName, isSelected && { color }]}>{label}</Text>
+                  <Text style={[styles.methodDesc, !isSelected && { color: '#CBD5E1' }]}>{hint}</Text>
                 </View>
-                <View style={[styles.radio, isSelected && { borderColor: color, backgroundColor: color + '15' }]}>
-                  {isSelected && <View style={[styles.radioFill, { backgroundColor: color }]} />}
+                <View style={[styles.radioDot, isSelected && { borderColor: color }]}>
+                  {isSelected && <View style={[styles.radioInner, { backgroundColor: color }]} />}
                 </View>
               </TouchableOpacity>
             );
@@ -688,13 +695,13 @@ export default function PaymentScreen({ navigation, route }) {
         )}
 
         <TouchableOpacity
-          style={[styles.checkoutBtn, processing && { opacity: 0.6 }]}
+          style={[styles.checkoutFloat, processing && { opacity: 0.6 }]}
           onPress={handleCheckout}
           activeOpacity={0.85}
           disabled={processing}
         >
           <Zap size={16} color="#FFF" fill="#FFF" />
-          <Text style={styles.checkoutBtnText}>{t('payment.completeOrder')}</Text>
+          <Text style={styles.checkoutFloatText}>{t('payment.completeOrder')}</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -743,7 +750,7 @@ const styles = StyleSheet.create({
   stepDotCurrent: { backgroundColor: '#0F172A', shadowColor: '#0F172A', shadowOpacity: 0.3, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 3 },
   stepNum: { fontSize: 11, fontWeight: '700', color: '#94A3B8' },
   stepNumActive: { color: '#fff' },
-  stepLine: { width: 40, height: 2, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
+  stepLine: { width: 40, height: 1.5, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
   stepLineActive: { backgroundColor: '#0F172A' },
 
   scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
@@ -776,89 +783,53 @@ const styles = StyleSheet.create({
   },
   cardLoading: { padding: 24, alignItems: 'center' },
 
-  /* ── Navy Location Card ── */
-  navyCard: {
-    backgroundColor: '#0F172A', borderRadius: 16,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 6,
+  /* ── Location Module — Borderless Layered ── */
+  locModule: {
+    backgroundColor: '#F8FAFC', borderRadius: 16,
+    marginBottom: 16, padding: 2,
   },
-  navyTopRow: {
-    flexDirection: 'row-reverse', padding: 16, gap: 14, alignItems: 'flex-start',
+  locLayer: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 12, padding: 14,
   },
-  navyIconCircle: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center', justifyContent: 'center',
-    marginTop: 2,
+  locIconWrap: {
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
-  navyTextWrap: { flex: 1, alignItems: 'flex-end' },
-  navyLabel: {
-    fontSize: 16, fontWeight: '700', color: '#FFFFFF', textAlign: 'right', marginBottom: 6,
-    letterSpacing: 0.2,
+  locTextWrap: { flex: 1, alignItems: 'flex-end' },
+  locLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 3 },
+  locDetail: { fontSize: 12, color: '#64748B', textAlign: 'right', lineHeight: 17 },
+  locPhone: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 3, fontWeight: '500' },
+  locEditBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
-  navyDetail: {
-    fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'right', lineHeight: 19,
-    marginBottom: 6,
-  },
-  navyPhoneRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 6,
-  },
-  navyPhone: {
-    fontSize: 13, color: 'rgba(255,255,255,0.45)', textAlign: 'right',
-    fontWeight: '500', letterSpacing: 0.3,
-  },
-  navyEditBtn: {
-    paddingVertical: 13, alignItems: 'center', justifyContent: 'center',
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
-  },
-  navyEditBtnText: {
-    color: '#60A5FA', fontSize: 14, fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  navyEditText: {
-    color: '#60A5FA', fontSize: 14, fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-
-  addAddressBtnNavy: {
+  locEmpty: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
-    padding: 24, gap: 12,
+    padding: 22, gap: 10,
   },
-  addIconCircleNavy: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(59,130,246,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  addAddressTextNavy: {
-    color: '#3B82F6', fontSize: 15, fontWeight: '600',
-  },
+  locEmptyText: { color: '#3B82F6', fontSize: 14, fontWeight: '600' },
 
-
-  methodsWrap: { gap: 10, marginBottom: 20 },
-  methodCard: {
+  /* ── Payment Methods — Border Only On Selection ── */
+  methodsWrap: { gap: 8, marginBottom: 20 },
+  methodItem: {
     flexDirection: 'row-reverse', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 16,
-    padding: 14, gap: 12,
-    borderWidth: 1.5, borderColor: '#E2E8F0',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    backgroundColor: '#F8FAFC', borderRadius: 14,
+    padding: 12, gap: 12,
+    borderWidth: 1.5, borderColor: 'transparent',
   },
-  methodCardIdle: {
-    opacity: 0.55,
-  },
-  methodIconWrap: {
-    width: 44, height: 44, borderRadius: 12,
+  methodIconCircle: {
+    width: 40, height: 40, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
-  methodInfo: { flex: 1, alignItems: 'flex-end' },
-  methodLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
-  methodLabelIdle: { color: '#94A3B8' },
-  methodHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2 },
-  methodHintIdle: { color: '#CBD5E1' },
-  radio: {
-    width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: '#CBD5E1',
+  methodTextCol: { flex: 1, alignItems: 'flex-end' },
+  methodName: { fontSize: 14, fontWeight: '700', color: '#94A3B8', textAlign: 'right' },
+  methodDesc: { fontSize: 11, color: '#CBD5E1', textAlign: 'right', marginTop: 1 },
+  radioDot: {
+    width: 18, height: 18, borderRadius: 9,
+    borderWidth: 2, borderColor: '#E2E8F0',
     alignItems: 'center', justifyContent: 'center',
   },
-  radioFill: { width: 10, height: 10, borderRadius: 5 },
+  radioInner: { width: 8, height: 8, borderRadius: 4 },
 
   summaryCard: {
     backgroundColor: '#fff', borderRadius: 16, marginBottom: 12,
@@ -885,16 +856,16 @@ const styles = StyleSheet.create({
 
   securityBadge: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
-    gap: 6, marginBottom: 12, paddingVertical: 8,
+    gap: 6, marginBottom: 16, paddingVertical: 8,
   },
-  securityText: { fontSize: 12, color: '#94A3B8' },
+  securityText: { fontSize: 11, color: '#94A3B8' },
 
-  checkoutBtn: {
+  checkoutFloat: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 16, marginBottom: 20,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
+    backgroundColor: '#0F172A', borderRadius: 50, paddingVertical: 16, marginBottom: 20,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 8,
   },
-  checkoutBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
+  checkoutFloatText: { color: '#FFF', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
 });

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import Button from '../components/Button';
@@ -174,15 +175,15 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
   const renderContent = () => (
     <>
-      {/* Header */}
+      {/* Header — Document of Success */}
       <View style={styles.header}>
         {paymentStatus === 'FAILED' ? (
-          <View style={[styles.iconWrap, styles.iconWrapFailed]}>
-            <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
+          <View style={[styles.iconWrapBig, styles.iconWrapFailed]}>
+            <AlertCircle size={52} color="#EF4444" strokeWidth={1.5} />
           </View>
         ) : (
-          <Animated.View style={[styles.iconWrap, styles.iconWrapSuccess, { transform: [{ scale: Animated.multiply(scaleAnim, pulseAnim) }] }]}>
-            <CheckCircle size={40} color="#22C55E" strokeWidth={1.5} />
+          <Animated.View style={[styles.iconWrapBig, styles.iconWrapSuccess, { transform: [{ scale: Animated.multiply(scaleAnim, pulseAnim) }] }]}>
+            <CheckCircle size={52} color="#22C55E" strokeWidth={1.5} />
           </Animated.View>
         )}
         <Text style={styles.headerTitle}>
@@ -198,28 +199,36 @@ export default function OrderConfirmScreen({ navigation, route }) {
                 : t('orders.confirmPendingSub')}
         </Text>
 
-        {/* Boarding-pass style Order ID */}
+        {/* Boarding-pass Order ID */}
         <View style={styles.boardingPass}>
-          <View style={styles.boardingPassLeft}>
-            <Text style={styles.boardingPassLabel}>{t('orders.orderNumber')}</Text>
-            <Text style={styles.boardingPassCode} selectable>{displayId}</Text>
+          <View style={styles.bpLeft}>
+            <Text style={styles.bpLabel}>{t('orders.orderNumber')}</Text>
+            <Text style={styles.bpCode} selectable>{displayId}</Text>
           </View>
-          <View style={styles.boardingPassDivider} />
-          <TouchableOpacity style={styles.boardingPassRight} onPress={handleShareOrder} activeOpacity={0.7}>
+          <View style={styles.bpDivider} />
+          <TouchableOpacity style={styles.bpRight} onPress={handleShareOrder} activeOpacity={0.7}>
             <Ionicons name="copy-outline" size={14} color="#38BDF8" />
-            <Text style={styles.boardingPassCopy}>نسخ</Text>
+            <Text style={styles.bpCopy}>نسخ</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Delivery Estimate with Lottie Location */}
+        <View style={styles.estimateRow}>
+          <View style={styles.estimatePin}>
+            <LottieView
+              source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
+              autoPlay
+              loop
+              style={{ width: 22, height: 22 }}
+            />
+          </View>
+          <Text style={styles.estimateText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
         </View>
 
         <View style={styles.metaRow}>
           <View style={styles.metaTag}>
             <PaymentIcon method={paymentMethod} />
             <Text style={styles.metaTagText}>{paymentMethodLabels[paymentMethod] || paymentMethod}</Text>
-          </View>
-          <View style={styles.metaDot} />
-          <View style={styles.metaTag}>
-            <Truck size={12} color="#94A3B8" strokeWidth={2} />
-            <Text style={styles.metaTagText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
           </View>
         </View>
       </View>
@@ -261,8 +270,8 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Unified Card */}
-      <View style={styles.card}>
+      {/* Receipt Card — Glassmorphism */}
+      <View style={styles.glassCard}>
         <Text style={styles.cardTitle}>{t('orders.detail')}</Text>
         {items.map((item, index) => {
           const img = productImage(item);
@@ -310,13 +319,18 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </View>
       </View>
 
-      {/* Address */}
+      {/* Address — Lottie Pin */}
       {address && (
-        <View style={styles.card}>
+        <View style={styles.glassCard}>
           <Text style={styles.cardTitle}>{t('orders.address')}</Text>
           <View style={styles.addrRow}>
-            <View style={styles.addrIcon}>
-              <MapPin size={16} color="#0F172A" strokeWidth={2} />
+            <View style={styles.addrIconWrap}>
+              <LottieView
+                source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
+                autoPlay
+                loop
+                style={{ width: 32, height: 32 }}
+              />
             </View>
             <View style={styles.addrInfo}>
               <Text style={styles.addrLabel}>{address.label || t('orders.addressFallback')}</Text>
@@ -332,7 +346,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Actions — Split layout */}
+      {/* Actions — Action Strip */}
       {paymentStatus === 'FAILED' ? (
         <>
           <TouchableOpacity style={styles.ctaPrimary} onPress={handleRetry} activeOpacity={0.85}>
@@ -341,19 +355,18 @@ export default function OrderConfirmScreen({ navigation, route }) {
           <TouchableOpacity style={styles.textLink} onPress={() => navigation.navigate('Chat')} activeOpacity={0.7}>
             <Text style={styles.textLinkText}>{t('orders.confirmSupport')}</Text>
           </TouchableOpacity>
-          <Button title={t('orders.confirmHome')} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} fullWidth style={styles.btnMargin} />
         </>
       ) : (
         <>
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.ctaPrimaryFlex} onPress={handleNavigateOrders} activeOpacity={0.85}>
-              <Navigation size={16} color="#FFF" strokeWidth={2.5} />
-              <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.ctaIconOnly} onPress={handleScreenshot} activeOpacity={0.85} disabled={capturing}>
-              <Camera size={20} color="#64748B" strokeWidth={2} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.ctaPrimary} onPress={handleNavigateOrders} activeOpacity={0.85}>
+            <Navigation size={16} color="#FFF" strokeWidth={2.5} />
+            <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionStrip} onPress={handleScreenshot} activeOpacity={0.7} disabled={capturing}>
+            <Camera size={16} color="#64748B" strokeWidth={2} />
+            <Text style={styles.actionStripText}>{t('orderConfirm.screenshotShare')}</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.textLink} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} activeOpacity={0.7}>
             <Text style={styles.textLinkText}>{t('orders.confirmHome')}</Text>
@@ -399,9 +412,9 @@ const styles = StyleSheet.create({
 
   /* ── Header ── */
   header: { alignItems: 'center', paddingTop: 12, paddingBottom: 18 },
-  iconWrap: {
-    width: 72, height: 72, borderRadius: 36,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+  iconWrapBig: {
+    width: 88, height: 88, borderRadius: 44,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 14,
   },
   iconWrapSuccess: { backgroundColor: '#DCFCE7' },
   iconWrapFailed: { backgroundColor: '#FEE2E2' },
@@ -414,29 +427,38 @@ const styles = StyleSheet.create({
     textAlign: 'center', marginBottom: 16, lineHeight: 18,
   },
 
-  /* Boarding-pass style Order ID */
+  /* Boarding-pass Order ID */
   boardingPass: {
     flexDirection: 'row-reverse', alignItems: 'center',
     backgroundColor: '#F8FAFC', borderRadius: 14,
     borderWidth: 1, borderColor: '#E2E8F0',
     marginBottom: 14, overflow: 'hidden',
   },
-  boardingPassLeft: { flex: 1, paddingVertical: 14, paddingHorizontal: 18 },
-  boardingPassLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', textAlign: 'right', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
-  boardingPassCode: {
+  bpLeft: { flex: 1, paddingVertical: 14, paddingHorizontal: 18 },
+  bpLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', textAlign: 'right', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
+  bpCode: {
     color: '#0F172A', fontSize: 16, fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     letterSpacing: 1.2, textAlign: 'right',
   },
-  boardingPassDivider: {
+  bpDivider: {
     width: 1, height: 40, backgroundColor: '#E2E8F0',
-    borderStyle: 'dashed',
   },
-  boardingPassRight: {
+  bpRight: {
     paddingHorizontal: 18, paddingVertical: 14,
     flexDirection: 'row-reverse', alignItems: 'center', gap: 4,
   },
-  boardingPassCopy: { fontSize: 12, fontWeight: '600', color: '#38BDF8' },
+  bpCopy: { fontSize: 12, fontWeight: '600', color: '#38BDF8' },
+
+  estimateRow: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
+    marginBottom: 10,
+  },
+  estimatePin: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+  },
+  estimateText: { fontSize: 12, color: '#64748B', fontWeight: '500' },
 
   metaRow: {
     flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
@@ -445,9 +467,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse', alignItems: 'center', gap: 5,
   },
   metaTagText: { color: '#94A3B8', fontSize: 11, fontWeight: '500' },
-  metaDot: {
-    width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#CBD5E1',
-  },
 
   /* ── Timeline ── */
   timelineWrap: {
@@ -468,7 +487,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF', borderWidth: 2.5, borderColor: '#F59E0B',
   },
   stepInnerDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: '#F59E0B' },
-  stepLine: { flex: 1, height: 2, backgroundColor: '#E2E8F0', marginTop: 14, marginHorizontal: -2, borderRadius: 1 },
+  stepLine: { flex: 1, height: 1.5, backgroundColor: '#E2E8F0', marginTop: 14, marginHorizontal: -2, borderRadius: 1 },
   stepLineDone: { backgroundColor: '#22C55E' },
   stepLabel: { fontSize: 9, fontWeight: '600', color: '#94A3B8', textAlign: 'center' },
   stepLabelDone: { color: '#22C55E' },
@@ -483,10 +502,11 @@ const styles = StyleSheet.create({
   fawryCode: { color: '#2563EB', fontSize: 22, fontWeight: '800', letterSpacing: 2, marginBottom: 2 },
   fawryHint: { color: '#94A3B8', fontSize: 10, textAlign: 'center' },
 
-  /* ── Card ── */
-  card: {
-    backgroundColor: '#FFF', borderRadius: 20, padding: 18, marginBottom: 12,
-    shadowColor: '#000', shadowOpacity: 0.03, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
+  /* ── Glass Card — Receipt ── */
+  glassCard: {
+    backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20, padding: 18, marginBottom: 12,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 2,
   },
   cardTitle: {
     fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12,
@@ -515,8 +535,8 @@ const styles = StyleSheet.create({
 
   /* ── Address ── */
   addrRow: { flexDirection: 'row-reverse', alignItems: 'flex-start' },
-  addrIcon: {
-    width: 34, height: 34, borderRadius: 10, backgroundColor: '#F1F5F9',
+  addrIconWrap: {
+    width: 40, height: 40, borderRadius: 12, backgroundColor: '#EFF6FF',
     justifyContent: 'center', alignItems: 'center', marginLeft: 10,
   },
   addrInfo: { flex: 1, alignItems: 'flex-end' },
@@ -530,24 +550,17 @@ const styles = StyleSheet.create({
   addrPhoneText: { fontSize: 11, color: '#22C55E', fontWeight: '600' },
 
   /* ── Actions ── */
-  actionRow: {
-    flexDirection: 'row-reverse', gap: 10, marginBottom: 10,
-  },
-  ctaPrimaryFlex: {
-    flex: 1, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 14,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
-  },
   ctaPrimary: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 14, marginBottom: 10,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
+    backgroundColor: '#0F172A', borderRadius: 50, paddingVertical: 16, marginBottom: 12,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 8,
   },
   ctaPrimaryText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  ctaIconOnly: {
-    width: 50, height: 50, borderRadius: 16,
-    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+  actionStrip: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 12, marginBottom: 8,
   },
+  actionStripText: { fontSize: 13, color: '#64748B', fontWeight: '600' },
   textLink: { alignItems: 'center', paddingVertical: 12 },
   textLinkText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
   btnMargin: { marginBottom: 0 },

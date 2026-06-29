@@ -257,9 +257,22 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
             <View style={styles.formGroup}>
               <Text style={[styles.formLabel, { textAlign: dir.textAlign }]}>{t('addresses.phone')}</Text>
               <Text style={[styles.phoneHint, { textAlign: dir.textAlign }]}>{t('addresses.phoneHint')}</Text>
-              <View style={styles.phoneRow}>
-                <View style={styles.phonePrefix}><Text style={styles.phonePrefixText}>+20</Text></View>
-                <TextInput style={styles.phoneInput} placeholder="1012345678" keyboardType="phone-pad" value={formData.phone} onChangeText={(v) => { const cleaned = v.replace(/[^0-9]/g, ''); const noLeadingZero = cleaned.replace(/^0/, ''); if (noLeadingZero.length <= 10) setFormData(p => ({ ...p, phone: noLeadingZero })); }} textAlign="right" />
+              <View style={styles.inputRow}>
+                <Phone size={18} color="#94A3B8" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="+20 010-000-0000"
+                  placeholderTextColor="#94A3B8"
+                  textAlign="right"
+                  keyboardType="phone-pad"
+                  value={formData.phone ? `+20 ${formData.phone}` : ''}
+                  onChangeText={(v) => {
+                    const cleaned = v.replace(/[^0-9]/g, '');
+                    const withoutPrefix = cleaned.startsWith('20') ? cleaned.slice(2) : cleaned;
+                    const noLeadingZero = withoutPrefix.replace(/^0/, '');
+                    if (noLeadingZero.length <= 10) setFormData(p => ({ ...p, phone: noLeadingZero }));
+                  }}
+                />
               </View>
             </View>
 
@@ -332,10 +345,16 @@ const styles = StyleSheet.create({
   formGroup: { marginBottom: 16 },
   formLabel: { fontSize: 13, fontWeight: '600', color: '#64748B', textAlign: 'right', marginBottom: 6 },
   formInput: { backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#0F172A', minHeight: 48, textAlign: 'right' },
-  phoneRow: { flexDirection: 'row-reverse', backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1.5, borderColor: '#E2E8F0', overflow: 'hidden', height: 48 },
-  phonePrefix: { backgroundColor: '#0F172A', paddingHorizontal: 14, justifyContent: 'center', alignItems: 'center' },
-  phonePrefixText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  inputRow: {
+    flexDirection: 'row-reverse', alignItems: 'center',
+    borderBottomWidth: 1.5, borderBottomColor: '#E2E8F0',
+    paddingBottom: 12, gap: 10,
+  },
+  input: {
+    flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A',
+    textAlign: 'right',
+    ...Platform.select({ ios: { paddingVertical: 4 }, android: { paddingVertical: 0 } }),
+  },
   phoneHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginBottom: 8 },
-  phoneInput: { flex: 1, paddingHorizontal: 14, fontSize: 15, color: '#0F172A', textAlign: 'right' },
   defaultRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
 });
