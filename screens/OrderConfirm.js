@@ -12,6 +12,7 @@ import {
   Modal,
   Animated,
   Platform,
+  Image,
 } from 'react-native';
 import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -252,7 +253,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
                     styles.stepLabel,
                     step.done && styles.stepLabelDone,
                     step.current && styles.stepLabelActive,
-                  ]} numberOfLines={1}>{step.label}</Text>
+                  ]}>{step.label}</Text>
                 </View>
                 {!isLast && <View style={[styles.stepLine, step.done && styles.stepLineDone]} />}
               </React.Fragment>
@@ -280,7 +281,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
               <View style={styles.itemRow}>
                 <View style={styles.itemThumb}>
                   {img ? (
-                    <View />
+                    <Image source={{ uri: img }} style={styles.itemImage} resizeMode="cover" />
                   ) : (
                     <Ionicons name="bag-outline" size={16} color="#CBD5E1" />
                   )}
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: 'row-reverse', alignItems: 'flex-start', justifyContent: 'space-between',
   },
-  stepCol: { alignItems: 'center', flex: 1, maxWidth: 72 },
+  stepCol: { alignItems: 'center', flex: 1 },
   stepCircle: {
     width: 28, height: 28, borderRadius: 14,
     backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center',
@@ -504,9 +505,8 @@ const styles = StyleSheet.create({
 
   /* ── Glass Card — Receipt ── */
   glassCard: {
-    backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 20, padding: 18, marginBottom: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18, marginBottom: 12,
+    borderWidth: 1, borderColor: '#F1F5F9',
   },
   cardTitle: {
     fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12,
@@ -518,6 +518,7 @@ const styles = StyleSheet.create({
     width: 44, height: 44, borderRadius: 10, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginLeft: 10, overflow: 'hidden',
   },
+  itemImage: { width: 44, height: 44, borderRadius: 10 },
   itemInfo: { flex: 1, alignItems: 'flex-end' },
   itemName: { fontSize: 13, fontWeight: '600', color: '#334155', textAlign: 'right' },
   itemMeta: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
