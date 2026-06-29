@@ -338,7 +338,7 @@ export default function MyOrdersScreen({ navigation }) {
               <Text style={styles.headerSubtitle}>{t('orders.loading')}</Text>
             </View>
           }
-          onBack={() => navigation.goBack()}
+          onBack={() => navigation.goBack() || navigation.navigate('Home')}
         />
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#0F172A" />
@@ -362,7 +362,7 @@ export default function MyOrdersScreen({ navigation }) {
             </Text>
           </View>
         }
-        onBack={() => navigation.goBack()}
+        onBack={() => navigation.goBack() || navigation.navigate('Home')}
       />
 
       <View style={styles.tabBarWrapper}>

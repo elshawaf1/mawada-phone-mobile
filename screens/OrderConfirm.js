@@ -169,6 +169,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
   };
 
   const productImage = (item) => {
+    if (item.image) return item.image;
     const imgs = item.products?.product_images;
     if (!imgs || imgs.length === 0) return null;
     return imgs.find(i => i.isPrimary)?.url || imgs[0]?.url || null;
