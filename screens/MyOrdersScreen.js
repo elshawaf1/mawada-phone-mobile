@@ -230,14 +230,16 @@ export default function MyOrdersScreen({ navigation }) {
           <View style={[styles.accentBar, { backgroundColor: statusColor.accent }]} />
           <View style={styles.cardBody}>
             <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
-              <TouchableOpacity
-                style={styles.deleteIconBtn}
-                activeOpacity={0.7}
-                onPress={() => handleDelete(order)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="trash-outline" size={16} color="#CBD5E1" />
-              </TouchableOpacity>
+              {['PENDING', 'CANCELLED'].includes(order.status) && (
+                <TouchableOpacity
+                  style={styles.deleteIconBtn}
+                  activeOpacity={0.7}
+                  onPress={() => handleDelete(order)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#CBD5E1" />
+                </TouchableOpacity>
+              )}
               <View style={[styles.cardHeaderText, { alignItems: dir.alignItems }]}>
                 <Text style={styles.orderNumber}>{order.orderNumber}</Text>
                 <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
