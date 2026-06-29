@@ -513,13 +513,13 @@ const styles = StyleSheet.create({
     fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12,
   },
   itemRow: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
+    flexDirection: 'row-reverse', alignItems: 'center', paddingVertical: 10,
   },
   itemThumb: {
     width: 44, height: 44, borderRadius: 10, backgroundColor: '#F1F5F9',
-    justifyContent: 'center', alignItems: 'center', marginRight: 10, overflow: 'hidden',
+    justifyContent: 'center', alignItems: 'center', marginLeft: 10, overflow: 'hidden',
   },
-  itemImage: { width: 44, height: 44, borderRadius: 10 },
+  itemImage: { width: 44, height: 44, borderRadius: 10, transform: [{ scaleX: -1 }] },
   itemInfo: { flex: 1, alignItems: 'flex-end' },
   itemName: { fontSize: 13, fontWeight: '600', color: '#334155', textAlign: 'right' },
   itemMeta: { fontSize: 11, color: '#94A3B8', marginTop: 1 },

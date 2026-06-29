@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -29,6 +29,7 @@ import { supabase } from '../services/supabase';
 import { db } from '../services/api';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
 
@@ -83,7 +84,6 @@ export default function ItemScreen({ navigation, route }) {
   const { user } = useAuth();
   const { t, locale } = useTranslation();
   const dir = useDirection();
-  const lastImageTap = useRef(0);
   const productId = route?.params?.productId;
   const [product, setProduct] = useState(null);
   const [specs, setSpecs] = useState({});
@@ -102,13 +102,15 @@ export default function ItemScreen({ navigation, route }) {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addedMap, setAddedMap] = useState({});
 
-  const handleImageDoubleTap = () => {
-    const now = Date.now();
-    if (now - lastImageTap.current < 300) {
-      toggleFavorite(product, user?.id);
-    }
-    lastImageTap.current = now;
-  };
+  const doubleTapGesture = useMemo(
+    () =>
+      Gesture.Tap()
+        .numberOfTaps(2)
+        .onEnd(() => {
+          toggleFavorite(product, user?.id);
+        }),
+    [product, user?.id]
+  );
 
   useEffect(() => {
     if (productId) {
@@ -371,7 +373,7 @@ export default function ItemScreen({ navigation, route }) {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 snapToInterval={width + 12}
-                snapToAlignment="center"
+                snapToAlignment="start"
                 decelerationRate={0.88}
                 onMomentumScrollEnd={(e) => {
                   const index = Math.round(e.nativeEvent.contentOffset.x / (width + 12));
@@ -382,17 +384,15 @@ export default function ItemScreen({ navigation, route }) {
                 keyExtractor={(item, i) => item.id || `img-${i}`}
                 renderItem={({ item }) => (
                   <View style={{ width, paddingHorizontal: 6 }}>
-                    <TouchableOpacity
-                      activeOpacity={1}
-                      onPress={handleImageDoubleTap}
-                      style={styles.imageSlide}
-                    >
-                      <Image
-                        source={{ uri: item.url }}
-                        style={styles.navMainImage}
-                        resizeMode="contain"
-                      />
-                    </TouchableOpacity>
+                    <GestureDetector gesture={doubleTapGesture}>
+                      <View style={styles.imageSlide}>
+                        <Image
+                          source={{ uri: item.url }}
+                          style={styles.navMainImage}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    </GestureDetector>
                   </View>
                 )}
               />
