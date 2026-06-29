@@ -171,6 +171,7 @@ export default function CartScreen({ navigation }) {
         productId: i.productId, variantId: i.variantId || null, quantity: i.quantity,
         unitPrice: typeof i.price === 'string' ? parseInt(i.price.replace(/,/g, '')) : i.price,
         name: i.title || i.name || 'Product',
+        image: i.image || null,
       })),
       notes: orderNotes,
     });
