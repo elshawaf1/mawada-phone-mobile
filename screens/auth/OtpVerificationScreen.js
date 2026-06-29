@@ -8,14 +8,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  StatusBar,
 } from 'react-native';
-import { ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/AppSettingsContext';
 import Button from '../../components/Button';
+import ScreenHeader from '../../components/ScreenHeader';
 
 const RESEND_COOLDOWN = 60;
 
@@ -132,7 +131,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
     if (cooldown > 0) return;
     try {
       if (type === 'signup') {
-        await supabase.auth.signInWithOtp({ email });
+        await supabase.auth.resend({ email, type: 'signup' });
       } else {
         await supabase.auth.resetPasswordForEmail(email);
       }
@@ -153,18 +152,12 @@ export default function OtpVerificationScreen({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={20}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ScreenHeader
+        title={isSignup ? t('auth.otpTitle') : t('auth.resetPassword')}
+        onBack={() => navigation.goBack()}
+      />
 
       <View style={styles.inner}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <ChevronRight size={22} color="#0F172A" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {isSignup ? t('auth.otpTitle') : t('auth.resetPassword')}
-          </Text>
-          <View style={styles.headerPlaceholder} />
-        </View>
 
         <Text style={styles.infoText}>
           {isSignup ? t('auth.otpSubtitle') : t('auth.resetPasswordDesc')}
@@ -238,33 +231,6 @@ export default function OtpVerificationScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   inner: { flex: 1, paddingHorizontal: 24, justifyContent: 'flex-start' },
-  header: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 18,
-    marginBottom: 24,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  headerTitle: {
-    color: '#0F172A',
-    fontSize: 22,
-    fontWeight: '800',
-    textAlign: 'right',
-  },
-  headerPlaceholder: { width: 44 },
   infoText: {
     color: '#64748B',
     fontSize: 15,

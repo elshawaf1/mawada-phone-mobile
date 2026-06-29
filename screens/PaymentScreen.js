@@ -532,27 +532,33 @@ export default function PaymentScreen({ navigation, route }) {
                 <ActivityIndicator size="small" color="#94A3B8" />
               </View>
             ) : deliveryAddress ? (
-              <View style={styles.addressContent}>
-                <View style={styles.addressRow}>
-                  <View style={styles.addressIconWrap}>
-                    <MapPin size={18} color="#fff" />
+              <View style={styles.navyCard}>
+                <View style={styles.navyTopRow}>
+                  <View style={styles.navyIconCircle}>
+                    <MapPin size={20} color="#fff" strokeWidth={2.2} />
                   </View>
-                  <View style={styles.addressTextWrap}>
-                    <Text style={styles.addressLabel}>{deliveryAddress.label || deliveryAddress.city}</Text>
-                    <Text style={styles.addressDetail}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
-                    <Text style={styles.addressPhone}>+20 {deliveryAddress.phone}</Text>
+                  <View style={styles.navyTextWrap}>
+                    <Text style={styles.navyLabel}>{deliveryAddress.label || deliveryAddress.city}</Text>
+                    <Text style={styles.navyDetail}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
+                    <View style={styles.navyPhoneRow}>
+                      <Text style={styles.navyPhone}>+20 {deliveryAddress.phone}</Text>
+                    </View>
                   </View>
                 </View>
-                <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
-                  <Text style={styles.editBtnText}>{t('payment.editAddress')}</Text>
+                <TouchableOpacity
+                  style={styles.navyEditBtn}
+                  onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.navyEditBtnText}>{t('payment.editAddress')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.addAddressBtn} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
-                <View style={styles.addIconWrap}>
-                  <MapPin size={20} color="#3B82F6" />
+              <TouchableOpacity style={styles.addAddressBtnNavy} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
+                <View style={styles.addIconCircleNavy}>
+                  <MapPin size={20} color="#3B82F6" strokeWidth={2} />
                 </View>
-                <Text style={styles.addAddressText}>{t('payment.addAddress')}</Text>
+                <Text style={styles.addAddressTextNavy}>{t('payment.addAddress')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -560,18 +566,20 @@ export default function PaymentScreen({ navigation, route }) {
 
         {deliveryType === 'branch' && (
           <View style={styles.card}>
-            <View style={styles.branchContent}>
-              <View style={styles.branchIconWrap}>
-                <MapPin size={22} color="#3B82F6" />
+            <View style={styles.navyCard}>
+              <View style={styles.navyTopRow}>
+                <View style={styles.navyIconCircle}>
+                  <MapPin size={20} color="#fff" strokeWidth={2.2} />
+                </View>
+                <View style={styles.navyTextWrap}>
+                  <Text style={styles.navyLabel}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
+                  <Text style={styles.navyDetail}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
+                </View>
               </View>
-              <View style={styles.branchTextWrap}>
-                <Text style={styles.branchName}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
-                <Text style={styles.branchAddr}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
-              </View>
+              <TouchableOpacity style={styles.navyEditBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
+                <Text style={styles.navyEditText}>{t('payment.changeBranch')}</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.changeBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
-              <Text style={styles.changeBtnText}>{t('payment.changeBranch')}</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -727,51 +735,67 @@ const styles = StyleSheet.create({
   segmentTextActive: { color: '#fff' },
 
   card: {
-    backgroundColor: '#fff', borderRadius: 16,
+    borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 1,
   },
   cardLoading: { padding: 24, alignItems: 'center' },
 
-  addressContent: {},
-  addressRow: { flexDirection: 'row-reverse', padding: 16, alignItems: 'flex-start', gap: 12 },
-  addressIconWrap: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center',
+  /* ── Navy Location Card ── */
+  navyCard: {
+    backgroundColor: '#0F172A', borderRadius: 16,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 6,
+  },
+  navyTopRow: {
+    flexDirection: 'row-reverse', padding: 16, gap: 14, alignItems: 'flex-start',
+  },
+  navyIconCircle: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center', justifyContent: 'center',
     marginTop: 2,
   },
-  addressTextWrap: { flex: 1, alignItems: 'flex-end' },
-  addressLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 4 },
-  addressDetail: { fontSize: 13, color: '#64748B', textAlign: 'right', lineHeight: 18 },
-  addressPhone: { fontSize: 13, color: '#94A3B8', textAlign: 'right', marginTop: 4 },
-  editBtn: {
-    backgroundColor: '#F8FAFC', paddingVertical: 12,
-    justifyContent: 'center', alignItems: 'center',
-    borderTopWidth: 1, borderTopColor: '#F1F5F9',
+  navyTextWrap: { flex: 1, alignItems: 'flex-end' },
+  navyLabel: {
+    fontSize: 16, fontWeight: '700', color: '#FFFFFF', textAlign: 'right', marginBottom: 6,
+    letterSpacing: 0.2,
   },
-  editBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
+  navyDetail: {
+    fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'right', lineHeight: 19,
+    marginBottom: 6,
+  },
+  navyPhoneRow: {
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 6,
+  },
+  navyPhone: {
+    fontSize: 13, color: 'rgba(255,255,255,0.45)', textAlign: 'right',
+    fontWeight: '500', letterSpacing: 0.3,
+  },
+  navyEditBtn: {
+    paddingVertical: 13, alignItems: 'center', justifyContent: 'center',
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  navyEditBtnText: {
+    color: '#60A5FA', fontSize: 14, fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  navyEditText: {
+    color: '#60A5FA', fontSize: 14, fontWeight: '600',
+    letterSpacing: 0.3,
+  },
 
-  addAddressBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 10 },
-  addIconWrap: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+  addAddressBtnNavy: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    padding: 24, gap: 12,
   },
-  addAddressText: { color: '#3B82F6', fontSize: 15, fontWeight: '600' },
+  addIconCircleNavy: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(59,130,246,0.1)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  addAddressTextNavy: {
+    color: '#3B82F6', fontSize: 15, fontWeight: '600',
+  },
 
-  branchContent: { flexDirection: 'row-reverse', padding: 16, alignItems: 'center', gap: 12 },
-  branchIconWrap: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
-  },
-  branchTextWrap: { flex: 1, alignItems: 'flex-end' },
-  branchName: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 2 },
-  branchAddr: { fontSize: 13, color: '#64748B', textAlign: 'right' },
-  changeBtn: {
-    backgroundColor: '#F8FAFC', paddingVertical: 12,
-    justifyContent: 'center', alignItems: 'center',
-    borderTopWidth: 1, borderTopColor: '#F1F5F9',
-  },
-  changeBtnText: { color: '#3B82F6', fontSize: 14, fontWeight: '600' },
 
   methodsWrap: { gap: 10, marginBottom: 20 },
   methodCard: {

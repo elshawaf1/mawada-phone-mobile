@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronLeft, Check, Plus, Minus, Trash2, ShoppingBag, Tag, Gift, Truck, ChevronDown, ChevronUp, Clock, FileText } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
+import LottieView from 'lottie-react-native';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../constants';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -99,6 +100,18 @@ export default function CartScreen({ navigation }) {
   const [deliveryFee, setDeliveryFee] = useState(90);
   const [freeShipThreshold, setFreeShipThreshold] = useState(50000);
   const [estimatedDays, setEstimatedDays] = useState(3);
+  const lottieRef = useRef(null);
+
+  const isEmpty = cart.length === 0 && savedForLater.length === 0;
+
+  useEffect(() => {
+    if (!isEmpty) return;
+    const interval = setInterval(() => {
+      lottieRef.current?.reset();
+      lottieRef.current?.play();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isEmpty]);
 
   const selected = cart.filter((i) => i.selected);
   const subtotal = selected.reduce((s, i) => {
@@ -110,7 +123,6 @@ export default function CartScreen({ navigation }) {
   const shipCost = selected.length > 0 && !freeShip ? deliveryFee : 0;
   const total = subtotal - discount + shipCost;
   const allSelected = cart.length > 0 && cart.every((i) => i.selected);
-  const isEmpty = cart.length === 0 && savedForLater.length === 0;
   const shipProgress = Math.min((subtotal / freeShipThreshold) * 100, 100);
 
   const animateOpacity = useRef(new Animated.Value(0)).current;
@@ -190,7 +202,14 @@ export default function CartScreen({ navigation }) {
 
       {isEmpty ? (
         <View style={styles.emptyContent}>
-          <View style={styles.iconCircle}><ShoppingBag size={48} color="#94A3B8" strokeWidth={1.5} /></View>
+          <LottieView
+            ref={lottieRef}
+            source={require('../assets/wired-lineal-146-trolley-hover-jump.json')}
+            style={styles.emptyLottie}
+            autoPlay
+            loop={false}
+            resizeMode="contain"
+          />
           <Text style={styles.emptyTitle}>{t('cart.empty')}</Text>
           <Text style={styles.emptySubtitle}>{t('cart.emptySub')}</Text>
           <TouchableOpacity style={styles.ctaButton} onPress={() => navigation.navigate('Home')} activeOpacity={0.8}>
@@ -356,7 +375,7 @@ const styles = StyleSheet.create({
   selectAllText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
 
   emptyContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 56 },
-  iconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: COLORS.gray100, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  emptyLottie: { width: 160, height: 160, marginBottom: 24 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 8, textAlign: 'center' },
   emptySubtitle: { fontSize: 14, color: '#94A3B8', textAlign: 'center', marginBottom: 32, lineHeight: 20 },
   ctaButton: { flexDirection: 'row-reverse', backgroundColor: COLORS.gray100, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },

@@ -69,10 +69,14 @@ export function AuthProvider({ children }) {
     });
 
     if (error) {
-      if (error.message.includes('Invalid login')) {
+      const msg = error.message || '';
+      if (msg.includes('Invalid login') || msg.includes('invalid')) {
         throw new Error('بيانات الدخول غير صحيحة');
       }
-      throw new Error(error.message);
+      if (msg.includes('Email not confirmed') || msg.includes('not confirmed')) {
+        throw new Error('البريد الإلكتروني غير مُؤَكَّد. يُرجى التحقق مِن البريد أَوَّلًا');
+      }
+      throw new Error(msg);
     }
 
     let profile = await fetchProfileWithRetry(data.user.id);
@@ -107,10 +111,10 @@ export function AuthProvider({ children }) {
     if (error) {
       const msg = error.message || '';
       if (msg.includes('already') || msg.includes('registered') || msg.includes('already been')) {
-        throw new Error('هذا البريد الإلكتروني مسجل بالفعل');
+        throw new Error('هَذَا الْبَرِيد الإِلِكْتُرُونِي مُسَجَّل بِالْفِعْل. سجِّل الدُّخُول بِدَلِيلًا');
       }
       if (msg.includes('rate') || msg.includes('limit')) {
-        throw new Error('لقد تجاوزت عدد المحاولات. يرجى المحاولة لاحقاً');
+        throw new Error('لَقَد تَجَاوَزْتَ عَدَد الْمُحَاوَلَات. يُرجَى الْمُحَاوَلَة لَاحِقًا');
       }
       throw new Error(msg);
     }
@@ -119,7 +123,11 @@ export function AuthProvider({ children }) {
       if (!data || !data.session) {
         return { emailConfirmed: false, email };
       }
-      throw new Error('فشل إنشاء الحساب');
+      throw new Error('فَشِلَ إِنْشَاء الْحِسَاب');
+    }
+
+    if (!data.user?.identities?.length && data.user?.role !== 'authenticated') {
+      throw new Error('هَذَا الْبَرِيد الإِلِكْتُرُونِي مُسَجَّل بِالْفِعْل. سجِّل الدُّخُول بِدَلِيلًا');
     }
 
     if (!data.session) {

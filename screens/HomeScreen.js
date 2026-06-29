@@ -13,7 +13,10 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { Heart, Clock, Tag } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
+import heartAnim from '../assets/wired-outline-20-love-heart-hover-heartbeat.json';
+import clockAnim from '../assets/wired-outline-45-clock-time-loop-oscillate.json';
+import saleAnim from '../assets/wired-outline-1339-sale-hover-pinch.json';
 import MainLayout from '../components/MainLayout';
 import ProductCard from '../components/ProductCard';
 import BundleCard from '../components/BundleCard';
@@ -31,10 +34,29 @@ import { useDirection } from '../hooks/useDirection';
 const { width } = Dimensions.get('window');
 const BANNER_W = width - 32;
 
+const searchAnim = require('../assets/wired-outline-19-magnifier-zoom-search-hover-spin.json');
+
 function SearchBar({ onPress, t }) {
+  const lottieRef = useRef(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      lottieRef.current?.reset();
+      lottieRef.current?.play();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <TouchableOpacity style={styles.searchBar} activeOpacity={0.8} onPress={onPress}>
-      <Feather name="search" size={18} color={COLORS.gray400} style={{ marginRight: 10 }} />
+      <LottieView
+        ref={lottieRef}
+        source={searchAnim}
+        style={styles.searchLottie}
+        autoPlay
+        loop={false}
+        resizeMode="cover"
+      />
       <Text style={styles.searchPlaceholder}>{t('home.searchPlaceholder')}</Text>
     </TouchableOpacity>
   );
@@ -213,10 +235,30 @@ function CategoryGrid({ categories, navigation, t }) {
 }
 
 function QuickActions({ navigation, t }) {
+  const heartRef = useRef(null);
+  const clockRef = useRef(null);
+  const saleRef = useRef(null);
+
+  useEffect(() => {
+    const heartInterval = setInterval(() => {
+      heartRef.current?.reset();
+      heartRef.current?.play();
+    }, 2000);
+    const clockInterval = setInterval(() => {
+      clockRef.current?.reset();
+      clockRef.current?.play();
+    }, 2000);
+    const saleInterval = setInterval(() => {
+      saleRef.current?.reset();
+      saleRef.current?.play();
+    }, 2000);
+    return () => { clearInterval(heartInterval); clearInterval(clockInterval); clearInterval(saleInterval); };
+  }, []);
+
   const actions = [
-    { key: 'wishlist', icon: Heart, label: t('wishlist.title') || 'المفضلة', screen: 'Wishlist', bg: '#FEE2E2', iconColor: '#DC2626' },
-    { key: 'recent', icon: Clock, label: t('recentlyViewed.title') || 'تم العرض مؤخراً', screen: 'RecentlyViewed', bg: '#DBEAFE', iconColor: '#2563EB' },
-    { key: 'offers', icon: Tag, label: t('offers.title') || 'العروض', screen: 'Offers', bg: '#FEF3C7', iconColor: '#D97706' },
+    { key: 'wishlist', label: t('wishlist.title') || 'المفضلة', screen: 'Wishlist', bg: '#FEF2F2', iconColor: '#DC2626' },
+    { key: 'recent', label: t('recentlyViewed.title') || 'تم العرض مؤخراً', screen: 'RecentlyViewed', bg: '#EFF6FF', iconColor: '#2563EB' },
+    { key: 'offers', label: t('offers.title') || 'العروض', screen: 'Offers', bg: '#FEF5D7', iconColor: '#D97706' },
   ];
 
   return (
@@ -230,7 +272,13 @@ function QuickActions({ navigation, t }) {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIconWrap, { backgroundColor: action.bg }]}>
-              <action.icon size={22} color={action.iconColor} />
+              {action.key === 'wishlist' ? (
+                <LottieView ref={heartRef} source={heartAnim} autoPlay={false} loop={false} style={{ width: 36, height: 36 }} />
+              ) : action.key === 'recent' ? (
+                <LottieView ref={clockRef} source={clockAnim} autoPlay={false} loop={false} style={{ width: 36, height: 36 }} />
+              ) : action.key === 'offers' ? (
+                <LottieView ref={saleRef} source={saleAnim} autoPlay={false} loop={false} style={{ width: 36, height: 36 }} />
+              ) : null}
             </View>
             <Text style={styles.quickActionLabel}>{action.label}</Text>
           </TouchableOpacity>
@@ -677,6 +725,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.gray200,
   },
   searchPlaceholder: { flex: 1, fontSize: 15, color: COLORS.textTertiary, textAlign: 'right', marginRight: 10 },
+  searchLottie: { width: 24, height: 24, marginRight: 10 },
 
   carouselContainer: { marginBottom: 16 },
   bannerCard: {

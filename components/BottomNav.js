@@ -1,17 +1,29 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, RADIUS, SHADOWS } from '../constants';
 import { useApp } from '../context/AppContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
+const avatarAnim = require('../assets/wired-outline-21-avatar-in-reveal.json');
+
 export default function BottomNav({ navigation, activeRoute }) {
   const insets = useSafeAreaInsets();
   const { cartCount } = useApp();
   const { t } = useTranslation();
   const dir = useDirection();
+  const lottieRef = useRef(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      lottieRef.current?.reset();
+      lottieRef.current?.play();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
   const NAV_ITEMS = [
     { route: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', label: t('nav.profile') },
     { route: 'Search', icon: 'search-outline', iconActive: 'search', label: t('nav.search') },
@@ -33,11 +45,22 @@ export default function BottomNav({ navigation, activeRoute }) {
             activeOpacity={0.7}
           >
             <View style={styles.dockIconWrapper}>
-              <Ionicons
-                name={isActive ? item.iconActive : item.icon}
-                size={24}
-                color={isActive ? COLORS.black : COLORS.gray400}
-              />
+              {item.route === 'Profile' ? (
+                <LottieView
+                  ref={lottieRef}
+                  source={avatarAnim}
+                  style={styles.lottieIcon}
+                  autoPlay={false}
+                  loop={false}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons
+                  name={isActive ? item.iconActive : item.icon}
+                  size={24}
+                  color={isActive ? COLORS.black : COLORS.gray400}
+                />
+              )}
               {isActive && <View style={styles.dockActiveDot} />}
               {badge > 0 && (
                 <View style={styles.dockBadge}>
@@ -65,6 +88,7 @@ const styles = StyleSheet.create({
   },
   dockItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
   dockIconWrapper: { position: 'relative', alignItems: 'center' },
+  lottieIcon: { width: 28, height: 28 },
   dockActiveDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.text, marginTop: 2 },
   dockBadge: {
     position: 'absolute', top: -4, left: -8,

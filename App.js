@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import SwipeBack from './components/SwipeBack';
+import ScreenTransition from './components/ScreenTransition';
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/auth/WelcomeScreen';
 import LoginScreen from './screens/auth/LoginScreen';
@@ -83,6 +84,7 @@ function AppInner() {
   const [currentScreen, setCurrentScreen] = useState('Splash');
   const [history, setHistory] = useState([]);
   const [routeParams, setRouteParams] = useState(null);
+  const [navDirection, setNavDirection] = useState('fade');
   const [authState, setAuthState] = useState({
     isAuthenticated: false,
     userName: 'علي',
@@ -112,6 +114,7 @@ function AppInner() {
   }, [currentScreen]);
 
   const navigate = (screen, params) => {
+    setNavDirection('push');
     setHistory((prev) => {
       const next = [...prev, currentScreen];
       historyRef.current = next;
@@ -122,6 +125,7 @@ function AppInner() {
   };
 
   const replace = (screen, params) => {
+    setNavDirection('fade');
     setRouteParams(params || null);
     setCurrentScreen(screen);
   };
@@ -132,6 +136,7 @@ function AppInner() {
     const prev = h[h.length - 1];
     const next = h.slice(0, h.length - 1);
     historyRef.current = next;
+    setNavDirection('pop');
     setHistory(next);
     setCurrentScreen(prev);
     return true;
@@ -140,6 +145,7 @@ function AppInner() {
   const reset = ({ index = 0, routes = [] }) => {
     const target = routes[index] || routes[0];
     if (target?.name) {
+      setNavDirection('fade');
       setHistory([]);
       setRouteParams(target.params || null);
       setCurrentScreen(target.name);
@@ -182,11 +188,13 @@ function AppInner() {
           disabled={noSwipeBackScreens.includes(currentScreen)}
           isNavigatingRef={isNavigatingRef}
         >
-          <ActiveScreen
-            navigation={navigation}
-            route={{ params: routeParams }}
-            authState={authState}
-          />
+          <ScreenTransition key={currentScreen} type={navDirection}>
+            <ActiveScreen
+              navigation={navigation}
+              route={{ params: routeParams }}
+              authState={authState}
+            />
+          </ScreenTransition>
         </SwipeBack>
       </View>
     </SafeAreaView>

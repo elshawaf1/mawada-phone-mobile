@@ -9,7 +9,14 @@ import {
   Alert,
   Animated,
   RefreshControl,
+  LayoutAnimation,
+  UIManager,
+  Platform,
 } from 'react-native';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { Ionicons } from '@expo/vector-icons';
 import { Bell, Package, Tag, Info, ChevronRight, CheckCheck, Trash2 } from 'lucide-react-native';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -29,7 +36,7 @@ const notifConfig = {
   system: { icon: Bell, bg: '#F3F4F6', color: COLORS.gray500 },
 };
 
-function SwipeableNotifCard({ notif, onMarkRead, onDelete, isFirst, onPress, t }) {
+function SwipeableNotifCard({ notif, onMarkRead, onDelete, isFirst, onPress, t, deleteAnim }) {
   const swipeRef = useRef(null);
 
   const renderRightActions = () => (
@@ -77,40 +84,42 @@ function SwipeableNotifCard({ notif, onMarkRead, onDelete, isFirst, onPress, t }
   };
 
   return (
-    <Swipeable
-      ref={swipeRef}
-      renderRightActions={renderRightActions}
-      renderLeftActions={renderLeftActions}
-      overshootRight={false}
-      overshootLeft={false}
-    >
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onLongPress={handleLongPress}
-        onPress={() => { if (!notif.isRead) onMarkRead(notif.id); }}
+    <Animated.View style={{ opacity: deleteAnim || 1, transform: [{ translateX: deleteAnim ? deleteAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 300] }) : 0 }] }}>
+      <Swipeable
+        ref={swipeRef}
+        renderRightActions={renderRightActions}
+        renderLeftActions={renderLeftActions}
+        overshootRight={false}
+        overshootLeft={false}
       >
-        <Animated.View style={[styles.notifCard, !notif.isRead && styles.notifCardUnread]}>
-          <View style={[styles.notifIcon, { backgroundColor: iconBg }]}>
-            <IconComp size={20} color={iconColor} />
-          </View>
-
-          <View style={styles.notifContent}>
-            <View style={styles.notifTopRow}>
-              {!notif.isRead && <View style={styles.unreadDot} />}
-              <Text style={styles.notifTime}>{formatTime(notif.createdAt, t)}</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onLongPress={handleLongPress}
+          onPress={() => { if (!notif.isRead) onMarkRead(notif.id); }}
+        >
+          <Animated.View style={[styles.notifCard, !notif.isRead && styles.notifCardUnread]}>
+            <View style={[styles.notifIcon, { backgroundColor: iconBg }]}>
+              <IconComp size={20} color={iconColor} />
             </View>
-            <Text style={styles.notifTitle} numberOfLines={1}>
-              {notif.titleAr || notif.title}
-            </Text>
-            <Text style={styles.notifBody} numberOfLines={2}>
-              {notif.bodyAr || notif.body}
-            </Text>
-          </View>
 
-          <Ionicons name="chevron-forward" size={16} color={COLORS.gray300} style={styles.chevron} />
-        </Animated.View>
-      </TouchableOpacity>
-    </Swipeable>
+            <View style={styles.notifContent}>
+              <View style={styles.notifTopRow}>
+                {!notif.isRead && <View style={styles.unreadDot} />}
+                <Text style={styles.notifTime}>{formatTime(notif.createdAt, t)}</Text>
+              </View>
+              <Text style={styles.notifTitle} numberOfLines={1}>
+                {notif.titleAr || notif.title}
+              </Text>
+              <Text style={styles.notifBody} numberOfLines={2}>
+                {notif.bodyAr || notif.body}
+              </Text>
+            </View>
+
+            <Ionicons name="chevron-forward" size={16} color={COLORS.gray300} style={styles.chevron} />
+          </Animated.View>
+        </TouchableOpacity>
+      </Swipeable>
+    </Animated.View>
   );
 }
 
@@ -178,6 +187,7 @@ export default function NotificationScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const fadeAnims = useRef([]);
+  const deleteAnims = useRef({});
 
   useEffect(() => {
     fetchNotifications();
@@ -236,8 +246,14 @@ export default function NotificationScreen({ navigation }) {
   }, [user?.id]);
 
   const deleteNotif = useCallback(async (id) => {
-    await supabase.from('notifications').delete().eq('id', id);
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    const anim = new Animated.Value(1);
+    deleteAnims.current[id] = anim;
+
+    Animated.timing(anim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      delete supabase.from('notifications').delete().eq('id', id);
+    });
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -302,6 +318,7 @@ export default function NotificationScreen({ navigation }) {
                   onDelete={deleteNotif}
                   onPress={() => {}}
                   t={t}
+                  deleteAnim={deleteAnims.current[notif.id]}
                 />
               ))}
             </View>
