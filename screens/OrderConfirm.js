@@ -10,8 +10,10 @@ import {
   Linking,
   Alert,
   Modal,
+  Animated,
+  Platform,
 } from 'react-native';
-import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -51,6 +53,22 @@ export default function OrderConfirmScreen({ navigation, route }) {
   const [paymentStatus, setPaymentStatus] = useState(order?.paymentStatus || 'PENDING');
   const [capturing, setCapturing] = useState(false);
   const paymentMethod = order?.paymentMethod || 'COD';
+
+  // Animated checkmark
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.spring(scaleAnim, { toValue: 1, friction: 4, tension: 60, useNativeDriver: true }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.08, duration: 1200, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        ])
+      ),
+    ]).start();
+  }, []);
 
   useEffect(() => {
     if (!order?.id) return;
@@ -163,9 +181,9 @@ export default function OrderConfirmScreen({ navigation, route }) {
             <AlertCircle size={40} color="#EF4444" strokeWidth={1.5} />
           </View>
         ) : (
-          <View style={[styles.iconWrap, styles.iconWrapSuccess]}>
+          <Animated.View style={[styles.iconWrap, styles.iconWrapSuccess, { transform: [{ scale: Animated.multiply(scaleAnim, pulseAnim) }] }]}>
             <CheckCircle size={40} color="#22C55E" strokeWidth={1.5} />
-          </View>
+          </Animated.View>
         )}
         <Text style={styles.headerTitle}>
           {paymentStatus === 'FAILED' ? t('orders.confirmFailedTitle') : t('orders.confirmSuccessTitle')}
@@ -180,10 +198,18 @@ export default function OrderConfirmScreen({ navigation, route }) {
                 : t('orders.confirmPendingSub')}
         </Text>
 
-        <TouchableOpacity style={styles.orderIdRow} onPress={handleShareOrder} activeOpacity={0.8}>
-          <Ionicons name="copy-outline" size={13} color="#38BDF8" />
-          <Text style={styles.orderIdText} selectable>{displayId}</Text>
-        </TouchableOpacity>
+        {/* Boarding-pass style Order ID */}
+        <View style={styles.boardingPass}>
+          <View style={styles.boardingPassLeft}>
+            <Text style={styles.boardingPassLabel}>{t('orders.orderNumber')}</Text>
+            <Text style={styles.boardingPassCode} selectable>{displayId}</Text>
+          </View>
+          <View style={styles.boardingPassDivider} />
+          <TouchableOpacity style={styles.boardingPassRight} onPress={handleShareOrder} activeOpacity={0.7}>
+            <Ionicons name="copy-outline" size={14} color="#38BDF8" />
+            <Text style={styles.boardingPassCopy}>نسخ</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.metaRow}>
           <View style={styles.metaTag}>
@@ -211,7 +237,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
                     step.done && styles.stepCircleDone,
                     step.current && styles.stepCircleActive,
                   ]}>
-                    {step.done ? <Check size={13} color="#FFF" strokeWidth={3} /> : step.current ? <View style={styles.stepInnerDot} /> : null}
+                    {step.done ? <Check size={13} color="#FFF" strokeWidth={3} /> : step.current ? <Animated.View style={[styles.stepInnerDot, { transform: [{ scale: pulseAnim }] }]} /> : null}
                   </View>
                   <Text style={[
                     styles.stepLabel,
@@ -306,7 +332,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Actions */}
+      {/* Actions — Split layout */}
       {paymentStatus === 'FAILED' ? (
         <>
           <TouchableOpacity style={styles.ctaPrimary} onPress={handleRetry} activeOpacity={0.85}>
@@ -319,15 +345,15 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </>
       ) : (
         <>
-          <TouchableOpacity style={styles.ctaPrimary} onPress={handleNavigateOrders} activeOpacity={0.85}>
-            <Ionicons name="location-outline" size={18} color="#FFF" />
-            <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.ctaScreenshot} onPress={handleScreenshot} activeOpacity={0.85} disabled={capturing}>
-            <Camera size={18} color="#0F172A" strokeWidth={2} />
-            <Text style={styles.ctaScreenshotText}>{t('orderConfirm.screenshotShare')}</Text>
-          </TouchableOpacity>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.ctaPrimaryFlex} onPress={handleNavigateOrders} activeOpacity={0.85}>
+              <Navigation size={16} color="#FFF" strokeWidth={2.5} />
+              <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.ctaIconOnly} onPress={handleScreenshot} activeOpacity={0.85} disabled={capturing}>
+              <Camera size={20} color="#64748B" strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={styles.textLink} onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })} activeOpacity={0.7}>
             <Text style={styles.textLinkText}>{t('orders.confirmHome')}</Text>
@@ -387,16 +413,31 @@ const styles = StyleSheet.create({
     color: '#64748B', fontSize: 13,
     textAlign: 'center', marginBottom: 16, lineHeight: 18,
   },
-  orderIdRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 20, paddingVertical: 7, paddingHorizontal: 14,
-    marginBottom: 12,
+
+  /* Boarding-pass style Order ID */
+  boardingPass: {
+    flexDirection: 'row-reverse', alignItems: 'center',
+    backgroundColor: '#F8FAFC', borderRadius: 14,
+    borderWidth: 1, borderColor: '#E2E8F0',
+    marginBottom: 14, overflow: 'hidden',
   },
-  orderIdText: {
-    color: '#38BDF8', fontSize: 14, fontWeight: '700',
-    fontFamily: 'monospace', letterSpacing: 0.5,
+  boardingPassLeft: { flex: 1, paddingVertical: 14, paddingHorizontal: 18 },
+  boardingPassLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', textAlign: 'right', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
+  boardingPassCode: {
+    color: '#0F172A', fontSize: 16, fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    letterSpacing: 1.2, textAlign: 'right',
   },
+  boardingPassDivider: {
+    width: 1, height: 40, backgroundColor: '#E2E8F0',
+    borderStyle: 'dashed',
+  },
+  boardingPassRight: {
+    paddingHorizontal: 18, paddingVertical: 14,
+    flexDirection: 'row-reverse', alignItems: 'center', gap: 4,
+  },
+  boardingPassCopy: { fontSize: 12, fontWeight: '600', color: '#38BDF8' },
+
   metaRow: {
     flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
   },
@@ -489,17 +530,24 @@ const styles = StyleSheet.create({
   addrPhoneText: { fontSize: 11, color: '#22C55E', fontWeight: '600' },
 
   /* ── Actions ── */
+  actionRow: {
+    flexDirection: 'row-reverse', gap: 10, marginBottom: 10,
+  },
+  ctaPrimaryFlex: {
+    flex: 1, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 14,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
+  },
   ctaPrimary: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 14, marginBottom: 10,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
   },
   ctaPrimaryText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  ctaScreenshot: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 13, marginBottom: 10,
-    borderWidth: 1.5, borderColor: '#E2E8F0',
+  ctaIconOnly: {
+    width: 50, height: 50, borderRadius: 16,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
   },
-  ctaScreenshotText: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
   textLink: { alignItems: 'center', paddingVertical: 12 },
   textLinkText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
   btnMargin: { marginBottom: 0 },

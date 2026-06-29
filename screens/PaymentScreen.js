@@ -11,8 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   AppState,
+  Animated,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
-import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield, ChevronDown, Zap } from 'lucide-react-native';
+
+if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Paymob, { PaymentStatus } from 'paymob-reactnative';
 import Button from '../components/Button';
@@ -82,6 +87,7 @@ export default function PaymentScreen({ navigation, route }) {
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [watchOrderId, setWatchOrderId] = useState(null);
@@ -597,18 +603,25 @@ export default function PaymentScreen({ navigation, route }) {
             return (
               <TouchableOpacity
                 key={method.id}
-                style={[styles.methodCard, isSelected && { borderColor: color, backgroundColor: bgColor }]}
-                onPress={() => setSelectedMethod(method.id)}
+                style={[
+                  styles.methodCard,
+                  isSelected && { borderColor: color, backgroundColor: bgColor },
+                  !isSelected && styles.methodCardIdle,
+                ]}
+                onPress={() => {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  setSelectedMethod(method.id);
+                }}
                 activeOpacity={0.7}
               >
                 <View style={[styles.methodIconWrap, { backgroundColor: isSelected ? color : '#F1F5F9' }]}>
-                  <Icon size={22} color={isSelected ? '#fff' : '#64748B'} />
+                  <Icon size={22} color={isSelected ? '#fff' : '#94A3B8'} />
                 </View>
                 <View style={styles.methodInfo}>
-                  <Text style={[styles.methodLabel, isSelected && { color }]}>{label}</Text>
-                  <Text style={styles.methodHint}>{hint}</Text>
+                  <Text style={[styles.methodLabel, isSelected && { color }, !isSelected && styles.methodLabelIdle]}>{label}</Text>
+                  <Text style={[styles.methodHint, !isSelected && styles.methodHintIdle]}>{hint}</Text>
                 </View>
-                <View style={[styles.radio, isSelected && { borderColor: color }]}>
+                <View style={[styles.radio, isSelected && { borderColor: color, backgroundColor: color + '15' }]}>
                   {isSelected && <View style={[styles.radioFill, { backgroundColor: color }]} />}
                 </View>
               </TouchableOpacity>
@@ -616,28 +629,49 @@ export default function PaymentScreen({ navigation, route }) {
           })}
         </View>
 
-        {/* Order Summary */}
+        {/* Order Summary — Expandable */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>{t('orders.total')}</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
-            <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
-          </View>
-          {discount > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={[styles.summaryValue, { color: '#16A34A' }]}>-{formatPrice(discount)} {t('common.egp')}</Text>
-              <Text style={styles.summaryLabel}>{t('common.discount')}</Text>
+          <TouchableOpacity
+            style={styles.summaryHeader}
+            onPress={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setSummaryExpanded(!summaryExpanded);
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.summaryHeaderRight}>
+              <Text style={styles.summaryTitle}>{t('orders.total')}</Text>
+              <Text style={styles.summaryTotalInline}>{formatPrice(total)} {t('common.egp')}</Text>
+            </View>
+            <Animated.View style={{ transform: [{ rotate: summaryExpanded ? '180deg' : '0deg' }] }}>
+              <ChevronDown size={18} color="#94A3B8" />
+            </Animated.View>
+          </TouchableOpacity>
+
+          {summaryExpanded && (
+            <View style={styles.summaryDetails}>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
+                <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
+              </View>
+              {discount > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryValue, { color: '#16A34A' }]}>-{formatPrice(discount)} {t('common.egp')}</Text>
+                  <Text style={styles.summaryLabel}>{t('common.discount')}</Text>
+                </View>
+              )}
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryValue}>{shippingCost > 0 ? `${formatPrice(shippingCost)} ${t('common.egp')}` : t('common.free')}</Text>
+                <Text style={styles.summaryLabel}>{t('common.shipping')}</Text>
+              </View>
+              <View style={[styles.summaryDivider, { marginTop: 12 }]} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
+                <Text style={styles.totalLabel}>{t('common.total')}</Text>
+              </View>
             </View>
           )}
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryValue}>{shippingCost > 0 ? `${formatPrice(shippingCost)} ${t('common.egp')}` : t('common.free')}</Text>
-            <Text style={styles.summaryLabel}>{t('common.shipping')}</Text>
-          </View>
-          <View style={styles.summaryDivider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
-            <Text style={styles.totalLabel}>{t('common.total')}</Text>
-          </View>
         </View>
 
         {/* Security Badge */}
@@ -653,13 +687,15 @@ export default function PaymentScreen({ navigation, route }) {
           </View>
         )}
 
-        <Button
-          title={t('payment.completeOrder')}
+        <TouchableOpacity
+          style={[styles.checkoutBtn, processing && { opacity: 0.6 }]}
           onPress={handleCheckout}
-          fullWidth
-          style={styles.checkoutButton}
+          activeOpacity={0.85}
           disabled={processing}
-        />
+        >
+          <Zap size={16} color="#FFF" fill="#FFF" />
+          <Text style={styles.checkoutBtnText}>{t('payment.completeOrder')}</Text>
+        </TouchableOpacity>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -805,13 +841,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E2E8F0',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
   },
+  methodCardIdle: {
+    opacity: 0.55,
+  },
   methodIconWrap: {
     width: 44, height: 44, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
   methodInfo: { flex: 1, alignItems: 'flex-end' },
   methodLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
+  methodLabelIdle: { color: '#94A3B8' },
   methodHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2 },
+  methodHintIdle: { color: '#CBD5E1' },
   radio: {
     width: 20, height: 20, borderRadius: 10,
     borderWidth: 2, borderColor: '#CBD5E1',
@@ -820,10 +861,18 @@ const styles = StyleSheet.create({
   radioFill: { width: 10, height: 10, borderRadius: 5 },
 
   summaryCard: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12,
+    backgroundColor: '#fff', borderRadius: 16, marginBottom: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    overflow: 'hidden',
   },
-  summaryTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12 },
+  summaryHeader: {
+    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    padding: 16,
+  },
+  summaryHeaderRight: { flex: 1, alignItems: 'flex-end' },
+  summaryTitle: { fontSize: 13, fontWeight: '600', color: '#94A3B8', textAlign: 'right', marginBottom: 2 },
+  summaryTotalInline: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'right', letterSpacing: -0.3 },
+  summaryDetails: { padding: 0, paddingHorizontal: 16, paddingBottom: 16 },
   summaryRow: {
     flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 6,
@@ -840,7 +889,12 @@ const styles = StyleSheet.create({
   },
   securityText: { fontSize: 12, color: '#94A3B8' },
 
-  checkoutButton: { marginBottom: 20 },
+  checkoutBtn: {
+    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 16, marginBottom: 20,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 4,
+  },
+  checkoutBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
 });
