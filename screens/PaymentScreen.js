@@ -100,6 +100,7 @@ export default function PaymentScreen({ navigation, route }) {
   const mountedRef = useRef(true);
   const orderDataRef = useRef(null);
   const pollingStarted = useRef(false);
+  const lastForegroundVerifyRef = useRef(0);
 
   useEffect(() => {
     fetchAddresses();
@@ -230,6 +231,9 @@ export default function PaymentScreen({ navigation, route }) {
     const prev = appStateRef.current;
     appStateRef.current = nextState;
     if (prev.match(/background|inactive/) && nextState === 'active') {
+      const now = Date.now();
+      if (now - lastForegroundVerifyRef.current < 3000) return;
+      lastForegroundVerifyRef.current = now;
       console.log('[Paymob] App returned to foreground — verifying payment');
       const od = orderDataRef.current;
       if (!navigatedRef.current && od?.orderId) {

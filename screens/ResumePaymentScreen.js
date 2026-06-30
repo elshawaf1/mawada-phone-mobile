@@ -47,6 +47,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
   const mountedRef = useRef(true);
   const orderDataRef = useRef(null);
   const pollingStarted = useRef(false);
+  const lastForegroundVerifyRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -64,6 +65,9 @@ export default function ResumePaymentScreen({ navigation, route }) {
     const prev = appStateRef.current;
     appStateRef.current = nextState;
     if (prev.match(/background|inactive/) && nextState === 'active') {
+      const now = Date.now();
+      if (now - lastForegroundVerifyRef.current < 3000) return;
+      lastForegroundVerifyRef.current = now;
       const od = orderDataRef.current;
       if (!navigatedRef.current && od?.orderId) {
         const serverStatus = await verifyWithServer(od.orderId);

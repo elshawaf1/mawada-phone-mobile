@@ -79,6 +79,7 @@ export default function PaymobPaymentScreen({ navigation, route }) {
   const appState = useRef(AppState.currentState);
   const mountedRef = useRef(true);
   const navigatedRef = useRef(false);
+  const lastForegroundVerifyRef = useRef(0);
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -238,6 +239,9 @@ export default function PaymobPaymentScreen({ navigation, route }) {
 
     if (prev === 'active' && nextState === 'background') return;
     if (prev.match(/background|inactive/) && nextState === 'active') {
+      const now = Date.now();
+      if (now - lastForegroundVerifyRef.current < 3000) return;
+      lastForegroundVerifyRef.current = now;
       console.log('[Paymob] App returned to foreground — checking order status');
       if (!sdkCallbackFired.current && !navigatedRef.current) {
         startPolling();
