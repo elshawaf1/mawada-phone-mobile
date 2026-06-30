@@ -65,13 +65,6 @@ const PAYMENT_METHODS = [
   },
 ];
 
-const AVAILABLE_PAYMENT_METHODS = PAYMENT_METHODS.filter(
-  (m) => {
-    const id = process.env[m.integrationIdKey];
-    return id && id !== '0' && id !== 'XXXX';
-  }
-);
-
 const StepIndicator = ({ step, total }) => (
   <View style={styles.stepRow}>
     {Array.from({ length: total }, (_, i) => (
@@ -391,7 +384,7 @@ export default function PaymentScreen({ navigation, route }) {
       return;
     }
 
-    const method = AVAILABLE_PAYMENT_METHODS.find(m => m.id === selectedMethod);
+    const method = PAYMENT_METHODS.find(m => m.id === selectedMethod);
     if (!method) {
       Alert.alert(t('common.error'), t('payment.choosePayment'));
       return;
@@ -614,7 +607,7 @@ export default function PaymentScreen({ navigation, route }) {
         </View>
 
         <View style={styles.methodsWrap}>
-          {AVAILABLE_PAYMENT_METHODS.map((method) => {
+          {PAYMENT_METHODS.map((method) => {
             const isSelected = selectedMethod === method.id;
             const { Icon, color, bgColor } = method;
             const label = method.label ? method.label : t(method.labelKey);
