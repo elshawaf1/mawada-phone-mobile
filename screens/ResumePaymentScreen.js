@@ -253,8 +253,9 @@ export default function ResumePaymentScreen({ navigation, route }) {
             ? 'EXPO_PUBLIC_PAYMOB_VALU_INTEGRATION_ID'
             : null;
 
-      const paymentMethodIds = isOnline && integrationIdKey
-        ? [parseInt(process.env[integrationIdKey])]
+      const rawIntegrationId = integrationIdKey ? process.env[integrationIdKey] : null;
+      const paymentMethodIds = isOnline && integrationIdKey && rawIntegrationId && rawIntegrationId !== '0' && rawIntegrationId !== 'XXXX'
+        ? [parseInt(rawIntegrationId)]
         : [];
 
       const edgeBody = {
