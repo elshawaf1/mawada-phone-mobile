@@ -199,6 +199,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
 
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 3000);
+
     const checkSession = async () => {
       try {
         await clearStaleAuthData();
@@ -249,6 +253,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimer);
       subscription?.unsubscribe();
     };
   }, []);

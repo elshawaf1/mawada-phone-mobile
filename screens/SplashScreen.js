@@ -8,6 +8,7 @@ export default function SplashScreen({ navigation }) {
   const { user, loading } = useAuth();
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const navigated = useRef(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -23,10 +24,15 @@ export default function SplashScreen({ navigation }) {
         useNativeDriver: true,
       }),
     ]).start();
+  }, []);
 
+  useEffect(() => {
     if (loading) return;
+    if (navigated.current) return;
 
     const timer = setTimeout(() => {
+      if (navigated.current) return;
+      navigated.current = true;
       if (user) {
         navigation.replace('Home');
       } else {
