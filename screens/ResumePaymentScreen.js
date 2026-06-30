@@ -20,9 +20,11 @@ import { supabase, supabaseUrl } from '../services/supabase';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
 
-const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || '';
+const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 const POLL_INTERVAL = 3000;
 const POLL_MAX_ATTEMPTS = 20;
+const CARD_INTEGRATION_ID = process.env.EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID || '5252066';
+const WALLET_INTEGRATION_ID = process.env.EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID || '5744962';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -245,16 +247,14 @@ export default function ResumePaymentScreen({ navigation, route }) {
 
       const isOnline = order.paymentMethod !== 'COD';
 
-      const integrationIdKey = order.paymentMethod === 'VISA'
-        ? 'EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID'
+      const integrationId = order.paymentMethod === 'VISA'
+        ? CARD_INTEGRATION_ID
         : order.paymentMethod === 'WALLET'
-          ? 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID'
-          : order.paymentMethod === 'VALU'
-            ? 'EXPO_PUBLIC_PAYMOB_VALU_INTEGRATION_ID'
-            : null;
+          ? WALLET_INTEGRATION_ID
+          : null;
 
-      const paymentMethodIds = isOnline && integrationIdKey
-        ? [parseInt(process.env[integrationIdKey])]
+      const paymentMethodIds = isOnline && integrationId
+        ? [parseInt(integrationId)]
         : [];
 
       const edgeBody = {

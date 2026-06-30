@@ -29,9 +29,11 @@ import { db } from '../services/api';
 import { COLORS } from '../constants';
 import { supabase, supabaseUrl } from '../services/supabase';
 
-const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || '';
+const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 const POLL_INTERVAL = 3000;
 const POLL_MAX_ATTEMPTS = 20;
+const CARD_INTEGRATION_ID = process.env.EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID || '5252066';
+const WALLET_INTEGRATION_ID = process.env.EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID || '5744962';
 
 const PAYMENT_METHODS = [
   {
@@ -392,7 +394,7 @@ export default function PaymentScreen({ navigation, route }) {
 
     const isOnline = method.type !== 'COD';
     if (isOnline) {
-      const integrationId = process.env[method.integrationIdKey];
+      const integrationId = method.id === 'card' ? CARD_INTEGRATION_ID : WALLET_INTEGRATION_ID;
       if (!integrationId) {
         Alert.alert(t('common.error'), t('payment.methodUnavailable'));
         return;
@@ -406,7 +408,8 @@ export default function PaymentScreen({ navigation, route }) {
       const token = session?.access_token || '';
       const idempotencyKey = Date.now().toString(36) + Math.random().toString(36).slice(2);
 
-      const paymentMethodIds = isOnline ? [parseInt(process.env[method.integrationIdKey])] : [];
+      const integrationId = method.id === 'card' ? CARD_INTEGRATION_ID : WALLET_INTEGRATION_ID;
+      const paymentMethodIds = isOnline && integrationId ? [parseInt(integrationId)] : [];
 
       const edgeBody = {
         idempotencyKey,
