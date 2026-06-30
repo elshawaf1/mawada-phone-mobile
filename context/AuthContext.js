@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, clearStaleAuthData } from '../services/supabase';
 import { savePushTokenForUser, removePushTokenForUser } from '../services/push';
 
@@ -19,6 +19,7 @@ async function fetchProfile(userId) {
 }
 
 async function fetchProfileWithRetry(userId, retries = 3) {
+  if (!userId) return null;
   for (let i = 0; i < retries; i++) {
     const profile = await fetchProfile(userId);
     if (profile) return profile;
@@ -46,136 +47,141 @@ async function createProfile(userId, name, email, phone) {
   return data;
 }
 
-async function waitForProfile(userId, maxAttempts = 10) {
-  for (let i = 0; i < maxAttempts; i++) {
-    const profile = await fetchProfile(userId);
-    if (profile) return profile;
-    await new Promise(r => setTimeout(r, 500));
-  }
-  return null;
-}
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const authInProgress = useRef(false);
+  const lastFetchedUserId = useRef(null);
+  const sessionChecked = useRef(false);
 
   const login = useCallback(async (identifier, password) => {
-    const isEmail = identifier.includes('@');
-    const authPayload = isEmail ? { email: identifier } : { phone: identifier };
+    authInProgress.current = true;
+    try {
+      const isEmail = identifier.includes('@');
+      const authPayload = isEmail ? { email: identifier } : { phone: identifier };
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      ...authPayload,
-      password,
-    });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        ...authPayload,
+        password,
+      });
 
-    if (error) {
-      const msg = error.message || '';
-      if (msg.includes('Invalid login') || msg.includes('invalid')) {
-        throw new Error('بيانات الدخول غير صحيحة');
+      if (error) {
+        const msg = error.message || '';
+        if (msg.includes('Invalid login') || msg.includes('invalid')) {
+          throw new Error('بيانات الدخول غير صحيحة');
+        }
+        if (msg.includes('Email not confirmed') || msg.includes('not confirmed')) {
+          throw new Error('البريد الإلكتروني غير مُؤَكَّد. يُرجى التحقق مِن البريد أَوَّلًا');
+        }
+        throw new Error(msg);
       }
-      if (msg.includes('Email not confirmed') || msg.includes('not confirmed')) {
-        throw new Error('البريد الإلكتروني غير مُؤَكَّد. يُرجى التحقق مِن البريد أَوَّلًا');
-      }
-      throw new Error(msg);
-    }
 
-    let profile = await fetchProfileWithRetry(data.user.id);
+      let profile = await fetchProfileWithRetry(data.user.id);
 
-    if (!profile) {
-      profile = await createProfile(
-        data.user.id,
-        data.user.user_metadata?.name,
-        data.user.email,
-        data.user.user_metadata?.phone
-      );
-    }
-
-    if (!profile) {
-      throw new Error('فشل في تحميل بيانات حسابك. حاول مرة أخرى');
-    }
-
-    setUser(profile);
-    savePushTokenForUser(profile.id);
-    return profile;
-  }, []);
-
-  const register = useCallback(async (name, email, phone, password) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, phone },
-      },
-    });
-
-    if (error) {
-      const msg = error.message || '';
-      if (msg.includes('already') || msg.includes('registered') || msg.includes('already been')) {
-        throw new Error('هَذَا الْبَرِيد الإِلِكْتُرُونِي مُسَجَّل بِالْفِعْل. سجِّل الدُّخُول بِدَلِيلًا');
-      }
-      if (msg.includes('rate') || msg.includes('limit')) {
-        throw new Error('لَقَد تَجَاوَزْتَ عَدَد الْمُحَاوَلَات. يُرجَى الْمُحَاوَلَة لَاحِقًا');
-      }
-      throw new Error(msg);
-    }
-
-    if (!data || !data.user) {
-      if (!data || !data.session) {
-        return { emailConfirmed: false, email };
-      }
-      throw new Error('فَشِلَ إِنْشَاء الْحِسَاب');
-    }
-
-    if (!data.user?.identities?.length && data.user?.role !== 'authenticated') {
-      throw new Error('هَذَا الْبَرِيد الإِلِكْتُرُونِي مُسَجَّل بِالْفِعْل. سجِّل الدُّخُول بِدَلِيلًا');
-    }
-
-    if (!data.session) {
-      return { emailConfirmed: false, email };
-    }
-
-    let profile = await waitForProfile(data.user.id);
-
-    if (!profile) {
-      profile = await createProfile(data.user.id, name, email, phone);
-    }
-
-    if (!profile) {
-      throw new Error('فشل إنشاء الحساب. حاول مرة أخرى');
-    }
-
-    setUser(profile);
-    savePushTokenForUser(profile.id);
-    return profile;
-  }, []);
-
-  const verifyEmailOtp = useCallback(async (email, token, type = 'signup', profileData = {}) => {
-    const { data, error } = await supabase.auth.verifyOtp({ email, token, type });
-    if (error) {
-      if (error.message.includes('expired') || error.message.includes('expired')) {
-        throw new Error('otpExpired');
-      }
-      if (error.message.includes('invalid') || error.message.includes('Token') || error.message.includes('token')) {
-        throw new Error('otpInvalid');
-      }
-      throw error;
-    }
-
-    if (type === 'signup' && data.session?.user) {
-      const { name, phone } = profileData;
-      let profile = await waitForProfile(data.session.user.id);
       if (!profile) {
-        profile = await createProfile(data.session.user.id, name, email, phone);
+        profile = await createProfile(
+          data.user.id,
+          data.user.user_metadata?.name,
+          data.user.email,
+          data.user.user_metadata?.phone
+        );
       }
+
       if (!profile) {
-        throw new Error('فشل إنشاء الحساب');
+        throw new Error('فشل في تحميل بيانات حسابك. حاول مرة أخرى');
       }
+
+      lastFetchedUserId.current = profile.id;
       setUser(profile);
       savePushTokenForUser(profile.id);
       return profile;
+    } finally {
+      authInProgress.current = false;
     }
+  }, []);
 
-    return data;
+  const register = useCallback(async (name, email, phone, password) => {
+    authInProgress.current = true;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name, phone },
+        },
+      });
+
+      if (error) {
+        const msg = error.message || '';
+        if (msg.includes('already') || msg.includes('registered') || msg.includes('already been')) {
+          throw new Error('هَذَا الْبَرِيد الإِلِكْتُرُونِي مُسَجَّل بِالْفِعْل. سجِّل الدُّخُول بِدَلِيلًا');
+        }
+        if (msg.includes('rate') || msg.includes('limit')) {
+          throw new Error('لَقَد تَجَاوَزْتَ عَدَد الْمُحَاوَلَات. يُرجَى الْمُحَاوَلَة لَاحِقًا');
+        }
+        throw new Error(msg);
+      }
+
+      if (!data || !data.user) {
+        if (!data || !data.session) {
+          return { emailConfirmed: false, email };
+        }
+        throw new Error('فَشِلَ إِنْشَاء الْحِسَاب');
+      }
+
+      if (!data.user?.identities?.length && data.user?.role !== 'authenticated') {
+        throw new Error('هَذَا الْبَرِيد الإِلِكْتُرُونِي مُسَجَّل بِالْفِعْل. سجِّل الدُّخُول بِدَلِيلًا');
+      }
+
+      if (!data.session) {
+        return { emailConfirmed: false, email };
+      }
+
+      let profile = await createProfile(data.user.id, name, email, phone);
+
+      if (!profile) {
+        throw new Error('فشل إنشاء الحساب. حاول مرة أخرى');
+      }
+
+      lastFetchedUserId.current = profile.id;
+      setUser(profile);
+      savePushTokenForUser(profile.id);
+      return profile;
+    } finally {
+      authInProgress.current = false;
+    }
+  }, []);
+
+  const verifyEmailOtp = useCallback(async (email, token, type = 'signup', profileData = {}) => {
+    authInProgress.current = true;
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ email, token, type });
+      if (error) {
+        if (error.message.includes('expired') || error.message.includes('expired')) {
+          throw new Error('otpExpired');
+        }
+        if (error.message.includes('invalid') || error.message.includes('Token') || error.message.includes('token')) {
+          throw new Error('otpInvalid');
+        }
+        throw error;
+      }
+
+      if (type === 'signup' && data.session?.user) {
+        const { name, phone } = profileData;
+        let profile = await createProfile(data.session.user.id, name, email, phone);
+        if (!profile) {
+          throw new Error('فشل إنشاء الحساب');
+        }
+        lastFetchedUserId.current = profile.id;
+        setUser(profile);
+        savePushTokenForUser(profile.id);
+        return profile;
+      }
+
+      return data;
+    } finally {
+      authInProgress.current = false;
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -208,12 +214,16 @@ export function AuthProvider({ children }) {
 
         if (session?.user) {
           const profile = await fetchProfileWithRetry(session.user.id);
-          if (!cancelled) setUser(profile);
+          if (!cancelled) {
+            setUser(profile);
+            if (profile) lastFetchedUserId.current = profile.id;
+          }
           if (profile) savePushTokenForUser(profile.id);
         }
       } catch (e) {
         console.warn('[Auth] Session check failed:', e.message);
       }
+      sessionChecked.current = true;
       if (!cancelled) setLoading(false);
     };
 
@@ -221,12 +231,17 @@ export function AuthProvider({ children }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (authInProgress.current) return;
+
         if (event === 'SIGNED_OUT' || !session) {
           if (!cancelled) setUser(null);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+          if (event === 'INITIAL_SESSION' && sessionChecked.current) return;
           if (session?.user) {
+            if (lastFetchedUserId.current === session.user.id) return;
             const profile = await fetchProfileWithRetry(session.user.id);
             if (!cancelled) setUser(profile);
+            if (profile) lastFetchedUserId.current = profile.id;
           }
         }
       }

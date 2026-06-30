@@ -24,6 +24,8 @@ export default function SplashScreen({ navigation }) {
       }),
     ]).start();
 
+    if (loading) return;
+
     const timer = setTimeout(() => {
       if (user) {
         navigation.replace('Home');
