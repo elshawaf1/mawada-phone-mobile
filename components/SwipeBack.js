@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -8,11 +8,11 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const EDGE_WIDTH = 25;
 const THRESHOLD = 80;
 
 export default function SwipeBack({ children, navigation, canGoBack = true, disabled = false, isNavigatingRef }) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const translateX = useSharedValue(0);
   const goBackRef = useRef(navigation.goBack);
   goBackRef.current = navigation.goBack;

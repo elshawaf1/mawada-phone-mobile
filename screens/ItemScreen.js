@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Animated,
   Dimensions,
   StatusBar,
   ActivityIndicator,
@@ -14,6 +15,7 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ShoppingCart, Star } from 'lucide-react-native';
@@ -29,9 +31,6 @@ import { supabase } from '../services/supabase';
 import { db } from '../services/api';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-
-const { width } = Dimensions.get('window');
 
 function StarRating({ rating, size = 14, spacing = 2 }) {
   return (
@@ -84,12 +83,12 @@ export default function ItemScreen({ navigation, route }) {
   const { user } = useAuth();
   const { t, locale } = useTranslation();
   const dir = useDirection();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const productId = route?.params?.productId;
   const [product, setProduct] = useState(null);
   const [specs, setSpecs] = useState({});
   const [variants, setVariants] = useState([]);
   const [images, setImages] = useState([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -102,15 +101,9 @@ export default function ItemScreen({ navigation, route }) {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addedMap, setAddedMap] = useState({});
 
-  const doubleTapGesture = useMemo(
-    () =>
-      Gesture.Tap()
-        .numberOfTaps(2)
-        .onEnd(() => {
-          toggleFavorite(product, user?.id);
-        }),
-    [product, user?.id]
-  );
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const CAROUSEL_WIDTH = Math.min(SCREEN_WIDTH - 32, 600);
+  const CAROUSEL_ITEM_WIDTH = CAROUSEL_WIDTH;
 
   useEffect(() => {
     if (productId) {
@@ -364,52 +357,75 @@ export default function ItemScreen({ navigation, route }) {
       />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.imageCard}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+        <View style={[styles.imageCard, { width: CAROUSEL_WIDTH, alignSelf: 'center' }]}>
           {images.length > 0 ? (
             <View>
-              <FlatList
+              <Animated.FlatList
                 data={images}
                 horizontal
+                pagingEnabled
                 showsHorizontalScrollIndicator={false}
-                snapToInterval={width + 12}
-                snapToAlignment="start"
-                decelerationRate={0.88}
-                onMomentumScrollEnd={(e) => {
-                  const index = Math.round(e.nativeEvent.contentOffset.x / (width + 12));
-                  setSelectedImageIndex(index);
-                }}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                  { useNativeDriver: false }
+                )}
                 scrollEventThrottle={16}
                 contentContainerStyle={{ paddingHorizontal: 0 }}
                 keyExtractor={(item, i) => item.id || `img-${i}`}
+                getItemLayout={(_, index) => ({
+                  length: CAROUSEL_ITEM_WIDTH,
+                  offset: CAROUSEL_ITEM_WIDTH * index,
+                  index,
+                })}
                 renderItem={({ item }) => (
-                  <View style={{ width, paddingHorizontal: 6 }}>
-                    <GestureDetector gesture={doubleTapGesture}>
+                  <View style={{ width: CAROUSEL_ITEM_WIDTH, paddingHorizontal: 6 }}>
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onLongPress={() => toggleFavorite(product, user?.id)}
+                    >
                       <View style={styles.imageSlide}>
                         <Image
                           source={{ uri: item.url }}
-                          style={styles.navMainImage}
+                          style={[styles.navMainImage, { width: CAROUSEL_ITEM_WIDTH - 12, height: (CAROUSEL_ITEM_WIDTH - 12) * 0.75 }]}
                           resizeMode="contain"
                         />
                       </View>
-                    </GestureDetector>
+                    </TouchableOpacity>
                   </View>
                 )}
               />
 
               {images.length > 1 && (
                 <View style={styles.navDots}>
-                  {images.map((_, i) => (
-                    <View
-                      key={i}
-                      style={[styles.navDot, selectedImageIndex === i && styles.navDotActive]}
-                    />
-                  ))}
+                  {images.map((_, i) => {
+                    const inputRange = [
+                      (i - 1) * CAROUSEL_ITEM_WIDTH,
+                      i * CAROUSEL_ITEM_WIDTH,
+                      (i + 1) * CAROUSEL_ITEM_WIDTH,
+                    ];
+                    const dotWidth = scrollX.interpolate({
+                      inputRange,
+                      outputRange: [7, 18, 7],
+                      extrapolate: 'clamp',
+                    });
+                    const dotOpacity = scrollX.interpolate({
+                      inputRange,
+                      outputRange: [0.4, 1, 0.4],
+                      extrapolate: 'clamp',
+                    });
+                    return (
+                      <Animated.View
+                        key={i}
+                        style={[styles.navDot, { width: dotWidth, opacity: dotOpacity }]}
+                      />
+                    );
+                  })}
                 </View>
               )}
             </View>
           ) : (
-            <View style={styles.navEmpty}>
+            <View style={[styles.navEmpty, { width: CAROUSEL_WIDTH }]}>
               <Ionicons name="phone-portrait-outline" size={80} color={COLORS.gray200} />
             </View>
           )}
@@ -712,20 +728,20 @@ const styles = StyleSheet.create({
   backBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: RADIUS.lg },
   backBtnText: { color: COLORS.white, fontWeight: FONT_WEIGHTS.bold },
 
-  scroll: { paddingBottom: 120 },
+  scroll: { paddingBottom: 120, maxWidth: 700, alignSelf: 'center', width: '100%' },
 
   bundleSection: { paddingHorizontal: 16, marginTop: 16 },
   relatedSection: { marginTop: 24 },
 
   imageCard: {
-    backgroundColor: COLORS.gray50, marginHorizontal: 16, marginTop: 16,
+    backgroundColor: COLORS.gray50, marginTop: 16,
     borderRadius: 24, overflow: 'hidden',
   },
   imageSlide: {
     backgroundColor: COLORS.gray50,
     borderRadius: 18, overflow: 'hidden',
   },
-  navMainImage: { width: '100%', height: 360 },
+  navMainImage: { width: '100%' },
   navDots: {
     position: 'absolute', bottom: 14, right: 0, left: 0,
     flexDirection: 'row-reverse', justifyContent: 'center', gap: 6,
@@ -734,12 +750,7 @@ const styles = StyleSheet.create({
     width: 7, height: 7, borderRadius: 3.5,
     backgroundColor: COLORS.gray300,
   },
-  navDotActive: {
-    backgroundColor: COLORS.black, width: 18, borderRadius: 3.5,
-  },
-  navEmpty: {
-    height: 360, justifyContent: 'center', alignItems: 'center',
-  },
+  navEmpty: { justifyContent: 'center', alignItems: 'center' },
 
   infoSection: { paddingHorizontal: 16, marginTop: 20 },
   ratingRow: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 10 },

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList,
   ActivityIndicator, StatusBar, RefreshControl,
-  Keyboard, Image,
+  Keyboard, Image, useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,14 +11,14 @@ import ProductCard from '../components/ProductCard';
 import { SearchSkeleton } from '../components/SearchSkeleton';
 import FilterSheet from '../components/FilterSheet';
 import PriceRangeModal from '../components/PriceRangeModal';
-import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS, SCREEN } from '../constants';
+import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
+import { useResponsive } from '../hooks/useResponsive';
 
-const ITEM_WIDTH = (SCREEN.width - 48) / 2;
 const PAGE_SIZE = 20;
 const RECENT_KEY = 'recentSearches';
 const MAX_RECENT = 10;
@@ -61,6 +61,7 @@ export default function SearchScreen({ navigation, route }) {
   const dir = useDirection();
   const { addToCart, removeFromCart, isInCart, isFavorite, toggleFavorite } = useApp();
   const { user } = useAuth();
+  const { width: SCREEN_WIDTH, numColumns, contentMaxWidth } = useResponsive();
   const inputRef = useRef(null);
   const initialQuery = route?.params?.q ?? '';
   const initialBrandId = route?.params?.brandId ?? null;
@@ -310,9 +311,10 @@ export default function SearchScreen({ navigation, route }) {
     : null;
 
   const renderProduct = useCallback(({ item }) => (
-    <View style={styles.productWrap}>
+    <View style={[styles.productWrap, { width: (SCREEN_WIDTH - 48) / numColumns }]}>
       <ProductCard
         item={item}
+        numColumns={numColumns}
         onPress={() => navigation.navigate('Item', { productId: item.id })}
         onAddToCart={() => handleAddToCart(item)}
         inCart={isInCart(item.id)}
@@ -321,7 +323,7 @@ export default function SearchScreen({ navigation, route }) {
         onToggleFavorite={() => toggleFavorite(item, user?.id)}
       />
     </View>
-  ), [addedMap, isInCart, isFavorite, user]);
+  ), [addedMap, isInCart, isFavorite, user, numColumns, SCREEN_WIDTH]);
 
   const renderFooter = () => {
     if (!hasSearched || !searchQuery.trim()) return null;
@@ -520,9 +522,9 @@ export default function SearchScreen({ navigation, route }) {
             data={results}
             renderItem={renderProduct}
             keyExtractor={(item) => item.id}
-            numColumns={2}
+            numColumns={numColumns}
             columnWrapperStyle={styles.columnWrap}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { maxWidth: contentMaxWidth, alignSelf: 'center' }]}
             showsVerticalScrollIndicator={false}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
@@ -653,7 +655,7 @@ const styles = StyleSheet.create({
   columnWrap: { justifyContent: 'space-between', marginBottom: 12 },
 
   /* Product card wrapper */
-  productWrap: { width: ITEM_WIDTH, position: 'relative' },
+  productWrap: { position: 'relative' },
 
   /* Loading more */
   loadingMore: { paddingVertical: 20, alignItems: 'center' },
@@ -697,7 +699,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: RADIUS.full, backgroundColor: COLORS.white,
     borderWidth: 1, borderColor: COLORS.gray200,
-    maxWidth: SCREEN.width * 0.7,
   },
   recentChipText: { fontSize: FONT_SIZES.sm, color: COLORS.gray600, fontWeight: FONT_WEIGHTS.medium },
   popularChip: {
@@ -712,7 +713,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 10,
   },
   catCard: {
-    width: (SCREEN.width - 52) / 3,
+    flexBasis: '30%',
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
     paddingVertical: 14, paddingHorizontal: 8,

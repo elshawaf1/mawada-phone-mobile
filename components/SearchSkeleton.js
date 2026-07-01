@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated, Dimensions } from 'react-native';
-import { COLORS, RADIUS, SCREEN } from '../constants';
-
-const CARD_W = (SCREEN.width - 48) / 2;
+import { StyleSheet, View, Animated, useWindowDimensions } from 'react-native';
+import { COLORS, RADIUS } from '../constants';
 
 function ShimmerBlock({ style }) {
   const opacity = useRef(new Animated.Value(0.3)).current;
@@ -21,9 +19,9 @@ function ShimmerBlock({ style }) {
   return <Animated.View style={[style, { opacity, backgroundColor: COLORS.gray200 }]} />;
 }
 
-function SkeletonCard() {
+function SkeletonCard({ cardWidth }) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { width: cardWidth }]}>
       <ShimmerBlock style={styles.image} />
       <View style={styles.info}>
         <ShimmerBlock style={styles.brandLine} />
@@ -34,13 +32,15 @@ function SkeletonCard() {
   );
 }
 
-export function ProductGridSkeleton({ count = 6 }) {
+export function ProductGridSkeleton({ count = 6, numColumns = 2 }) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const CARD_W = (SCREEN_WIDTH - 48) / numColumns;
   const rows = [];
-  for (let i = 0; i < count; i += 2) {
+  for (let i = 0; i < count; i += numColumns) {
     rows.push(
       <View key={i} style={styles.row}>
-        <SkeletonCard />
-        {i + 1 < count && <SkeletonCard />}
+        <SkeletonCard cardWidth={CARD_W} />
+        {i + 1 < count && <SkeletonCard cardWidth={CARD_W} />}
       </View>
     );
   }
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   grid: { gap: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   card: {
-    width: CARD_W, borderRadius: 24, overflow: 'hidden',
+    borderRadius: 24, overflow: 'hidden',
     backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.gray100,
   },
   image: { height: 180, backgroundColor: COLORS.gray200 },

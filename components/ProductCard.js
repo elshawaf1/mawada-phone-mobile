@@ -1,11 +1,9 @@
 import React, { useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, Animated } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Animated, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SCREEN, SHADOWS } from '../constants';
+import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
-
-const CARD_W = (SCREEN.width - 24) / 2;
 
 function formatPrice(n) {
   return Number(n || 0).toLocaleString();
@@ -20,8 +18,12 @@ export default function ProductCard({
   wide = false,
   isFavorite,
   onToggleFavorite,
+  numColumns = 2,
+  cardWidth,
 }) {
   const { t } = useTranslation();
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const CARD_W = cardWidth || (SCREEN_WIDTH - 24) / numColumns;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const heartScale = useRef(new Animated.Value(1)).current;
   const cartScale = useRef(new Animated.Value(1)).current;
@@ -67,7 +69,7 @@ export default function ProductCard({
     : `${formatPrice(price)} ${t('common.currency')}`;
 
   return (
-    <Animated.View style={[styles.cardOuter, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[styles.cardOuter, { width: CARD_W, transform: [{ scale: scaleAnim }] }]}>
       <TouchableOpacity
         style={styles.card}
         activeOpacity={1}
@@ -75,7 +77,7 @@ export default function ProductCard({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
-        <View style={styles.imageZone}>
+        <View style={[styles.imageZone, { height: CARD_W }]}>
           {primaryImage ? (
             <Image source={{ uri: primaryImage }} style={styles.image} resizeMode="contain" />
           ) : (
@@ -153,7 +155,6 @@ export default function ProductCard({
 
 const styles = StyleSheet.create({
   cardOuter: {
-    width: CARD_W,
     marginBottom: 10,
   },
   card: {
@@ -168,7 +169,6 @@ const styles = StyleSheet.create({
   },
 
   imageZone: {
-    height: CARD_W,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F7F7F7',

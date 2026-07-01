@@ -11,6 +11,7 @@ import {
   ScrollView,
   Animated,
   RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
@@ -31,9 +32,7 @@ import { db } from '../services/api';
 import { setBadgeCountAsync } from '../services/push';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
-
-const { width } = Dimensions.get('window');
-const BANNER_W = width - 32;
+import { useResponsive } from '../hooks/useResponsive';
 
 const searchAnim = require('../assets/wired-outline-19-magnifier-zoom-search-hover-spin.json');
 
@@ -63,7 +62,9 @@ function SearchBar({ onPress, t }) {
   );
 }
 
-function HeroCarousel({ banners, navigation, t }) {
+function HeroCarousel({ banners, navigation, t, bannerWidth }) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const BANNER_W = bannerWidth || SCREEN_WIDTH - 32;
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (!banners || banners.length === 0) return null;
@@ -83,9 +84,14 @@ function HeroCarousel({ banners, navigation, t }) {
         onMomentumScrollEnd={handleScrollEnd}
         scrollEventThrottle={16}
         decelerationRate="fast"
+        getItemLayout={(_, index) => ({
+          length: BANNER_W,
+          offset: BANNER_W * index,
+          index,
+        })}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.bannerCard}
+            style={[styles.bannerCard, { width: BANNER_W }]}
             activeOpacity={0.9}
             onPress={() => {
               if (item.linkType === 'product' && item.linkId) {
@@ -200,7 +206,7 @@ function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress }) {
   )
 }
 
-function CategoryGrid({ categories, navigation, t }) {
+function CategoryGrid({ categories, navigation, t, screenWidth }) {
   if (!categories || categories.length < 2) return null
   const cats = categories.slice(0, 4)
   while (cats.length < 4) {
@@ -208,7 +214,7 @@ function CategoryGrid({ categories, navigation, t }) {
   }
 
   const GAP = 24
-  const CARD_W = (width - 32 - GAP) / 2
+  const CARD_W = (screenWidth - 32 - GAP) / 2
 
   return (
     <View style={styles.categorySection}>
@@ -400,6 +406,7 @@ export default function HomeScreen({ navigation }) {
   const { addToCart, removeFromCart, isInCart, cartCount } = useApp();
   const { t } = useTranslation();
   const dir = useDirection();
+  const { width: SCREEN_WIDTH, numColumns, contentMaxWidth } = useResponsive();
   const [banners, setBanners] = useState([]);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -573,10 +580,10 @@ export default function HomeScreen({ navigation }) {
 
       <FlatList
         data={filteredProducts}
-        numColumns={2}
+        numColumns={numColumns}
         columnWrapperStyle={styles.columnWrapper}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
+        contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom, maxWidth: contentMaxWidth, alignSelf: 'center' }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0F172A']} tintColor="#0F172A" />}
         ListHeaderComponent={
           <View style={styles.headerSection}>
@@ -598,9 +605,9 @@ export default function HomeScreen({ navigation }) {
 
             <SearchBar onPress={() => navigation.navigate('Search')} t={t} />
 
-            <HeroCarousel banners={banners} navigation={navigation} t={t} />
+            <HeroCarousel banners={banners} navigation={navigation} t={t} bannerWidth={Math.min(SCREEN_WIDTH - 32, 600)} />
 
-            <CategoryGrid categories={categories} navigation={navigation} t={t} />
+            <CategoryGrid categories={categories} navigation={navigation} t={t} screenWidth={SCREEN_WIDTH} />
 
             <QuickActions navigation={navigation} t={t} />
 
@@ -682,6 +689,7 @@ export default function HomeScreen({ navigation }) {
         renderItem={({ item }) => (
           <ProductCard
             item={item}
+            numColumns={numColumns}
             onPress={() => navigation.navigate('Item', { productId: item.id })}
             onAddToCart={() => handleAddToCart(item)}
             inCart={isInCart(item.id)}

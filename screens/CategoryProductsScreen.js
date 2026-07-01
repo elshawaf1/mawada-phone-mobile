@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, Text, View, FlatList, RefreshControl, TouchableOpacity,
-  TextInput, ScrollView, Modal, Animated, Dimensions,
+  TextInput, ScrollView, Modal, Animated, Dimensions, useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SlidersHorizontal, Check, X } from 'lucide-react-native';
@@ -13,14 +13,14 @@ import { useApp } from '../context/AppContext';
 import { supabase } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
-
-const { height: SCREEN_H } = Dimensions.get('window');
+import { useResponsive } from '../hooks/useResponsive';
 
 export default function CategoryProductsScreen({ navigation, route }) {
   const { categoryId, categoryName } = route?.params || {};
   const { addToCart, removeFromCart, isInCart } = useApp();
   const { t } = useTranslation();
   const dir = useDirection();
+  const { width: SCREEN_WIDTH, height: SCREEN_H, numColumns, contentMaxWidth } = useResponsive();
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -137,14 +137,15 @@ export default function CategoryProductsScreen({ navigation, route }) {
         <FlatList
           data={products}
           keyExtractor={(item) => item.id}
-          numColumns={2}
+          numColumns={numColumns}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { maxWidth: contentMaxWidth, alignSelf: 'center' }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
           renderItem={({ item }) => (
             <ProductCard
               item={item}
+              numColumns={numColumns}
               onPress={() => navigation.navigate('Item', { productId: item.id })}
               onAddToCart={() => handleAddToCart(item)}
               inCart={isInCart(item.id)}
