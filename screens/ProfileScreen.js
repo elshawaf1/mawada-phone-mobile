@@ -12,6 +12,7 @@ import { ChevronRight, LogOut } from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
+import { setBadgeCountAsync } from '../services/push';
 import { COLORS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
@@ -30,7 +31,11 @@ export default function ProfileScreen({ navigation }) {
     const sub = supabase
       .channel('profile-notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `userId=eq.${user.id}` }, () => {
-        setUnreadCount((prev) => prev + 1);
+        setUnreadCount((prev) => {
+          const next = prev + 1;
+          setBadgeCountAsync(next);
+          return next;
+        });
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `userId=eq.${user.id}` }, () => {
         fetchUnreadCount();

@@ -28,6 +28,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 import { db } from '../services/api';
+import { setBadgeCountAsync } from '../services/push';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
@@ -425,7 +426,11 @@ export default function HomeScreen({ navigation }) {
       const sub = supabase
         .channel('home-notifications')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `userId=eq.${user.id}` }, () => {
-          setUnreadCount((prev) => prev + 1);
+          setUnreadCount((prev) => {
+            const next = prev + 1;
+            setBadgeCountAsync(next);
+            return next;
+          });
         })
         .subscribe();
       return () => { sub.unsubscribe(); };

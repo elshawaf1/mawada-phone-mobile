@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, clearStaleAuthData } from '../services/supabase';
-import { savePushTokenForUser, removePushTokenForUser } from '../services/push';
+import { savePushTokenForUser, removePushTokenForUser, setBadgeCountAsync } from '../services/push';
 
 const AuthContext = createContext(null);
 
@@ -222,7 +222,15 @@ export function AuthProvider({ children }) {
             setUser(profile);
             if (profile) lastFetchedUserId.current = profile.id;
           }
-          if (profile) savePushTokenForUser(profile.id);
+          if (profile) {
+            savePushTokenForUser(profile.id);
+            const { count } = await supabase
+              .from('notifications')
+              .select('id', { count: 'exact', head: true })
+              .eq('userId', profile.id)
+              .eq('isRead', false);
+            setBadgeCountAsync(count || 0);
+          }
         }
       } catch (e) {
         console.warn('[Auth] Session check failed:', e.message);

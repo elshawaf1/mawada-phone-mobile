@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import SwipeBack from './components/SwipeBack';
 import ScreenTransition from './components/ScreenTransition';
+import NotificationHandler from './components/NotificationHandler';
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/auth/WelcomeScreen';
 import LoginScreen from './screens/auth/LoginScreen';
@@ -181,6 +182,7 @@ function AppInner() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: statusBg }]}>
       <StatusBar barStyle={statusBarStyle} backgroundColor={statusBg} />
+      <NotificationHandler navigation={navigation} />
       <View style={styles.screenWrapper}>
         <SwipeBack
           navigation={navigation}

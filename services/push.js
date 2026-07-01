@@ -9,9 +9,9 @@ let cachedPlatform = null;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowBanner: false,
+    shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: true,
   }),
 });

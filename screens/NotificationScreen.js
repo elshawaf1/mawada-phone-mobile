@@ -28,12 +28,16 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { supabase } from '../services/supabase';
+import { setBadgeCountAsync } from '../services/push';
 
 const notifConfig = {
   order: { icon: Package, bg: '#EFF6FF', color: COLORS.blue },
   promo: { icon: Tag, bg: '#F0FDF4', color: '#22C55E' },
   info: { icon: Info, bg: '#FFFBEB', color: '#F59E0B' },
   system: { icon: Bell, bg: '#F3F4F6', color: COLORS.gray500 },
+  payment: { icon: Package, bg: '#ECFEFF', color: '#06B6D4' },
+  payment_success: { icon: Package, bg: '#ECFEFF', color: '#06B6D4' },
+  payment_failed: { icon: Package, bg: '#FEF2F2', color: '#EF4444' },
 };
 
 function SwipeableNotifCard({ notif, onMarkRead, onDelete, isFirst, onPress, t, deleteAnim }) {
@@ -234,15 +238,19 @@ export default function NotificationScreen({ navigation }) {
 
   const markRead = useCallback(async (id) => {
     await supabase.from('notifications').update({ isRead: true }).eq('id', id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    setNotifications((prev) => {
+      const updated = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+      const newCount = updated.filter((n) => !n.isRead).length;
+      setBadgeCountAsync(newCount);
+      return updated;
+    });
   }, []);
 
   const markAllRead = useCallback(async () => {
     if (!user?.id) return;
     await supabase.from('notifications').update({ isRead: true }).eq('userId', user.id).eq('isRead', false);
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setBadgeCountAsync(0);
   }, [user?.id]);
 
   const deleteNotif = useCallback(async (id) => {
