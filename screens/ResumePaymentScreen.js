@@ -20,7 +20,7 @@ import { supabase, supabaseUrl } from '../services/supabase';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
 
-const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
+const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_live_hTSIQc0VJKPmmhilZPcmhPzDwqnstTjJ';
 const POLL_INTERVAL = 3000;
 const POLL_MAX_ATTEMPTS = 20;
 const CARD_INTEGRATION_ID = process.env.EXPO_PUBLIC_PAYMOB_CARD_INTEGRATION_ID || '5764758';
