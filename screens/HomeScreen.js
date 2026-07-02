@@ -483,9 +483,9 @@ export default function HomeScreen({ navigation }) {
             product_images(id, url, "isPrimary", "sortOrder"),
             brands(name, "nameAr")
           `)
-          .not('homeOrder', 'is', null)
           .eq('isActive', true)
-          .order('homeOrder')
+          .order('homeOrder', { ascending: true, nullsFirst: false })
+          .order('createdAt', { ascending: false })
           .limit(50),
         supabase
           .from('reviews')

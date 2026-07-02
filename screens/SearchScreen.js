@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.primary,
   },
   listContent: { paddingHorizontal: 16, paddingBottom: 100 },
-  columnWrap: { justifyContent: 'space-between', marginBottom: 12 },
+  columnWrap: { gap: 10, marginBottom: 12 },
 
   /* Product card wrapper */
   productWrap: { position: 'relative' },
