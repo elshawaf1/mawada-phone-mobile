@@ -30,8 +30,7 @@ import CategoryProductsScreen from './screens/CategoryProductsScreen';
 import DeliveryLocationsScreen from './screens/DeliveryLocationsScreen';
 import OrderDetailScreen from './screens/OrderDetailScreen';
 import ResumePaymentScreen from './screens/ResumePaymentScreen';
-import EditProfileScreen from './screens/EditProfileScreen';
-import UpdatePasswordScreen from './screens/UpdatePasswordScreen';
+
 import MyOrdersScreen from './screens/MyOrdersScreen';
 import ForgotPasswordScreen from './screens/auth/ForgotPasswordScreen';
 import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
@@ -66,8 +65,7 @@ const screenRegistry = {
   DeliveryLocations: DeliveryLocationsScreen,
   OrderDetail: OrderDetailScreen,
   ResumePayment: ResumePaymentScreen,
-  EditProfile: EditProfileScreen,
-  UpdatePassword: UpdatePasswordScreen,
+
   MyOrders: MyOrdersScreen,
   ForgotPassword: ForgotPasswordScreen,
   ResetPassword: ResetPasswordScreen,

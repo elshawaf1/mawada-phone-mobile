@@ -101,10 +101,6 @@ export default function SettingsScreen({ navigation }) {
         </Section>
 
         <Section title={t('settings.account')}>
-          <RowLink icon="person-outline" label={t('settings.editProfile')} onPress={() => navigation.navigate('EditProfile')} />
-          <View style={styles.rowDivider} />
-          <RowLink icon="lock-closed-outline" label={t('settings.changePassword')} onPress={() => navigation.navigate('UpdatePassword')} />
-          <View style={styles.rowDivider} />
           <RowLink icon="location-outline" label={t('settings.manageAddresses')} onPress={() => navigation.navigate('DeliveryLocations')} />
           <View style={styles.rowDivider} />
           <RowLink icon="card-outline" label={t('settings.savedPaymentMethods')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.comingSoon'))} />

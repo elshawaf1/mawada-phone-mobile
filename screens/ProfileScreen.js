@@ -105,12 +105,6 @@ export default function ProfileScreen({ navigation }) {
           {user?.phone ? <Text style={styles.userPhone}>{user.phone}</Text> : null}
         </View>
 
-        <Section title={t('settings.account')}>
-          <Row iconName="create-outline" label={t('settings.editProfile')} onPress={() => navigation.navigate('EditProfile')} />
-          <View style={styles.rowDivider} />
-          <Row iconName="lock-closed-outline" label={t('settings.changePassword')} onPress={() => navigation.navigate('UpdatePassword')} />
-        </Section>
-
         <Section title={t('settings.orders')}>
           <Row iconName="receipt-outline" label={t('profile.menuOrders')} onPress={() => navigation.navigate('MyOrders')} />
           <View style={styles.rowDivider} />
