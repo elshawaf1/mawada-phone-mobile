@@ -484,9 +484,8 @@ export default function HomeScreen({ navigation }) {
             brands(name, "nameAr")
           `)
           .eq('isActive', true)
-          .order('homeOrder', { ascending: true, nullsFirst: false })
           .order('createdAt', { ascending: false })
-          .limit(50),
+          .limit(100),
         supabase
           .from('reviews')
           .select('productId, rating')
@@ -507,6 +506,13 @@ export default function HomeScreen({ navigation }) {
           rating: stats ? parseFloat((stats.total / stats.count).toFixed(1)) : null,
           reviewCount: stats ? stats.count : 0,
         };
+      });
+
+      productsWithRatings.sort((a, b) => {
+        if (a.homeOrder != null && b.homeOrder != null) return a.homeOrder - b.homeOrder;
+        if (a.homeOrder != null) return -1;
+        if (b.homeOrder != null) return 1;
+        return new Date(b.createdAt) - new Date(a.createdAt);
       });
 
       setBanners(bannersRes.data || []);
