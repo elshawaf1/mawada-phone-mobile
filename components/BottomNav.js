@@ -68,8 +68,8 @@ export default function BottomNav({ navigation, activeRoute }) {
                   ref={homeLottieRef}
                   source={homeAnim}
                   style={styles.lottieIcon}
-                  autoPlay={false}
-                  loop={false}
+                  autoPlay
+                  loop
                   resizeMode="cover"
                 />
               ) : (
