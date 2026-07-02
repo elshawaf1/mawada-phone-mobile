@@ -163,7 +163,7 @@ function AppInner() {
   const noSwipeBackScreens = [
     'Splash', 'Welcome', 'Login', 'Register', 'Otp',
     'ForgotPassword', 'ResetPassword', 'Home',
-    'Payment', 'ResumePayment', 'OrderConfirm',
+    'Payment', 'ResumePayment', 'OrderConfirm', 'Item',
   ];
 
   const isDarkScreen = ['Splash'].includes(currentScreen);
