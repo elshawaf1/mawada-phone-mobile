@@ -10,6 +10,7 @@ import { useDirection } from '../hooks/useDirection';
 
 const avatarAnim = require('../assets/wired-outline-21-avatar-in-reveal.json');
 const homeAnim = require('../assets/wired-outline-63-home-hover-3d-roll.json');
+const searchAnim = require('../assets/wired-outline-19-magnifier-zoom-search-hover-spin.json');
 
 export default function BottomNav({ navigation, activeRoute }) {
   const insets = useSafeAreaInsets();
@@ -18,6 +19,7 @@ export default function BottomNav({ navigation, activeRoute }) {
   const dir = useDirection();
   const lottieRef = useRef(null);
   const homeLottieRef = useRef(null);
+  const searchLottieRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -67,6 +69,15 @@ export default function BottomNav({ navigation, activeRoute }) {
                 <LottieView
                   ref={homeLottieRef}
                   source={homeAnim}
+                  style={styles.lottieIcon}
+                  autoPlay
+                  loop
+                  resizeMode="cover"
+                />
+              ) : item.route === 'Search' && isActive ? (
+                <LottieView
+                  ref={searchLottieRef}
+                  source={searchAnim}
                   style={styles.lottieIcon}
                   autoPlay
                   loop
