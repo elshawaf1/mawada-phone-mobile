@@ -14,8 +14,10 @@ import {
   Animated,
   LayoutAnimation,
   UIManager,
+  Image,
+  BackHandler,
 } from 'react-native';
-import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, Shield, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
 import LottieView from 'lottie-react-native';
 
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -59,7 +61,7 @@ const PAYMENT_METHODS = [
     id: 'wallet',
     type: 'WALLET',
     label: 'مَحْفَظَة إِلِكْتُرُونِيَّة',
-    hint: 'الدَّفْع عَبْر مَحْفَظَة إِلِكْتُرُونِيَّة',
+    hint: 'فودافون كاش • أورانج كاش • إيصالات كاش • وي كاش',
     Icon: Wallet,
     color: '#2563EB',
     bgColor: '#EFF6FF',
@@ -90,7 +92,8 @@ export default function PaymentScreen({ navigation, route }) {
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(true);
+  const [productsExpanded, setProductsExpanded] = useState(true);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [watchOrderId, setWatchOrderId] = useState(null);
@@ -108,6 +111,18 @@ export default function PaymentScreen({ navigation, route }) {
     fetchAddresses();
     fetchBranches();
   }, [user?.id]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (processing) {
+        setProcessing(false);
+        return true;
+      }
+      return false;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [processing]);
 
   const fetchAddresses = async () => {
     if (!user?.id) return;
@@ -326,12 +341,12 @@ export default function PaymentScreen({ navigation, route }) {
         const serverStatus = await verifyWithServer(orderData.orderId);
         if (serverStatus === 'PAID') {
           navigateToSuccess();
-        } else if (serverStatus === 'FAILED') {
-          setProcessing(false);
-          Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
         } else {
-          // Still pending — start polling
-          if (!pollingStarted.current) {
+          setProcessing(false);
+          if (serverStatus === 'FAILED') {
+            Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+          }
+          if (serverStatus === 'PENDING' && !pollingStarted.current) {
             pollingStarted.current = true;
             startPolling();
           }
@@ -620,7 +635,7 @@ export default function PaymentScreen({ navigation, route }) {
                 key={method.id}
                 style={[
                   styles.methodItem,
-                  isSelected && { borderColor: color, backgroundColor: bgColor },
+                  isSelected && { borderColor: '#16A34A', backgroundColor: '#F0FDF4' },
                 ]}
                 onPress={() => {
                   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -628,19 +643,58 @@ export default function PaymentScreen({ navigation, route }) {
                 }}
                 activeOpacity={0.7}
               >
-                <View style={[styles.methodIconCircle, { backgroundColor: isSelected ? color : '#F1F5F9' }]}>
+                <View style={[styles.methodIconCircle, { backgroundColor: isSelected ? '#16A34A' : '#F1F5F9' }]}>
                   <Icon size={20} color={isSelected ? '#fff' : '#94A3B8'} />
                 </View>
                 <View style={styles.methodTextCol}>
-                  <Text style={[styles.methodName, isSelected && { color }]}>{label}</Text>
+                  <Text style={[styles.methodName, isSelected && { color: '#16A34A' }]}>{label}</Text>
                   <Text style={[styles.methodDesc, !isSelected && { color: '#CBD5E1' }]}>{hint}</Text>
-                </View>
-                <View style={[styles.radioDot, isSelected && { borderColor: color }]}>
-                  {isSelected && <View style={[styles.radioInner, { backgroundColor: color }]} />}
                 </View>
               </TouchableOpacity>
             );
           })}
+        </View>
+
+        {/* Products — Expandable */}
+        <View style={styles.summaryCard}>
+          <TouchableOpacity
+            style={styles.summaryHeader}
+            onPress={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setProductsExpanded(!productsExpanded);
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.summaryHeaderRight}>
+              <Text style={styles.summaryTitle}>{t('common.products')}</Text>
+              <Text style={styles.summaryTotalInline}>{items.length} {t('common.product')}</Text>
+            </View>
+            <Animated.View style={{ transform: [{ rotate: productsExpanded ? '180deg' : '0deg' }] }}>
+              <ChevronDown size={18} color="#94A3B8" />
+            </Animated.View>
+          </TouchableOpacity>
+
+          {productsExpanded && (
+            <View style={styles.summaryDetails}>
+              <View style={styles.summaryDivider} />
+              {items.map((item, index) => (
+                <View key={index} style={styles.productItemRow}>
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} style={styles.productItemImage} />
+                  ) : (
+                    <View style={[styles.productItemImage, { backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }]}>
+                      <Text style={{ fontSize: 16, color: '#CBD5E1' }}>📦</Text>
+                    </View>
+                  )}
+                  <View style={styles.productItemInfo}>
+                    <Text style={styles.productItemName} numberOfLines={2}>{item.name}</Text>
+                    <Text style={styles.productItemQty}>×{item.quantity || 1}</Text>
+                  </View>
+                  <Text style={styles.productItemPrice}>{formatPrice((Number(item.unitPrice) || 0) * (item.quantity || 1))} {t('common.egp')}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Order Summary — Expandable */}
@@ -688,10 +742,19 @@ export default function PaymentScreen({ navigation, route }) {
           )}
         </View>
 
-        {/* Security Badge */}
-        <View style={styles.securityBadge}>
-          <Shield size={14} color="#94A3B8" />
-          <Text style={styles.securityText}>{t('payment.codHint')}</Text>
+        {/* Return Policy */}
+        <View style={styles.returnPolicySection}>
+          <View style={styles.returnPolicyHeader}>
+            <Text style={styles.returnPolicyTitle}>{t('payment.returnPolicy')}</Text>
+          </View>
+          <Text style={styles.returnPolicyItem}>• {t('payment.return14')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.return30')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.zeroGuarantee')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.intlGuarantee')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.usedGuarantee')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.accessoryReturn')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.warrantyReplace')}</Text>
+          <Text style={styles.returnPolicyItem}>• {t('payment.invoiceRequired')}</Text>
         </View>
 
         {processing && (
@@ -861,11 +924,35 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
   totalValue: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
 
-  securityBadge: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
-    gap: 6, marginBottom: 16, paddingVertical: 8,
+  productItemRow: {
+    flexDirection: 'row-reverse', alignItems: 'center',
+    paddingVertical: 8,
   },
-  securityText: { fontSize: 11, color: '#94A3B8' },
+  productItemImage: {
+    width: 48, height: 48, borderRadius: 10,
+    marginLeft: 10, backgroundColor: '#F8FAFC',
+  },
+  productItemInfo: { flex: 1 },
+  productItemName: {
+    fontSize: 13, fontWeight: '600', color: '#0F172A',
+    textAlign: 'right', lineHeight: 18,
+  },
+  productItemQty: {
+    fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2,
+  },
+  productItemPrice: {
+    fontSize: 13, fontWeight: '700', color: '#0F172A',
+    textAlign: 'left', marginLeft: 8,
+  },
+
+  returnPolicySection: {
+    backgroundColor: '#F8FAFC', borderRadius: 12,
+    borderWidth: 1, borderColor: '#E2E8F0',
+    padding: 12, marginBottom: 16,
+  },
+  returnPolicyHeader: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 10 },
+  returnPolicyTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
+  returnPolicyItem: { fontSize: 14, fontWeight: '700', color: '#334155', textAlign: 'right', lineHeight: 22, marginBottom: 6, writingDirection: 'rtl' },
 
   checkoutFloat: {
     flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
