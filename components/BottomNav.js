@@ -9,6 +9,7 @@ import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
 const avatarAnim = require('../assets/wired-outline-21-avatar-in-reveal.json');
+const homeAnim = require('../assets/wired-outline-63-home-hover-3d-roll.json');
 
 export default function BottomNav({ navigation, activeRoute }) {
   const insets = useSafeAreaInsets();
@@ -16,6 +17,7 @@ export default function BottomNav({ navigation, activeRoute }) {
   const { t } = useTranslation();
   const dir = useDirection();
   const lottieRef = useRef(null);
+  const homeLottieRef = useRef(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,6 +26,13 @@ export default function BottomNav({ navigation, activeRoute }) {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (activeRoute === 'Home') {
+      homeLottieRef.current?.reset();
+      homeLottieRef.current?.play();
+    }
+  }, [activeRoute]);
   const NAV_ITEMS = [
     { route: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', label: t('nav.profile') },
     { route: 'Search', icon: 'search-outline', iconActive: 'search', label: t('nav.search') },
@@ -49,6 +58,15 @@ export default function BottomNav({ navigation, activeRoute }) {
                 <LottieView
                   ref={lottieRef}
                   source={avatarAnim}
+                  style={styles.lottieIcon}
+                  autoPlay={false}
+                  loop={false}
+                  resizeMode="cover"
+                />
+              ) : item.route === 'Home' && isActive ? (
+                <LottieView
+                  ref={homeLottieRef}
+                  source={homeAnim}
                   style={styles.lottieIcon}
                   autoPlay={false}
                   loop={false}
