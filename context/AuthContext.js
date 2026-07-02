@@ -4,6 +4,15 @@ import { savePushTokenForUser, removePushTokenForUser, setBadgeCountAsync } from
 
 const AuthContext = createContext(null);
 
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(label || 'timeout')), ms)
+    ),
+  ]);
+}
+
 async function fetchProfile(userId) {
   const { data, error } = await supabase
     .from('profiles')
@@ -21,8 +30,12 @@ async function fetchProfile(userId) {
 async function fetchProfileWithRetry(userId, retries = 3) {
   if (!userId) return null;
   for (let i = 0; i < retries; i++) {
-    const profile = await fetchProfile(userId);
-    if (profile) return profile;
+    try {
+      const profile = await withTimeout(fetchProfile(userId), 5000, 'fetchProfile timeout');
+      if (profile) return profile;
+    } catch (e) {
+      console.warn('[Auth] fetchProfile attempt', i + 1, 'failed:', e.message);
+    }
     if (i < retries - 1) {
       await new Promise(r => setTimeout(r, 500));
     }
@@ -60,10 +73,14 @@ export function AuthProvider({ children }) {
       const isEmail = identifier.includes('@');
       const authPayload = isEmail ? { email: identifier } : { phone: identifier };
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        ...authPayload,
-        password,
-      });
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          ...authPayload,
+          password,
+        }),
+        15000,
+        'timeout'
+      );
 
       if (error) {
         const msg = error.message || '';
@@ -219,17 +236,17 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           const profile = await fetchProfileWithRetry(session.user.id);
           if (!cancelled) {
-            setUser(profile);
-            if (profile) lastFetchedUserId.current = profile.id;
-          }
-          if (profile) {
-            savePushTokenForUser(profile.id);
-            const { count } = await supabase
-              .from('notifications')
-              .select('id', { count: 'exact', head: true })
-              .eq('userId', profile.id)
-              .eq('isRead', false);
-            setBadgeCountAsync(count || 0);
+            if (profile) {
+              setUser(profile);
+              lastFetchedUserId.current = profile.id;
+              savePushTokenForUser(profile.id);
+              const { count } = await supabase
+                .from('notifications')
+                .select('id', { count: 'exact', head: true })
+                .eq('userId', profile.id)
+                .eq('isRead', false);
+              setBadgeCountAsync(count || 0);
+            }
           }
         }
       } catch (e) {
@@ -252,8 +269,22 @@ export function AuthProvider({ children }) {
           if (session?.user) {
             if (lastFetchedUserId.current === session.user.id) return;
             const profile = await fetchProfileWithRetry(session.user.id);
-            if (!cancelled) setUser(profile);
-            if (profile) lastFetchedUserId.current = profile.id;
+            if (cancelled) return;
+            if (profile) {
+              lastFetchedUserId.current = profile.id;
+              setUser(profile);
+            } else {
+              const newProfile = await createProfile(
+                session.user.id,
+                session.user.user_metadata?.name,
+                session.user.email,
+                session.user.user_metadata?.phone
+              );
+              if (!cancelled && newProfile) {
+                lastFetchedUserId.current = newProfile.id;
+                setUser(newProfile);
+              }
+            }
           }
         }
       }

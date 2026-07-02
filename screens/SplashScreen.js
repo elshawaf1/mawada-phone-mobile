@@ -38,7 +38,7 @@ export default function SplashScreen({ navigation }) {
       } else {
         navigation.replace('Welcome');
       }
-    }, 2200);
+    }, 800);
     return () => clearTimeout(timer);
   }, [user, loading, navigation]);
 
