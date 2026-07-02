@@ -138,7 +138,8 @@ export default function CategoryProductsScreen({ navigation, route }) {
           data={products}
           keyExtractor={(item) => item.id}
           numColumns={numColumns}
-          columnWrapperStyle={styles.columnWrapper}
+          columnGap={10}
+          rowGap={10}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.listContent, { maxWidth: contentMaxWidth, alignSelf: 'center' }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
@@ -251,7 +252,6 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: FONT_SIZES.lg, color: COLORS.textTertiary, marginTop: 12 },
   listContent: { padding: SPACING.xl, paddingBottom: 100 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: 12 },
 
   filterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.gray50, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
   filterBtnActive: { backgroundColor: COLORS.primary },

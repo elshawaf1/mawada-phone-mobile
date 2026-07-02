@@ -84,7 +84,8 @@ export default function OffersScreen({ navigation }) {
           data={products}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
+          columnGap={10}
+          rowGap={10}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -109,7 +110,6 @@ export default function OffersScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.white },
   listContent: { padding: SPACING.xl, paddingBottom: 100 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: 12 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, textAlign: 'center' },

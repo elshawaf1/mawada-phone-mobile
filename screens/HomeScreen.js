@@ -586,15 +586,13 @@ export default function HomeScreen({ navigation }) {
     <MainLayout navigation={navigation} activeRoute="Home" style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
 
-      <FlatList
-        data={filteredProducts}
-        numColumns={numColumns}
-        columnWrapperStyle={styles.columnWrapper}
+      <ScrollView
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom, maxWidth: contentMaxWidth, alignSelf: 'center' }]}
+        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0F172A']} tintColor="#0F172A" />}
-        ListHeaderComponent={
-          <View style={styles.headerSection}>
+      >
+        <View style={[styles.headerSection, { maxWidth: contentMaxWidth, alignSelf: 'center' }]}>
             <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
               <View style={styles.headerRight}>
                 <Text style={styles.greetingText}>{user ? t('home.greetingUser', { name: user.name }) : t('home.greeting')}</Text>
@@ -692,34 +690,38 @@ export default function HomeScreen({ navigation }) {
                 );
               })}
             </View>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <ProductCard
-            item={item}
-            numColumns={numColumns}
-            onPress={() => navigation.navigate('Item', { productId: item.id })}
-            onAddToCart={() => handleAddToCart(item)}
-            inCart={isInCart(item.id)}
-            justAdded={addedMap[item.id]}
-          />
-        )}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="phone-portrait-outline" size={48} color={COLORS.gray300} />
-            <Text style={styles.emptyText}>{t('home.noProducts')}</Text>
-          </View>
-        }
-      />
+        </View>
+
+        <View style={[styles.productGrid, { maxWidth: contentMaxWidth, alignSelf: 'center' }]}>
+          {filteredProducts.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="phone-portrait-outline" size={48} color={COLORS.gray300} />
+              <Text style={styles.emptyText}>{t('home.noProducts')}</Text>
+            </View>
+          ) : (
+            filteredProducts.map((item) => (
+              <View key={item.id} style={[styles.productGridItem, { width: `${100 / numColumns}%` }]}>
+                <ProductCard
+                  item={item}
+                  numColumns={numColumns}
+                  onPress={() => navigation.navigate('Item', { productId: item.id })}
+                  onAddToCart={() => handleAddToCart(item)}
+                  inCart={isInCart(item.id)}
+                  justAdded={addedMap[item.id]}
+                />
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
     </MainLayout>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F8F9FA' },
-  listContent: { backgroundColor: '#F8F9FA', paddingHorizontal: SPACING.md },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: 8 },
+  productGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: SPACING.md },
+  productGridItem: { paddingHorizontal: 5, marginBottom: 10 },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { fontSize: 16, color: COLORS.textSecondary, marginBottom: 16 },
   retryBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: RADIUS.lg },

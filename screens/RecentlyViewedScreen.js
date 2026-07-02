@@ -83,7 +83,8 @@ export default function RecentlyViewedScreen({ navigation }) {
         <FlatList
           data={items}
           numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
+          columnGap={10}
+          rowGap={10}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id}
@@ -104,7 +105,6 @@ export default function RecentlyViewedScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.white },
   listContent: { padding: SPACING.md, paddingBottom: 32 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: SPACING.md },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
   emptySubtitle: { fontSize: 14, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 20 },

@@ -523,7 +523,8 @@ export default function SearchScreen({ navigation, route }) {
             renderItem={renderProduct}
             keyExtractor={(item) => item.id}
             numColumns={numColumns}
-            columnWrapperStyle={styles.columnWrap}
+            columnGap={10}
+            rowGap={10}
             contentContainerStyle={[styles.listContent, { maxWidth: contentMaxWidth, alignSelf: 'center' }]}
             showsVerticalScrollIndicator={false}
             onEndReached={handleLoadMore}
@@ -652,7 +653,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.primary,
   },
   listContent: { paddingHorizontal: 16, paddingBottom: 100 },
-  columnWrap: { gap: 10, marginBottom: 12 },
 
   /* Product card wrapper */
   productWrap: { position: 'relative' },
