@@ -9,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 const SORT_OPTIONS = ['latest', 'priceLow', 'priceHigh', 'name'];
 
 export default function FilterSheet({
-  visible, onClose, sortBy, onSortChange, brands, selectedBrandId, onBrandChange, t, onOpenPrice,
+  visible, onClose, sortBy, onSortChange, brands, selectedBrandId, onBrandChange,
+  selectedCondition, onConditionChange, t, onOpenPrice,
 }) {
   const activePrice = false;
 
@@ -86,6 +87,50 @@ export default function FilterSheet({
               <Ionicons name="chevron-forward-outline" size={18} color={COLORS.gray400} />
             </TouchableOpacity>
 
+            {/* Condition */}
+            <Text style={styles.sectionLabel}>{t('search.condition')}</Text>
+            <View style={styles.chipRow}>
+              <TouchableOpacity
+                style={[styles.chip, !selectedCondition && styles.chipActive]}
+                onPress={() => { onConditionChange(null); onClose(); }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.chipText, !selectedCondition && styles.chipTextActive]}>
+                  {t('search.allProducts')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.chip, selectedCondition === 'new' && styles.chipActive]}
+                onPress={() => { onConditionChange('new'); onClose(); }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="sparkles-outline"
+                  size={14}
+                  color={selectedCondition === 'new' ? COLORS.white : COLORS.gray500}
+                  style={{ marginLeft: 4 }}
+                />
+                <Text style={[styles.chipText, selectedCondition === 'new' && styles.chipTextActive]}>
+                  {t('search.conditionNew')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.chip, selectedCondition === 'used' && styles.chipActive]}
+                onPress={() => { onConditionChange('used'); onClose(); }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="refresh-outline"
+                  size={14}
+                  color={selectedCondition === 'used' ? COLORS.white : COLORS.gray500}
+                  style={{ marginLeft: 4 }}
+                />
+                <Text style={[styles.chipText, selectedCondition === 'used' && styles.chipTextActive]}>
+                  {t('search.conditionUsed')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Brands */}
             {brands.length > 0 && (
               <>
@@ -97,7 +142,7 @@ export default function FilterSheet({
                     activeOpacity={0.7}
                   >
                     <Text style={[styles.chipText, !selectedBrandId && styles.chipTextActive]}>
-                      {t('common.all')}
+                      {t('search.allProducts')}
                     </Text>
                   </TouchableOpacity>
                   {brands.map((brand) => {

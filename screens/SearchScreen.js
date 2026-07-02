@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList,
   ActivityIndicator, StatusBar, RefreshControl,
-  Keyboard, Image,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,37 +24,6 @@ const RECENT_KEY = 'recentSearches';
 const MAX_RECENT = 10;
 
 const POPULAR_SEARCHES = ['iPhone', 'Samsung', 'شاومي', 'Oppo', 'Huawei', 'Realme'];
-
-const CATEGORY_ICONS = {
-  هاتف: 'phone-portrait-outline',
-  تابلت: 'tablet-portrait-outline',
-  لابتوب: 'laptop-outline',
-  سماعة: 'headset-outline',
-  ساعة: 'watch-outline',
-  اكسسوار: 'watch-outline',
-  شاحن: 'flash-outline',
-  default: 'grid-outline',
-};
-
-function getCategoryIcon(name) {
-  if (!name) return CATEGORY_ICONS.default;
-  const n = name.toLowerCase();
-  for (const key of Object.keys(CATEGORY_ICONS)) {
-    if (n.includes(key)) return CATEGORY_ICONS[key];
-  }
-  return CATEGORY_ICONS.default;
-}
-
-function getCategoryImageUrl(cat) {
-  if (cat.searchImageUrl) return cat.searchImageUrl;
-  if (cat.imageUrl) return cat.imageUrl;
-  if (cat.icon) {
-    const iconName = getCategoryIcon(cat.icon);
-    return `https://api.iconify.design/${iconName}.svg?color=%230F172A&height=40`;
-  }
-  const iconName = getCategoryIcon(cat.nameAr || cat.name);
-  return `https://api.iconify.design/${iconName}.svg?color=%230F172A&height=40`;
-}
 
 export default function SearchScreen({ navigation, route }) {
   const { t } = useTranslation();
@@ -78,13 +47,13 @@ export default function SearchScreen({ navigation, route }) {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [selectedCondition, setSelectedCondition] = useState(null);
   const [brands, setBrands] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
   const [filterVisible, setFilterVisible] = useState(false);
   const [priceVisible, setPriceVisible] = useState(false);
 
-  const hasActiveFilters = selectedBrandId || priceMin || priceMax;
+  const hasActiveFilters = selectedBrandId || priceMin || priceMax || selectedCondition;
   const dirRow = dir.row;
 
   useEffect(() => {
@@ -92,7 +61,6 @@ export default function SearchScreen({ navigation, route }) {
   }, []);
 
   useEffect(() => {
-    fetchCategories();
     fetchBrands();
     loadRecentSearches();
   }, []);
@@ -111,19 +79,7 @@ export default function SearchScreen({ navigation, route }) {
       setResults([]);
       performSearch(searchQuery, 1);
     }
-  }, [sortBy, selectedBrandId, priceMin, priceMax]);
-
-  const fetchCategories = async () => {
-    try {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, nameAr, name, icon, "imageUrl", "homeImageUrl", "searchImageUrl"')
-        .eq('isActive', true)
-        .order('sortOrder');
-      setCategories(data || []);
-    } catch (err) {
-    }
-  };
+  }, [sortBy, selectedBrandId, priceMin, priceMax, selectedCondition]);
 
   const fetchBrands = async () => {
     try {
@@ -200,6 +156,9 @@ export default function SearchScreen({ navigation, route }) {
       if (priceMax) {
         dbQuery = dbQuery.lte('basePrice', Number(priceMax));
       }
+      if (selectedCondition) {
+        dbQuery = dbQuery.eq('condition', selectedCondition);
+      }
 
       const s = buildSortOrder(sortBy);
       dbQuery = dbQuery.order(s.column, { ascending: s.asc });
@@ -256,10 +215,6 @@ export default function SearchScreen({ navigation, route }) {
     setPage(1);
     setResults([]);
     performSearch(term, 1);
-  };
-
-  const handleCategoryTap = (cat) => {
-    navigation.navigate('CategoryProducts', { categoryId: cat.id, categoryName: cat.nameAr || cat.name });
   };
 
   const handleAddToCart = (product) => {
@@ -388,32 +343,6 @@ export default function SearchScreen({ navigation, route }) {
         </View>
       </View>
 
-      {/* Categories */}
-      {categories.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('search.browseCategories')}</Text>
-          <View style={styles.catGrid}>
-            {categories.map((cat) => (
-              <TouchableOpacity
-                key={cat.id}
-                style={styles.catCard}
-                onPress={() => handleCategoryTap(cat)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.catIconWrap}>
-                  <Image
-                    source={{ uri: getCategoryImageUrl(cat) }}
-                    style={styles.catIcon}
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text style={styles.catName} numberOfLines={1}>{cat.nameAr || cat.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      )}
-
       <View style={styles.helperWrap}>
         <Ionicons name="search-outline" size={14} color={COLORS.gray400} style={{ marginLeft: 4 }} />
         <Text style={styles.helperText}>{t('search.helper')}</Text>
@@ -452,24 +381,24 @@ export default function SearchScreen({ navigation, route }) {
         {/* Filter bar — only when results are shown */}
         {hasSearched && !loading && !error && (
           <View style={styles.filterBar}>
-            <TouchableOpacity
-              style={[styles.filterChip, hasActiveFilters && styles.filterChipActive]}
-              onPress={() => setFilterVisible(true)}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="options-outline"
-                size={14}
-                color={hasActiveFilters ? COLORS.white : COLORS.gray600}
-                style={{ marginLeft: 4 }}
-              />
-              <Text style={[styles.filterChipText, hasActiveFilters && styles.filterChipTextActive]}>
-                {t('search.filter')}
-              </Text>
-              {hasActiveFilters && <View style={styles.filterDot} />}
-            </TouchableOpacity>
+            <View style={styles.filterBarContent}>
+              <TouchableOpacity
+                style={[styles.filterChip, hasActiveFilters && styles.filterChipActive]}
+                onPress={() => setFilterVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="options-outline"
+                  size={14}
+                  color={hasActiveFilters ? COLORS.white : COLORS.gray600}
+                  style={{ marginLeft: 4 }}
+                />
+                <Text style={[styles.filterChipText, hasActiveFilters && styles.filterChipTextActive]}>
+                  {t('search.filter')}
+                </Text>
+                {hasActiveFilters && <View style={styles.filterDot} />}
+              </TouchableOpacity>
 
-            <View style={styles.sortChips}>
               {['latest', 'priceLow', 'priceHigh', 'name'].map((key) => {
                 const active = sortBy === key;
                 return (
@@ -509,7 +438,7 @@ export default function SearchScreen({ navigation, route }) {
             </Text>
             {hasActiveFilters && (
               <TouchableOpacity
-                onPress={() => { setSelectedBrandId(null); setPriceMin(''); setPriceMax(''); }}
+                onPress={() => { setSelectedBrandId(null); setPriceMin(''); setPriceMax(''); setSelectedCondition(null); }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.clearFilterText}>{t('common.reset')}</Text>
@@ -561,6 +490,8 @@ export default function SearchScreen({ navigation, route }) {
         brands={brands}
         selectedBrandId={selectedBrandId}
         onBrandChange={setSelectedBrandId}
+        selectedCondition={selectedCondition}
+        onConditionChange={setSelectedCondition}
         t={t}
         onOpenPrice={() => setPriceVisible(true)}
       />
@@ -606,10 +537,8 @@ const styles = StyleSheet.create({
   },
 
   /* Filter bar */
-  filterBar: {
-    flexDirection: 'row-reverse', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 6, gap: 8,
-  },
+  filterBar: { paddingHorizontal: 16, paddingVertical: 6 },
+  filterBarContent: { flexDirection: 'row-reverse', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   filterChip: {
     flexDirection: 'row-reverse', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 6,
@@ -706,31 +635,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: COLORS.gray200,
   },
   popularChipText: { fontSize: FONT_SIZES.sm, color: COLORS.primary, fontWeight: FONT_WEIGHTS.semibold },
-
-  /* Category grid */
-  catGrid: {
-    flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 10,
-  },
-  catCard: {
-    width: (SCREEN.width - 52) / 3,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.xl,
-    paddingVertical: 14, paddingHorizontal: 8,
-    alignItems: 'center',
-    borderWidth: 1, borderColor: COLORS.gray100,
-    gap: 8,
-  },
-  catIconWrap: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: COLORS.gray50, justifyContent: 'center', alignItems: 'center',
-  },
-  catIcon: {
-    width: 28, height: 28,
-  },
-  catName: {
-    fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.text,
-    textAlign: 'center',
-  },
 
   /* Helper */
   helperWrap: {

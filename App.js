@@ -162,6 +162,7 @@ function AppInner() {
     'Splash', 'Welcome', 'Login', 'Register', 'Otp',
     'ForgotPassword', 'ResetPassword', 'Home',
     'Payment', 'ResumePayment', 'OrderConfirm', 'Item',
+    'Notifications', 'Search',
   ];
 
   const isDarkScreen = ['Splash'].includes(currentScreen);
