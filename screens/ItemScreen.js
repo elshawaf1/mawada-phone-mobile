@@ -148,7 +148,6 @@ export default function ItemScreen({ navigation, route }) {
       if (productRes.data) {
         setProduct(productRes.data);
         setImages(productRes.data.product_images || []);
-        setSelectedImageIndex(0);
       }
 
       if (specsRes.data) {

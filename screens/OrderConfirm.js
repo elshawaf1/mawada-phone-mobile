@@ -22,6 +22,7 @@ import * as Sharing from 'expo-sharing';
 import Button from '../components/Button';
 import { supabase, supabaseUrl } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
+import { getDeliveryFee } from '../services/settings';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -46,7 +47,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
   const displayId = order?.orderNumber || orderId || 'MW-' + Math.floor(100000 + Math.random() * 900000);
   const items = order?.order_items || order?.items || [];
   const subtotal = order?.subtotal || items.reduce((s, i) => s + (Number(i.unitPrice) * i.quantity), 0);
-  const delivery = order?.shippingCost || 90;
+  const delivery = order?.shippingCost || getDeliveryFee();
   const total = order?.total || subtotal + delivery;
   const address = order?.addresses || order?.address;
   const discount = order?.discount || 0;

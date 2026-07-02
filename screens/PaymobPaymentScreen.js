@@ -221,6 +221,7 @@ export default function PaymobPaymentScreen({ navigation, route }) {
           console.error('[Paymob] presentPayVC error:', err);
           setPhase('error');
           setResult('init_failed');
+          Alert.alert(t('common.error'), t('payment.sdkServiceDown'));
         }
       }
     }, 800);
@@ -284,7 +285,8 @@ export default function PaymobPaymentScreen({ navigation, route }) {
         case PaymentStatus.FAIL:
           console.log('[Paymob] Payment FAIL');
           setPhase('error');
-          setResult('failed');
+          setResult('init_failed');
+          Alert.alert(t('common.error'), t('payment.sdkServiceDown'));
           break;
 
         default:
@@ -421,12 +423,10 @@ export default function PaymobPaymentScreen({ navigation, route }) {
               </View>
             </View>
             <Text style={styles.errorTitle}>
-              {result === 'init_failed' ? t('payment.paymentInitFailed') : t('payment.paymentFailed')}
+              {t('common.error')}
             </Text>
             <Text style={styles.statusSubtext}>
-              {result === 'init_failed'
-                ? 'لَم يُتَمَّ فَتْح نَافِذَة الدَّفْع'
-                : 'عُد واحْتَرِك مَرَّة أُخْرَى'}
+              {t('payment.sdkServiceDown')}
             </Text>
 
             <View style={styles.orderMiniCard}>

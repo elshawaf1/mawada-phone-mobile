@@ -332,7 +332,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
             if (serverStatus === 'PAID') {
               navigateToSuccess();
             } else if (serverStatus === 'FAILED') {
-              Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+              Alert.alert(t('common.error'), t('payment.sdkServiceDown'));
             } else {
               if (!pollingStarted.current) {
                 pollingStarted.current = true;

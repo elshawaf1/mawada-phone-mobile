@@ -28,6 +28,7 @@ import { useTranslation } from '../context/AppSettingsContext';
 import { db } from '../services/api';
 import { COLORS } from '../constants';
 import { supabase, supabaseUrl } from '../services/supabase';
+import { getDeliveryFee } from '../services/settings';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_live_hTSIQc0VJKPmmhilZPcmhPzDwqnstTjJ';
 const POLL_INTERVAL = 3000;
@@ -184,8 +185,8 @@ export default function PaymentScreen({ navigation, route }) {
         return true;
       }
       if (data?.paymentStatus === 'FAILED') {
-        setProcessing(false);
-        Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+          setProcessing(false);
+          Alert.alert(t('common.error'), t('payment.sdkServiceDown'));
         return true;
       }
       return false;
@@ -361,7 +362,7 @@ export default function PaymentScreen({ navigation, route }) {
   const items = routeParams?.selectedItems || [];
   const orderNotes = routeParams?.notes || '';
   const subtotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (item.quantity || 1), 0);
-  const shippingCost = deliveryType === 'delivery' ? 90 : 0;
+  const shippingCost = deliveryType === 'delivery' ? getDeliveryFee() : 0;
   const discount = coupon?.discount ? Math.round(subtotal * (coupon.discount / 100)) : 0;
   const total = subtotal - discount + shippingCost;
 

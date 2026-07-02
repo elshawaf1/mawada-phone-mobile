@@ -159,7 +159,7 @@ export default function CategoryProductsScreen({ navigation, route }) {
         <Modal transparent visible={showFilter} animationType="none" onRequestClose={closeFilter}>
           <View style={styles.overlay}>
             <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeFilter} />
-            <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
+            <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }], maxHeight: SCREEN_H * 0.8 }]}>
               <View style={styles.sheetHandle}><View style={styles.sheetHandleBar} /></View>
 
               <View style={[styles.sheetFilterHeader, { flexDirection: dir.row }]}>
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   filterBadgeText: { color: COLORS.white, fontSize: 9, fontWeight: '800' },
 
   overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: { backgroundColor: COLORS.white, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, paddingBottom: 40, maxHeight: SCREEN_H * 0.8 },
+  sheet: { backgroundColor: COLORS.white, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, paddingBottom: 40 },
   sheetHandle: { alignItems: 'center', paddingVertical: 12 },
   sheetHandleBar: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.gray300 },
   sheetTitle: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, textAlign: 'right', paddingHorizontal: SPACING.xl, marginBottom: 8 },

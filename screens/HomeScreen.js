@@ -329,12 +329,13 @@ function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMa
   );
 }
 
+const { width: SCREEN_W } = Dimensions.get('window');
 const FLOATING_ICONS = [
   { icon: 'phone-portrait-outline', top: 45, left: 8, size: 34, duration: 3000 },
-  { icon: 'phone-portrait-outline', top: 50, left: width * 0.2, size: 30, duration: 3400 },
+  { icon: 'phone-portrait-outline', top: 50, left: SCREEN_W * 0.2, size: 30, duration: 3400 },
   { icon: 'phone-portrait-outline', top: 50, right: 8, size: 34, duration: 3200 },
-  { icon: 'phone-portrait-outline', top: 48, left: width * 0.65, size: 30, duration: 3600 },
-  { icon: 'laptop-outline', top: 70, left: width * 0.42, size: 34, duration: 3700 },
+  { icon: 'phone-portrait-outline', top: 48, left: SCREEN_W * 0.65, size: 30, duration: 3600 },
+  { icon: 'laptop-outline', top: 70, left: SCREEN_W * 0.42, size: 34, duration: 3700 },
 ];
 
 function AnimatedFloatingIcon({ item }) {
@@ -482,8 +483,9 @@ export default function HomeScreen({ navigation }) {
             product_images(id, url, "isPrimary", "sortOrder"),
             brands(name, "nameAr")
           `)
+          .not('homeOrder', 'is', null)
           .eq('isActive', true)
-          .order('createdAt', { ascending: false })
+          .order('homeOrder')
           .limit(50),
         supabase
           .from('reviews')
@@ -742,7 +744,7 @@ const styles = StyleSheet.create({
 
   carouselContainer: { marginBottom: 16 },
   bannerCard: {
-    width: BANNER_W, height: 150, borderRadius: RADIUS.xl, backgroundColor: COLORS.gray50,
+    height: 150, borderRadius: RADIUS.xl, backgroundColor: COLORS.gray50,
     marginHorizontal: 8, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.gray200,
   },
   bannerOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.3)' },
