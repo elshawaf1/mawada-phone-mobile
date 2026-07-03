@@ -181,6 +181,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
     VISA: t('orders.methodVisa'),
     WALLET: t('orders.methodWallet'),
     COD: t('orders.methodCod'),
+    INSTAPAY: t('payment.instapay'),
     BRANCH: t('orders.methodBranch'),
   }), [t]);
 

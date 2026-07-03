@@ -14,7 +14,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation, Smartphone, Clock } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { captureRef } from 'react-native-view-shot';
@@ -28,6 +28,7 @@ const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d
 function PaymentIcon({ method }) {
   if (method === 'VISA') return <CreditCard size={14} color="#22C55E" strokeWidth={2.25} />;
   if (method === 'WALLET') return <Wallet size={14} color="#22C55E" strokeWidth={2.25} />;
+  if (method === 'INSTAPAY') return <Smartphone size={14} color="#059669" strokeWidth={2.25} />;
   return <Banknote size={14} color="#22C55E" strokeWidth={2.25} />;
 }
 
@@ -53,6 +54,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
   const fawryCode = order?.fawryCode;
   const [paymentStatus, setPaymentStatus] = useState(order?.paymentStatus || 'PENDING');
+  const [paymentProofStatus, setPaymentProofStatus] = useState(order?.paymentProofStatus || 'NONE');
   const [capturing, setCapturing] = useState(false);
   const paymentMethod = order?.paymentMethod || 'COD';
 
@@ -81,6 +83,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
         { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
         (payload) => {
           if (payload.new?.paymentStatus) setPaymentStatus(payload.new.paymentStatus);
+          if (payload.new?.paymentProofStatus) setPaymentProofStatus(payload.new.paymentProofStatus);
         },
       )
       .subscribe();
@@ -89,7 +92,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
   // Safety net: verify payment with Paymob API if status is not yet PAID
   useEffect(() => {
-    if (!order?.id || paymentMethod === 'COD') return;
+    if (!order?.id || paymentMethod === 'COD' || paymentMethod === 'INSTAPAY') return;
     if (paymentStatus === 'PAID' || paymentStatus === 'FAILED') return;
 
     const verifyPayment = async () => {
@@ -130,6 +133,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
     VISA: t('orders.methodVisa'),
     WALLET: t('orders.methodWallet'),
     COD: t('orders.methodCod'),
+    INSTAPAY: t('payment.instapay'),
   };
 
   const handleShareOrder = () => {
@@ -179,7 +183,15 @@ export default function OrderConfirmScreen({ navigation, route }) {
     <>
       {/* Header — Document of Success */}
       <View style={styles.header}>
-        {paymentStatus === 'FAILED' ? (
+        {paymentMethod === 'INSTAPAY' && paymentProofStatus === 'PENDING' ? (
+          <Animated.View style={[styles.iconWrapBig, { backgroundColor: '#FFFBEB', borderColor: '#FDE68A', transform: [{ scale: Animated.multiply(scaleAnim, pulseAnim) }] }]}>
+            <Clock size={52} color="#F59E0B" strokeWidth={1.5} />
+          </Animated.View>
+        ) : paymentMethod === 'INSTAPAY' && paymentProofStatus === 'REJECTED' ? (
+          <View style={[styles.iconWrapBig, styles.iconWrapFailed]}>
+            <AlertCircle size={52} color="#EF4444" strokeWidth={1.5} />
+          </View>
+        ) : paymentStatus === 'FAILED' ? (
           <View style={[styles.iconWrapBig, styles.iconWrapFailed]}>
             <AlertCircle size={52} color="#EF4444" strokeWidth={1.5} />
           </View>
@@ -189,16 +201,26 @@ export default function OrderConfirmScreen({ navigation, route }) {
           </Animated.View>
         )}
         <Text style={styles.headerTitle}>
-          {paymentStatus === 'FAILED' ? t('orders.confirmFailedTitle') : t('orders.confirmSuccessTitle')}
+          {paymentMethod === 'INSTAPAY' && paymentProofStatus === 'PENDING'
+            ? t('payment.instapayWaiting')
+            : paymentMethod === 'INSTAPAY' && paymentProofStatus === 'REJECTED'
+              ? t('payment.instapayRejected')
+              : paymentStatus === 'FAILED'
+                ? t('orders.confirmFailedTitle')
+                : t('orders.confirmSuccessTitle')}
         </Text>
         <Text style={styles.headerSubtitle}>
-          {paymentStatus === 'FAILED'
-            ? t('orders.confirmFailedSub')
-            : paymentMethod === 'COD'
-              ? t('orders.confirmCodSub')
-              : paymentStatus === 'PAID'
-                ? t('orders.confirmPaidSub')
-                : t('orders.confirmPendingSub')}
+          {paymentMethod === 'INSTAPAY' && paymentProofStatus === 'PENDING'
+            ? t('payment.instapayWaitingSub')
+            : paymentMethod === 'INSTAPAY' && paymentProofStatus === 'REJECTED'
+              ? t('payment.instapayRejectedSub')
+              : paymentStatus === 'FAILED'
+                ? t('orders.confirmFailedSub')
+                : paymentMethod === 'COD'
+                  ? t('orders.confirmCodSub')
+                  : paymentStatus === 'PAID'
+                    ? t('orders.confirmPaidSub')
+                    : t('orders.confirmPendingSub')}
         </Text>
 
         {/* Boarding-pass Order ID */}

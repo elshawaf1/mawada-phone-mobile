@@ -105,6 +105,7 @@ export default function OrderDetailScreen({ navigation, route }) {
     WALLET: t('orders.methodWallet'),
     COD: t('orders.methodCod'),
     BRANCH: t('orders.methodBranch'),
+    INSTAPAY: t('payment.instapay'),
   };
 
   const TIMELINE_STEPS = [

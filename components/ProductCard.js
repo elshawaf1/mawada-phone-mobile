@@ -171,12 +171,11 @@ const styles = StyleSheet.create({
     height: CARD_W,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7F7F7',
-    position: 'relative',
+    overflow: 'hidden',
   },
   image: {
-    width: '90%',
-    height: '90%',
+    width: '100%',
+    height: '100%',
   },
 
   heartBtn: {

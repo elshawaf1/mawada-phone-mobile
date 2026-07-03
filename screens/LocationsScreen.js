@@ -113,10 +113,10 @@ export default function LocationsScreen({ navigation, route }) {
                 )}
 
                 {branch.phone && (
-                  <View style={[styles.infoRow, { flexDirection: dir.row }]}>
+                  <TouchableOpacity style={[styles.infoRow, { flexDirection: dir.row }]} onPress={() => callBranch(branch.phone)} activeOpacity={0.7}>
                     <Phone size={15} color="#64748B" />
-                    <Text style={[styles.infoText, { textAlign: dir.textAlign }]}>{branch.phone}</Text>
-                  </View>
+                    <Text style={[styles.infoText, { textAlign: dir.textAlign, color: COLORS.primary }]}>{branch.phone}</Text>
+                  </TouchableOpacity>
                 )}
 
                 <View style={[styles.branchFooter, { flexDirection: dir.row }]}>

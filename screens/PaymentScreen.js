@@ -17,7 +17,9 @@ import {
   Image,
   BackHandler,
 } from 'react-native';
-import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3, Smartphone, Copy, CheckCheck } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
 import LottieView from 'lottie-react-native';
 
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -67,6 +69,15 @@ const PAYMENT_METHODS = [
     bgColor: '#EFF6FF',
     integrationIdKey: 'EXPO_PUBLIC_PAYMOB_WALLET_INTEGRATION_ID',
   },
+  {
+    id: 'instapay',
+    type: 'INSTAPAY',
+    labelKey: 'payment.instapay',
+    hintKey: 'payment.instapayHint',
+    Icon: Smartphone,
+    color: '#059669',
+    bgColor: '#ECFDF5',
+  },
 ];
 
 const StepIndicator = ({ step, total }) => (
@@ -97,6 +108,12 @@ export default function PaymentScreen({ navigation, route }) {
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [watchOrderId, setWatchOrderId] = useState(null);
+  const [showInstapayGuide, setShowInstapayGuide] = useState(false);
+  const [showInstapayProof, setShowInstapayProof] = useState(false);
+  const [instapayOrderId, setInstapayOrderId] = useState(null);
+  const [instapayOrderData, setInstapayOrderData] = useState(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const sdkCallbackFired = useRef(false);
   const pollTimer = useRef(null);
@@ -407,7 +424,7 @@ export default function PaymentScreen({ navigation, route }) {
       return;
     }
 
-    const isOnline = method.type !== 'COD';
+    const isOnline = method.type !== 'COD' && method.type !== 'INSTAPAY';
     if (isOnline) {
       const integrationId = method.id === 'card' ? CARD_INTEGRATION_ID : WALLET_INTEGRATION_ID;
       if (!integrationId) {
@@ -478,6 +495,27 @@ export default function PaymentScreen({ navigation, route }) {
           })),
         };
         openSDK(data.clientSecret, orderData);
+      } else if (method.type === 'INSTAPAY') {
+        await db.clearCart(user.id);
+        clearAppCart();
+        setProcessing(false);
+        setInstapayOrderId(data.orderId);
+        setInstapayOrderData({
+          id: data.orderId,
+          orderNumber: data.orderNumber,
+          paymentMethod: 'INSTAPAY',
+          paymentStatus: 'PENDING',
+          subtotal,
+          shippingCost,
+          discount,
+          total,
+          order_items: items.map((item) => ({
+            ...item,
+            nameAr: item.name || t('common.product'),
+            unitPrice: item.unitPrice,
+          })),
+        });
+        setShowInstapayGuide(true);
       } else {
         await db.clearCart(user.id);
         clearAppCart();
@@ -508,6 +546,76 @@ export default function PaymentScreen({ navigation, route }) {
   };
 
   const formatPrice = (n) => Number(n || 0).toLocaleString();
+
+  const INSTAPAY_LINK = 'https://ipn.eg/S/chdzw/instapay/9f8SGC';
+
+  const handleCopyLink = async () => {
+    await Clipboard.setStringAsync(INSTAPAY_LINK);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handlePickProof = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('common.error'), 'يجب منح صلاحية الوصول للصور');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (!result.canceled) {
+      await uploadProof(result.assets[0].uri);
+    }
+  };
+
+  const handleTakeProof = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('common.error'), 'يجب منح صلاحية الوصول للكاميرا');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.8,
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
+    if (!result.canceled) {
+      await uploadProof(result.assets[0].uri);
+    }
+  };
+
+  const uploadProof = async (uri) => {
+    setUploadingProof(true);
+    try {
+      const fileName = `proof_${instapayOrderId}_${Date.now()}.jpg`;
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const { error: uploadErr } = await supabase.storage
+        .from('payment-proof-images')
+        .upload(fileName, blob, { contentType: 'image/jpeg' });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage
+        .from('payment-proof-images')
+        .getPublicUrl(fileName);
+      await supabase.from('orders').update({
+        paymentProofUrl: urlData.publicUrl,
+        paymentProofStatus: 'PENDING',
+      }).eq('id', instapayOrderId);
+      setShowInstapayProof(false);
+      navigation.replace('OrderConfirm', {
+        order: { ...instapayOrderData, paymentProofStatus: 'PENDING' },
+      });
+    } catch (err) {
+      console.error('Upload proof error:', err);
+      Alert.alert(t('common.error'), 'فشل في رفع الصورة');
+    } finally {
+      setUploadingProof(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -775,6 +883,117 @@ export default function PaymentScreen({ navigation, route }) {
         </TouchableOpacity>
 
       </ScrollView>
+
+      {/* InstaPay Step Guide Modal */}
+      {showInstapayGuide && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBackdrop} />
+          <View style={styles.modalCard}>
+            <View style={styles.modalHandleRow}><View style={styles.modalHandle} /></View>
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalIconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <Smartphone size={24} color="#059669" />
+              </View>
+              <Text style={styles.modalTitle}>{t('payment.instapayGuideTitle')}</Text>
+            </View>
+
+            {[
+              { num: 1, titleKey: 'instapayStep1', subKey: 'instapayStep1Sub' },
+              { num: 2, titleKey: 'instapayStep2', subKey: 'instapayStep2Sub' },
+              { num: 3, titleKey: 'instapayStep3', subKey: 'instapayStep3Sub' },
+              { num: 4, titleKey: 'instapayStep4', subKey: 'instapayStep4Sub' },
+            ].map((step, i) => (
+              <View key={step.num} style={styles.guideStepRow}>
+                <View style={styles.guideStepLeft}>
+                  <View style={[styles.guideStepNum, i < 3 && styles.guideStepNumActive]}>
+                    <Text style={[styles.guideStepNumText, i < 3 && { color: '#fff' }]}>{step.num}</Text>
+                  </View>
+                  {i < 3 && <View style={styles.guideStepLine} />}
+                </View>
+                <View style={styles.guideStepContent}>
+                  <Text style={styles.guideStepTitle}>{t(`payment.${step.titleKey}`)}</Text>
+                  <Text style={styles.guideStepSub}>{t(`payment.${step.subKey}`)}</Text>
+                </View>
+              </View>
+            ))}
+
+            <TouchableOpacity
+              style={styles.modalBtn}
+              onPress={() => { setShowInstapayGuide(false); setShowInstapayProof(true); }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalBtnText}>{t('payment.instapayGotIt')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* InstaPay Proof Upload Modal */}
+      {showInstapayProof && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBackdrop} />
+          <View style={styles.modalCard}>
+            <View style={styles.modalHandleRow}><View style={styles.modalHandle} /></View>
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalIconCircle, { backgroundColor: '#ECFDF5' }]}>
+                <Smartphone size={24} color="#059669" />
+              </View>
+              <Text style={styles.modalTitle}>{t('payment.instapay')}</Text>
+            </View>
+
+            {/* Link section */}
+            <View style={styles.linkCard}>
+              <Text style={styles.linkLabel}>{t('payment.instapayLinkLabel')}</Text>
+              <View style={styles.linkRow}>
+                <Text style={styles.linkText} numberOfLines={1}>{INSTAPAY_LINK}</Text>
+                <TouchableOpacity style={styles.linkCopyBtn} onPress={handleCopyLink} activeOpacity={0.7}>
+                  {linkCopied ? (
+                    <CheckCheck size={18} color="#059669" />
+                  ) : (
+                    <Copy size={18} color="#64748B" />
+                  )}
+                </TouchableOpacity>
+              </View>
+              <View style={styles.usernameRow}>
+                <Text style={styles.usernameLabel}>{t('payment.instapayUsername')}</Text>
+              </View>
+            </View>
+
+            {/* Upload buttons */}
+            <View style={styles.uploadBtnsRow}>
+              <TouchableOpacity
+                style={styles.uploadBtnPrimary}
+                onPress={handlePickProof}
+                activeOpacity={0.85}
+                disabled={uploadingProof}
+              >
+                {uploadingProof ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.uploadBtnPrimaryText}>{t('payment.instapaySend')}</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.uploadBtnSecondary}
+                onPress={handleTakeProof}
+                activeOpacity={0.85}
+                disabled={uploadingProof}
+              >
+                <Text style={styles.uploadBtnSecondaryText}>📸</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={() => { setShowInstapayProof(false); setProcessing(false); navigation.goBack(); }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCancelText}>{t('payment.instapayCancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
     </KeyboardAvoidingView>
   );
 }
@@ -962,4 +1181,115 @@ const styles = StyleSheet.create({
   checkoutFloatText: { color: '#FFF', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
   processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
+
+  /* InstaPay Modals */
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end', zIndex: 1000,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    paddingHorizontal: 24, paddingBottom: 40,
+    maxHeight: '85%',
+  },
+  modalHandleRow: { alignItems: 'center', paddingVertical: 12 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1' },
+  modalHeader: {
+    alignItems: 'center', marginBottom: 20, gap: 12,
+  },
+  modalIconCircle: {
+    width: 56, height: 56, borderRadius: 28,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 20, fontWeight: '800', color: '#0F172A', textAlign: 'center',
+  },
+
+  /* Guide Steps */
+  guideStepRow: {
+    flexDirection: 'row-reverse', marginBottom: 0,
+  },
+  guideStepLeft: {
+    alignItems: 'center', width: 32, marginLeft: 12,
+  },
+  guideStepNum: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+  },
+  guideStepNumActive: { backgroundColor: '#059669' },
+  guideStepNumText: { fontSize: 13, fontWeight: '700', color: '#94A3B8' },
+  guideStepLine: {
+    width: 2, height: 28, backgroundColor: '#E2E8F0', marginTop: 4,
+  },
+  guideStepContent: { flex: 1, paddingVertical: 2 },
+  guideStepTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
+  guideStepSub: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2, lineHeight: 18 },
+
+  modalBtn: {
+    backgroundColor: '#059669', borderRadius: 16,
+    paddingVertical: 16, alignItems: 'center', marginTop: 24,
+    shadowColor: '#059669', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+  },
+  modalBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+  /* Proof Upload */
+  linkCard: {
+    backgroundColor: '#F8FAFC', borderRadius: 16,
+    borderWidth: 1, borderColor: '#E2E8F0',
+    padding: 16, marginBottom: 16,
+  },
+  linkLabel: {
+    fontSize: 12, fontWeight: '600', color: '#94A3B8',
+    textAlign: 'right', marginBottom: 8,
+  },
+  linkRow: {
+    flexDirection: 'row-reverse', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 12,
+    borderWidth: 1, borderColor: '#E2E8F0', gap: 10,
+  },
+  linkText: {
+    flex: 1, fontSize: 13, fontWeight: '600', color: '#059669',
+    textAlign: 'left', writingDirection: 'ltr',
+  },
+  linkCopyBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+  },
+  usernameRow: {
+    flexDirection: 'row-reverse', justifyContent: 'center', marginTop: 12,
+  },
+  usernameLabel: {
+    fontSize: 16, fontWeight: '800', color: '#0F172A',
+    textAlign: 'center',
+  },
+
+  uploadBtnsRow: {
+    flexDirection: 'row-reverse', gap: 10, marginBottom: 12,
+  },
+  uploadBtnPrimary: {
+    flex: 1, backgroundColor: '#059669', borderRadius: 14,
+    paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#059669', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+  },
+  uploadBtnPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  uploadBtnSecondary: {
+    width: 54, height: 54, borderRadius: 14,
+    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#E2E8F0',
+  },
+
+  modalCancelBtn: {
+    alignItems: 'center', paddingVertical: 12,
+  },
+  modalCancelText: {
+    fontSize: 14, fontWeight: '600', color: '#94A3B8',
+  },
 });
