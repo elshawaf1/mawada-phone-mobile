@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Alert,
   Animated,
   RefreshControl,
   LayoutAnimation,
@@ -18,8 +17,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 import { Ionicons } from '@expo/vector-icons';
-import { Bell, Package, Tag, Info, ChevronRight, CheckCheck, Trash2 } from 'lucide-react-native';
-import { Swipeable } from 'react-native-gesture-handler';
+import { Bell, Package, Tag, Info, ChevronRight, CheckCheck } from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
 import { ListSkeleton } from '../components/Skeleton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,90 +38,48 @@ const notifConfig = {
   payment_failed: { icon: Package, bg: '#FEF2F2', color: '#EF4444' },
 };
 
-function SwipeableNotifCard({ notif, onMarkRead, onDelete, isFirst, onPress, t, deleteAnim }) {
-  const swipeRef = useRef(null);
+function NotifCard({ notif, onMarkRead, t }) {
+  const readAnim = useRef(new Animated.Value(notif.isRead ? 0 : 1)).current;
 
-  const renderRightActions = () => (
-    <TouchableOpacity
-      style={styles.swipeAction}
-      activeOpacity={0.8}
-      onPress={() => {
-        swipeRef.current?.close();
-        onMarkRead(notif.id);
-      }}
-    >
-      <CheckCheck size={20} color={COLORS.white} />
-      <Text style={styles.swipeActionText}>{t('notifications.read')}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderLeftActions = () => (
-    <TouchableOpacity
-      style={[styles.swipeAction, styles.swipeActionDelete]}
-      activeOpacity={0.8}
-      onPress={() => {
-        swipeRef.current?.close();
-        onDelete(notif.id);
-      }}
-    >
-      <Trash2 size={20} color={COLORS.white} />
-      <Text style={styles.swipeActionText}>{t('common.delete')}</Text>
-    </TouchableOpacity>
-  );
+  useEffect(() => {
+    Animated.spring(readAnim, { toValue: notif.isRead ? 0 : 1, useNativeDriver: true, tension: 50, friction: 7 }).start();
+  }, [notif.isRead]);
 
   const IconComp = (notifConfig[notif.type] || notifConfig.info).icon;
   const iconBg = (notifConfig[notif.type] || notifConfig.info).bg;
   const iconColor = (notifConfig[notif.type] || notifConfig.info).color;
 
-  const handleLongPress = () => {
-    Alert.alert(
-      notif.titleAr || notif.title,
-      t('notifications.chooseAction'),
-      [
-        { text: notif.isRead ? t('notifications.alreadyRead') : t('notifications.markAsRead'), onPress: () => onMarkRead(notif.id) },
-        { text: t('common.delete'), onPress: () => onDelete(notif.id), style: 'destructive' },
-        { text: t('common.cancel'), style: 'cancel' },
-      ]
-    );
-  };
-
   return (
-    <Animated.View style={{ opacity: deleteAnim || 1, transform: [{ translateX: deleteAnim ? deleteAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 300] }) : 0 }] }}>
-      <Swipeable
-        ref={swipeRef}
-        renderRightActions={renderRightActions}
-        renderLeftActions={renderLeftActions}
-        overshootRight={false}
-        overshootLeft={false}
-      >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onLongPress={handleLongPress}
-          onPress={() => { if (!notif.isRead) onMarkRead(notif.id); }}
-        >
-          <Animated.View style={[styles.notifCard, !notif.isRead && styles.notifCardUnread]}>
-            <View style={[styles.notifIcon, { backgroundColor: iconBg }]}>
-              <IconComp size={20} color={iconColor} />
-            </View>
+    <View style={[styles.notifCard, !notif.isRead && styles.notifCardUnread]}>
+      <View style={[styles.notifIcon, { backgroundColor: iconBg }]}>
+        <IconComp size={20} color={iconColor} />
+      </View>
 
-            <View style={styles.notifContent}>
-              <View style={styles.notifTopRow}>
-                {!notif.isRead && <View style={styles.unreadDot} />}
-                <Text style={styles.notifTime}>{formatTime(notif.createdAt, t)}</Text>
-              </View>
-              <Text style={styles.notifTitle} numberOfLines={1}>
-                {notif.titleAr || notif.title}
-              </Text>
-              <Text style={styles.notifBody} numberOfLines={2}>
-                {notif.bodyAr || notif.body}
-              </Text>
-            </View>
+      <View style={styles.notifContent}>
+        <View style={styles.notifTopRow}>
+          <Animated.View style={[styles.unreadDot, { opacity: readAnim, transform: [{ scale: readAnim }] }]} />
+          <Text style={styles.notifTime}>{formatTime(notif.createdAt, t)}</Text>
+        </View>
+        <Text style={styles.notifTitle} numberOfLines={1}>
+          {notif.titleAr || notif.title}
+        </Text>
+        <Text style={styles.notifBody} numberOfLines={2}>
+          {notif.bodyAr || notif.body}
+        </Text>
+      </View>
 
-            <Ionicons name="chevron-forward" size={16} color={COLORS.gray300} style={styles.chevron} />
-          </Animated.View>
-        </TouchableOpacity>
-      </Swipeable>
-    </Animated.View>
+      <View style={styles.notifActions}>
+        {!notif.isRead && (
+          <TouchableOpacity
+            style={[styles.notifActionBtn, styles.notifActionRead]}
+            onPress={() => onMarkRead(notif.id)}
+            activeOpacity={0.7}
+          >
+            <CheckCheck size={14} color={COLORS.blue} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -179,7 +135,7 @@ function formatTime(dateStr, t) {
   if (diffMin < 60) return t('time.minutesAgo', { n: diffMin });
   if (diffHr < 24) return t('time.hoursAgo', { n: diffHr });
   if (diffDay < 7) return t('time.daysAgo', { n: diffDay });
-  return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 export default function NotificationScreen({ navigation }) {
@@ -191,25 +147,9 @@ export default function NotificationScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const fadeAnims = useRef([]);
-  const deleteAnims = useRef({});
+  const isFocusedRef = useRef(true);
 
-  useEffect(() => {
-    fetchNotifications();
-    const subscription = supabase
-      .channel('notifications')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `userId=eq.${user?.id}`,
-      }, (payload) => {
-        setNotifications((prev) => [payload.new, ...prev]);
-      })
-      .subscribe();
-    return () => { subscription.unsubscribe(); };
-  }, [user?.id]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
     try {
       const { data, error } = await supabase
@@ -228,41 +168,60 @@ export default function NotificationScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchNotifications();
+
+    const subscription = supabase
+      .channel('notifications')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `userId=eq.${user?.id}`,
+      }, (payload) => {
+        setNotifications((prev) => [payload.new, ...prev]);
+      })
+      .subscribe();
+
+    return () => { subscription.unsubscribe(); };
+  }, [user?.id, fetchNotifications]);
+
+  // Re-fetch on screen focus
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('focus', () => {
+      isFocusedRef.current = true;
+      fetchNotifications();
+    });
+    const unsubscribeBlur = navigation?.addListener?.('blur', () => {
+      isFocusedRef.current = false;
+    });
+    return () => { unsubscribe?.(); unsubscribeBlur?.(); };
+  }, [navigation, fetchNotifications]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchNotifications();
     setRefreshing(false);
-  }, [user?.id]);
+  }, [fetchNotifications]);
 
   const markRead = useCallback(async (id) => {
-    await supabase.from('notifications').update({ isRead: true }).eq('id', id);
     setNotifications((prev) => {
       const updated = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
-      const newCount = updated.filter((n) => !n.isRead).length;
-      setBadgeCountAsync(newCount);
+      setBadgeCountAsync(updated.filter((n) => !n.isRead).length);
       return updated;
     });
+    await supabase.from('notifications').update({ isRead: true }).eq('id', id);
   }, []);
 
   const markAllRead = useCallback(async () => {
     if (!user?.id) return;
-    await supabase.from('notifications').update({ isRead: true }).eq('userId', user.id).eq('isRead', false);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setBadgeCountAsync(0);
+    await supabase.from('notifications').update({ isRead: true }).eq('userId', user.id).eq('isRead', false);
   }, [user?.id]);
-
-  const deleteNotif = useCallback(async (id) => {
-    const anim = new Animated.Value(1);
-    deleteAnims.current[id] = anim;
-
-    Animated.timing(anim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      delete supabase.from('notifications').delete().eq('id', id);
-    });
-  }, []);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const isEmpty = notifications.length === 0;
@@ -271,15 +230,15 @@ export default function NotificationScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
-        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <StatusBar barStyle="light-content" backgroundColor="#0F172A" translucent />
         <View style={styles.headerContent}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <ChevronRight color={COLORS.text} size={24} />
+            <ChevronRight color="#FFFFFF" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
           {unreadCount > 0 ? (
             <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
-              <CheckCheck size={16} color={COLORS.blue} />
+              <CheckCheck size={16} color="#60A5FA" />
               <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
             </TouchableOpacity>
           ) : (
@@ -290,7 +249,7 @@ export default function NotificationScreen({ navigation }) {
 
       {unreadCount > 0 && (
         <View style={styles.unreadBanner}>
-          <Bell size={16} color={COLORS.primary} />
+          <Bell size={16} color="#60A5FA" />
           <Text style={styles.unreadText}>
             {unreadCount === 1 ? t('notifications.unreadBanner', { count: unreadCount }) : t('notifications.unreadBannerPlural', { count: unreadCount })}
           </Text>
@@ -304,7 +263,7 @@ export default function NotificationScreen({ navigation }) {
       ) : isEmpty ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconWrapper}>
-            <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray300} />
+            <Ionicons name="notifications-off-outline" size={48} color="#475569" />
           </View>
           <Text style={styles.emptyTitle}>{t('notifications.empty')}</Text>
           <Text style={styles.emptySubtitle}>{t('notifications.emptySub')}</Text>
@@ -313,20 +272,17 @@ export default function NotificationScreen({ navigation }) {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scroll, { paddingBottom: 120 + insets.bottom }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} tintColor="#3B82F6" />}
         >
           {groups.map((group) => (
             <View key={group.key}>
               <Text style={styles.sectionHeader}>{group.label}</Text>
               {group.data.map((notif) => (
-                <SwipeableNotifCard
+                <NotifCard
                   key={notif.id}
                   notif={notif}
                   onMarkRead={markRead}
-                  onDelete={deleteNotif}
-                  onPress={() => {}}
                   t={t}
-                  deleteAnim={deleteAnims.current[notif.id]}
                 />
               ))}
             </View>
@@ -339,11 +295,10 @@ export default function NotificationScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.gray50 },
+  container: { flex: 1, backgroundColor: '#0F172A' },
   headerContainer: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#0F172A',
     paddingBottom: 12,
-    ...SHADOWS.sm,
   },
   headerContent: {
     flexDirection: 'row-reverse',
@@ -354,31 +309,31 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: COLORS.gray50, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
   markAllBtn: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 4,
   },
-  markAllText: { fontSize: 13, fontWeight: '600', color: COLORS.blue },
+  markAllText: { fontSize: 13, fontWeight: '600', color: '#60A5FA' },
   spacer: { width: 60 },
   unreadBanner: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(59,130,246,0.15)',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
   },
-  unreadText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: '#1D4ED8' },
+  unreadText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: '#93C5FD' },
   loadingContainer: { flex: 1, paddingTop: 16 },
   scroll: { padding: 16, paddingBottom: 100 },
   sectionHeader: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textTertiary,
+    color: '#64748B',
     textTransform: 'uppercase',
     marginBottom: 8,
     marginTop: 16,
@@ -387,18 +342,20 @@ const styles = StyleSheet.create({
   },
   notifCard: {
     flexDirection: 'row-reverse',
-    backgroundColor: COLORS.white,
+    backgroundColor: '#1E293B',
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     gap: 12,
     alignItems: 'center',
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   notifCardUnread: {
-    backgroundColor: '#FAFEFF',
+    backgroundColor: '#1E293B',
     borderRightWidth: 3,
-    borderRightColor: COLORS.blue,
+    borderRightColor: '#3B82F6',
+    borderColor: 'rgba(59,130,246,0.2)',
   },
   notifIcon: {
     width: 44, height: 44, borderRadius: 22,
@@ -411,38 +368,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.blue },
-  notifTime: { fontSize: 11, color: COLORS.gray400 },
-  notifTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, textAlign: 'right', marginBottom: 4 },
-  notifBody: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'right', lineHeight: 20 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6' },
+  notifTime: { fontSize: 11, color: '#64748B' },
+  notifTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: '#F1F5F9', textAlign: 'right', marginBottom: 4 },
+  notifBody: { fontSize: FONT_SIZES.sm, color: '#94A3B8', textAlign: 'right', lineHeight: 20 },
   chevron: { marginRight: 4 },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
   emptyIconWrapper: {
     width: 88, height: 88, borderRadius: 44,
-    backgroundColor: COLORS.gray100,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 20,
   },
-  emptyTitle: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, marginBottom: 8 },
-  emptySubtitle: { fontSize: FONT_SIZES.md, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 22 },
-  swipeAction: {
-    backgroundColor: COLORS.blue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 80,
-    marginBottom: 10,
-    borderRadius: 16,
-    marginLeft: 8,
-    gap: 4,
+  emptyTitle: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: '#F1F5F9', marginBottom: 8 },
+  emptySubtitle: { fontSize: FONT_SIZES.md, color: '#64748B', textAlign: 'center', lineHeight: 22 },
+  notifActions: {
+    alignItems: 'center', gap: 6, flexShrink: 0,
   },
-  swipeActionDelete: {
-    backgroundColor: COLORS.error,
-    marginLeft: 0,
-    marginRight: 8,
+  notifActionBtn: {
+    width: 30, height: 30, borderRadius: 15,
+    alignItems: 'center', justifyContent: 'center',
   },
-  swipeActionText: {
-    color: COLORS.white,
-    fontSize: 11,
-    fontWeight: FONT_WEIGHTS.bold,
+  notifActionRead: {
+    backgroundColor: 'rgba(59,130,246,0.15)',
   },
 });
