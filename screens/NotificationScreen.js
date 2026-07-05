@@ -147,7 +147,6 @@ export default function NotificationScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const fadeAnims = useRef([]);
-  const isFocusedRef = useRef(true);
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
@@ -188,16 +187,11 @@ export default function NotificationScreen({ navigation }) {
     return () => { subscription.unsubscribe(); };
   }, [user?.id, fetchNotifications]);
 
-  // Re-fetch on screen focus
   useEffect(() => {
     const unsubscribe = navigation?.addListener?.('focus', () => {
-      isFocusedRef.current = true;
       fetchNotifications();
     });
-    const unsubscribeBlur = navigation?.addListener?.('blur', () => {
-      isFocusedRef.current = false;
-    });
-    return () => { unsubscribe?.(); unsubscribeBlur?.(); };
+    return () => { unsubscribe?.(); };
   }, [navigation, fetchNotifications]);
 
   const onRefresh = useCallback(async () => {
@@ -230,15 +224,15 @@ export default function NotificationScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
-        <StatusBar barStyle="light-content" backgroundColor="#0F172A" translucent />
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
         <View style={styles.headerContent}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <ChevronRight color="#FFFFFF" size={24} />
+            <ChevronRight color={COLORS.text} size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
           {unreadCount > 0 ? (
             <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
-              <CheckCheck size={16} color="#60A5FA" />
+              <CheckCheck size={16} color={COLORS.blue} />
               <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
             </TouchableOpacity>
           ) : (
@@ -249,7 +243,7 @@ export default function NotificationScreen({ navigation }) {
 
       {unreadCount > 0 && (
         <View style={styles.unreadBanner}>
-          <Bell size={16} color="#60A5FA" />
+          <Bell size={16} color={COLORS.primary} />
           <Text style={styles.unreadText}>
             {unreadCount === 1 ? t('notifications.unreadBanner', { count: unreadCount }) : t('notifications.unreadBannerPlural', { count: unreadCount })}
           </Text>
@@ -263,7 +257,7 @@ export default function NotificationScreen({ navigation }) {
       ) : isEmpty ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconWrapper}>
-            <Ionicons name="notifications-off-outline" size={48} color="#475569" />
+            <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray300} />
           </View>
           <Text style={styles.emptyTitle}>{t('notifications.empty')}</Text>
           <Text style={styles.emptySubtitle}>{t('notifications.emptySub')}</Text>
@@ -272,7 +266,7 @@ export default function NotificationScreen({ navigation }) {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scroll, { paddingBottom: 120 + insets.bottom }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3B82F6']} tintColor="#3B82F6" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} tintColor={COLORS.primary} />}
         >
           {groups.map((group) => (
             <View key={group.key}>
@@ -295,10 +289,11 @@ export default function NotificationScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: COLORS.gray50 },
   headerContainer: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     paddingBottom: 12,
+    ...SHADOWS.sm,
   },
   headerContent: {
     flexDirection: 'row-reverse',
@@ -309,31 +304,31 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.gray50, alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   markAllBtn: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 4,
   },
-  markAllText: { fontSize: 13, fontWeight: '600', color: '#60A5FA' },
+  markAllText: { fontSize: 13, fontWeight: '600', color: COLORS.blue },
   spacer: { width: 60 },
   unreadBanner: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: 'rgba(59,130,246,0.15)',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
   },
-  unreadText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: '#93C5FD' },
+  unreadText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: '#1D4ED8' },
   loadingContainer: { flex: 1, paddingTop: 16 },
   scroll: { padding: 16, paddingBottom: 100 },
   sectionHeader: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.bold,
-    color: '#64748B',
+    color: COLORS.textTertiary,
     textTransform: 'uppercase',
     marginBottom: 8,
     marginTop: 16,
@@ -342,20 +337,18 @@ const styles = StyleSheet.create({
   },
   notifCard: {
     flexDirection: 'row-reverse',
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     gap: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    ...SHADOWS.sm,
   },
   notifCardUnread: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FAFEFF',
     borderRightWidth: 3,
-    borderRightColor: '#3B82F6',
-    borderColor: 'rgba(59,130,246,0.2)',
+    borderRightColor: COLORS.blue,
   },
   notifIcon: {
     width: 44, height: 44, borderRadius: 22,
@@ -368,20 +361,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6' },
-  notifTime: { fontSize: 11, color: '#64748B' },
-  notifTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: '#F1F5F9', textAlign: 'right', marginBottom: 4 },
-  notifBody: { fontSize: FONT_SIZES.sm, color: '#94A3B8', textAlign: 'right', lineHeight: 20 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.blue },
+  notifTime: { fontSize: 11, color: COLORS.gray400 },
+  notifTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, textAlign: 'right', marginBottom: 4 },
+  notifBody: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'right', lineHeight: 20 },
   chevron: { marginRight: 4 },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
   emptyIconWrapper: {
     width: 88, height: 88, borderRadius: 44,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: COLORS.gray100,
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 20,
   },
-  emptyTitle: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: '#F1F5F9', marginBottom: 8 },
-  emptySubtitle: { fontSize: FONT_SIZES.md, color: '#64748B', textAlign: 'center', lineHeight: 22 },
+  emptyTitle: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, marginBottom: 8 },
+  emptySubtitle: { fontSize: FONT_SIZES.md, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 22 },
   notifActions: {
     alignItems: 'center', gap: 6, flexShrink: 0,
   },
@@ -390,6 +383,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   notifActionRead: {
-    backgroundColor: 'rgba(59,130,246,0.15)',
+    backgroundColor: '#EFF6FF',
   },
 });
