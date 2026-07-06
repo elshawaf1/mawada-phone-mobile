@@ -95,25 +95,15 @@ export default function SettingsScreen({ navigation }) {
         </Section>
 
         <Section title={t('settings.appearance')}>
-          <RowToggle icon="moon-outline" label={t('settings.darkMode')} value={darkMode} onValueChange={toggleDarkMode} />
-          <View style={styles.rowDivider} />
           <RowLink icon="language-outline" label={t('settings.language')} value={locale === 'ar' ? t('settings.arabic') : t('settings.english')} onPress={toggleLocale} />
         </Section>
 
         <Section title={t('settings.account')}>
           <RowLink icon="location-outline" label={t('settings.manageAddresses')} onPress={() => navigation.navigate('DeliveryLocations')} />
           <View style={styles.rowDivider} />
-          <RowLink icon="card-outline" label={t('settings.savedPaymentMethods')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.comingSoon'))} />
-          <View style={styles.rowDivider} />
           <RowLink iconType="Feather" icon="log-out" label={t('settings.logout')} onPress={handleLogout} />
           <View style={styles.rowDivider} />
           <RowLink iconType="Feather" icon="trash-2" label={t('settings.deleteAccount')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.deleteAccountNotAvailable'))} isDestructive />
-        </Section>
-
-        <Section title={t('settings.support')}>
-          <RowLink icon="chatbubble-ellipses-outline" label={t('settings.contactUs')} onPress={() => navigation.navigate('Chat')} />
-          <View style={styles.rowDivider} />
-          <RowLink icon="star-outline" label={t('settings.rateApp')} onPress={() => openUrl('https://play.google.com/store')} />
         </Section>
 
         <Section title={t('settings.legal')}>
