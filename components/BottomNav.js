@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, RADIUS, SHADOWS } from '../constants';
@@ -44,6 +45,7 @@ export default function BottomNav({ navigation, activeRoute }) {
 
   return (
     <View style={[styles.dock, { bottom: Math.max(insets.bottom, 16) + 12, flexDirection: dir.row }]}>
+      <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
       {NAV_ITEMS.map((item) => {
         const isActive = activeRoute === item.route;
         const badge = item.badgeKey === 'cart' ? cartCount : 0;
@@ -111,9 +113,10 @@ const styles = StyleSheet.create({
   dock: {
     position: 'absolute', left: 16, right: 16, height: 64,
     flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
-    backgroundColor: COLORS.white, borderRadius: RADIUS.xxl,
+    backgroundColor: 'transparent', borderRadius: RADIUS.xxl,
     ...SHADOWS.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+    overflow: 'hidden',
   },
   dockItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
   dockIconWrapper: { position: 'relative', alignItems: 'center' },
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
     minWidth: 16, height: 16, borderRadius: 8,
     backgroundColor: COLORS.error,
     justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1.5, borderColor: COLORS.white, paddingHorizontal: 3,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.6)', paddingHorizontal: 3,
   },
   dockBadgeText: { color: COLORS.white, fontSize: 8, fontWeight: FONT_WEIGHTS.extrabold, lineHeight: 10 },
   dockLabel: { fontSize: 10, color: COLORS.gray400, marginTop: 2, fontWeight: FONT_WEIGHTS.medium },
