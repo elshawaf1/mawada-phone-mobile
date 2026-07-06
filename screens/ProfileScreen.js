@@ -120,6 +120,8 @@ export default function ProfileScreen({ navigation }) {
         </Section>
 
         <Section title={t('profile.support')}>
+          <Row iconName="settings-outline" label={t('settings.title')} onPress={() => navigation.navigate('Settings')} />
+          <View style={styles.rowDivider} />
           <Row iconName="location-outline" label={t('profile.menuBranches')} onPress={() => navigation.navigate('Locations')} />
           <View style={styles.rowDivider} />
           <Row iconName="chatbubble-ellipses-outline" label={t('profile.support')} onPress={() => navigation.navigate('Support')} />
