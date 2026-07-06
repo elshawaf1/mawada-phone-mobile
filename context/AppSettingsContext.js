@@ -48,32 +48,21 @@ function getNested(obj, path) {
   return path.split('.').reduce((acc, part) => acc?.[part], obj);
 }
 
+const _deviceLang = getDeviceLanguage();
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(_deviceLang === 'ar');
+
 export function AppSettingsProvider({ children }) {
-  const [locale, setLocale] = useState('ar');
+  const [locale, setLocale] = useState(_deviceLang);
   const [darkMode, setDarkMode] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.multiGet(['locale', 'darkMode'])
-      .then(([l, d]) => {
-        const savedLocale = l[1];
-        const finalLocale = savedLocale || getDeviceLanguage();
-        setLocale(finalLocale);
-
-        const isRTL = finalLocale === 'ar';
-        if (I18nManager.isRTL !== isRTL) {
-          I18nManager.allowRTL(true);
-          I18nManager.forceRTL(isRTL);
-        }
-
-        if (d[1] !== null) setDarkMode(d[1] === 'true');
+    AsyncStorage.getItem('darkMode')
+      .then((d) => {
+        if (d !== null) setDarkMode(d === 'true');
       })
-      .catch(() => {
-        const fallback = getDeviceLanguage();
-        setLocale(fallback);
-        I18nManager.allowRTL(true);
-        I18nManager.forceRTL(fallback === 'ar');
-      })
+      .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
 
