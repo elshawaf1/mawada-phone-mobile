@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { BackHandler, I18nManager, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(true);
 import { AppProvider } from './context/AppContext';
 import { AppSettingsProvider } from './context/AppSettingsContext';
 import { AuthProvider, useAuth } from './context/AuthContext';

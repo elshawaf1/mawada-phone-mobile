@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation, useTheme, useAppSettings } from '../context/AppSettingsContext';
+import { useTranslation, useTheme } from '../context/AppSettingsContext';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
 
@@ -14,9 +14,8 @@ const APP_VERSION = '1.0.0';
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
-  const { toggleLocale } = useAppSettings();
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [ordersNotif, setOrdersNotif] = useState(true);
   const [offersNotif, setOffersNotif] = useState(true);
@@ -96,8 +95,6 @@ export default function SettingsScreen({ navigation }) {
 
         <Section title={t('settings.appearance')}>
           <RowToggle icon="moon-outline" label={t('settings.darkMode')} value={darkMode} onValueChange={toggleDarkMode} />
-          <View style={styles.rowDivider} />
-          <RowLink icon="language-outline" label={t('settings.language')} value={locale === 'ar' ? t('settings.arabic') : t('settings.english')} onPress={toggleLocale} />
         </Section>
 
         <Section title={t('settings.account')}>

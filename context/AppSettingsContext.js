@@ -37,25 +37,18 @@ function getNested(obj, path) {
 }
 
 export function AppSettingsProvider({ children }) {
-  const [locale, setLocale] = useState('ar');
+  const locale = 'ar';
   const [darkMode, setDarkMode] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.multiGet(['locale', 'darkMode'])
-      .then(([l, d]) => {
-        if (l[1]) setLocale(l[1]);
-        if (d[1]) setDarkMode(d[1] === 'true');
+    AsyncStorage.getItem('darkMode')
+      .then((d) => {
+        if (d !== null) setDarkMode(d === 'true');
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
   }, []);
-
-  const toggleLocale = useCallback(() => {
-    const next = locale === 'ar' ? 'en' : 'ar';
-    setLocale(next);
-    AsyncStorage.setItem('locale', next);
-  }, [locale]);
 
   const toggleDarkMode = useCallback(() => {
     const next = !darkMode;
@@ -85,10 +78,10 @@ export function AppSettingsProvider({ children }) {
 
   const value = useMemo(() => ({
     locale, darkMode, loaded,
-    t, toggleLocale, toggleDarkMode,
+    t, toggleDarkMode,
     colors, weekdays, months,
-    isRTL: locale === 'ar',
-  }), [locale, darkMode, loaded, t, toggleLocale, toggleDarkMode, colors, weekdays, months]);
+    isRTL: true,
+  }), [darkMode, loaded, t, toggleDarkMode, colors, weekdays, months]);
 
   if (!loaded) return null;
 
