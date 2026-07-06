@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import RNRestart from 'react-native-restart';
@@ -67,30 +66,17 @@ export function AppSettingsProvider({ children }) {
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
-
-    // I18nManager.forceRTL requires a restart to take effect on native side
-    // If native RTL state doesn't match what we need, restart immediately
-    const shouldBeRTL = _deviceLang === 'ar';
-    if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.allowRTL(true);
-      I18nManager.forceRTL(shouldBeRTL);
-      setTimeout(() => RNRestart.restart(), 100);
-    }
   }, []);
 
   const toggleLocale = useCallback(() => {
     const next = locale === 'ar' ? 'en' : 'ar';
     AsyncStorage.setItem('locale', next);
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(next === 'ar');
     setTimeout(() => RNRestart.restart(), 100);
   }, [locale]);
 
   const setLocaleAndPersist = useCallback((newLocale) => {
     setLocale(newLocale);
     AsyncStorage.setItem('locale', newLocale);
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(newLocale === 'ar');
   }, []);
 
   const toggleDarkMode = useCallback(() => {
