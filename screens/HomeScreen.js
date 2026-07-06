@@ -132,14 +132,15 @@ function HeroCarousel({ banners, navigation, t }) {
 }
 
 function BrandSegmentedControl({ brands, activeBrand, setActiveBrand, t }) {
+  const dir = useDirection();
   const allBrands = [{ id: 'all', nameAr: t('home.all'), name: 'All' }, ...(brands || [])];
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.brandScroll} contentContainerStyle={styles.brandContainer}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.brandScroll, dir.isRTL && { transform: [{ scaleX: -1 }] }]} contentContainerStyle={styles.brandContainer}>
       {allBrands.map((brand) => {
         const isActive = activeBrand === brand.id;
         return (
-          <View key={brand.id}>
+          <View key={brand.id} style={dir.isRTL && { transform: [{ scaleX: -1 }] }}>
             <TouchableOpacity
               style={[styles.brandItem, isActive && styles.brandItemActive]}
               onPress={() => setActiveBrand(brand.id)}
