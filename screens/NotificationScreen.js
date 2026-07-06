@@ -38,7 +38,7 @@ const notifConfig = {
   payment_failed: { icon: Package, bg: '#FEF2F2', color: '#EF4444' },
 };
 
-function NotifCard({ notif, onMarkRead, t }) {
+function NotifCard({ notif, onMarkRead, t, locale }) {
   const dir = useDirection();
   const readAnim = useRef(new Animated.Value(notif.isRead ? 0 : 1)).current;
 
@@ -62,10 +62,10 @@ function NotifCard({ notif, onMarkRead, t }) {
           <Text style={styles.notifTime}>{formatTime(notif.createdAt, t)}</Text>
         </View>
         <Text style={[styles.notifTitle, { textAlign: dir.textAlign }]} numberOfLines={1}>
-          {notif.titleAr || notif.title}
+          {locale === 'ar' ? notif.titleAr : notif.title}
         </Text>
         <Text style={[styles.notifBody, { textAlign: dir.textAlign }]} numberOfLines={2}>
-          {notif.bodyAr || notif.body}
+          {locale === 'ar' ? notif.bodyAr : notif.body}
         </Text>
       </View>
 
@@ -142,7 +142,7 @@ function formatTime(dateStr, t) {
 export default function NotificationScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -278,6 +278,7 @@ export default function NotificationScreen({ navigation }) {
                   notif={notif}
                   onMarkRead={markRead}
                   t={t}
+                  locale={locale}
                 />
               ))}
             </View>

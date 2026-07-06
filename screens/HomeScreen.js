@@ -64,7 +64,7 @@ function SearchBar({ onPress, t }) {
   );
 }
 
-function HeroCarousel({ banners, navigation, t }) {
+function HeroCarousel({ banners, navigation, t, locale }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const dir = useDirection();
   const flatListRef = useRef(null);
@@ -117,7 +117,7 @@ function HeroCarousel({ banners, navigation, t }) {
             )}
             <View style={styles.bannerOverlay} />
             <View style={styles.bannerContent}>
-              <Text style={[styles.bannerTitle, { textAlign: dir.textAlign }]}>{item.titleAr || item.title}</Text>
+              <Text style={[styles.bannerTitle, { textAlign: dir.textAlign }]}>{locale === 'ar' ? item.titleAr : item.title}</Text>
               <View style={[styles.bannerBtn, { flexDirection: dir.row }]}>
                 <Text style={styles.bannerBtnText}>{t('home.shopNow')}</Text>
                 <Ionicons name="arrow-forward" size={14} color="#FFF" />
@@ -416,7 +416,7 @@ export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { addToCart, removeFromCart, isInCart, cartCount } = useApp();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const [banners, setBanners] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -616,7 +616,7 @@ export default function HomeScreen({ navigation }) {
 
             <SearchBar onPress={() => navigation.navigate('Search')} t={t} />
 
-            <HeroCarousel banners={banners} navigation={navigation} t={t} />
+            <HeroCarousel banners={banners} navigation={navigation} t={t} locale={locale} />
 
             <CategoryGrid categories={categories} navigation={navigation} t={t} />
 
