@@ -59,10 +59,10 @@ export function AppSettingsProvider({ children }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.multiRemove(['locale']).catch(() => {});
-    AsyncStorage.getItem('darkMode')
-      .then((d) => {
-        if (d !== null) setDarkMode(d === 'true');
+    AsyncStorage.multiGet(['savedLocale', 'darkMode'])
+      .then(([l, d]) => {
+        if (l[1]) setLocale(l[1]);
+        if (d[1] !== null) setDarkMode(d[1] === 'true');
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
@@ -70,13 +70,14 @@ export function AppSettingsProvider({ children }) {
 
   const toggleLocale = useCallback(() => {
     const next = locale === 'ar' ? 'en' : 'ar';
-    AsyncStorage.setItem('locale', next);
+    setLocale(next);
+    AsyncStorage.setItem('savedLocale', next);
     setTimeout(() => RNRestart.restart(), 100);
   }, [locale]);
 
   const setLocaleAndPersist = useCallback((newLocale) => {
     setLocale(newLocale);
-    AsyncStorage.setItem('locale', newLocale);
+    AsyncStorage.setItem('savedLocale', newLocale);
   }, []);
 
   const toggleDarkMode = useCallback(() => {
