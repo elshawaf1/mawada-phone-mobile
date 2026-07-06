@@ -67,6 +67,17 @@ function SearchBar({ onPress, t }) {
 function HeroCarousel({ banners, navigation, t }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const dir = useDirection();
+  const flatListRef = useRef(null);
+
+  useEffect(() => {
+    if (!banners || banners.length <= 1) return;
+    const timer = setInterval(() => {
+      const next = (activeIndex + 1) % banners.length;
+      flatListRef.current?.scrollToOffset({ offset: next * BANNER_W, animated: true });
+      setActiveIndex(next);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [activeIndex, banners]);
 
   if (!banners || banners.length === 0) return null;
 
@@ -78,6 +89,7 @@ function HeroCarousel({ banners, navigation, t }) {
   return (
     <View style={styles.carouselContainer}>
       <FlatList
+        ref={flatListRef}
         data={banners}
         horizontal
         pagingEnabled
