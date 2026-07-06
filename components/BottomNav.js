@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { COLORS, FONT_SIZES, FONT_WEIGHTS, RADIUS, SHADOWS } from '../constants';
@@ -36,7 +35,6 @@ export default function BottomNav({ navigation, activeRoute }) {
       homeLottieRef.current?.play();
     }
   }, [activeRoute]);
-
   const NAV_ITEMS = [
     { route: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', label: t('nav.profile') },
     { route: 'Search', icon: 'search-outline', iconActive: 'search', label: t('nav.search') },
@@ -45,93 +43,81 @@ export default function BottomNav({ navigation, activeRoute }) {
   ];
 
   return (
-    <View style={[styles.outerWrap, { bottom: Math.max(insets.bottom, 16) + 12 }]}>
-      <View style={[styles.dock, { flexDirection: dir.row }]}>
-        <BlurView intensity={60} tint="systemMaterialLight" style={StyleSheet.absoluteFill} />
-        {NAV_ITEMS.map((item) => {
-          const isActive = activeRoute === item.route;
-          const badge = item.badgeKey === 'cart' ? cartCount : 0;
+    <View style={[styles.dock, { bottom: Math.max(insets.bottom, 16) + 12, flexDirection: dir.row }]}>
+      {NAV_ITEMS.map((item) => {
+        const isActive = activeRoute === item.route;
+        const badge = item.badgeKey === 'cart' ? cartCount : 0;
 
-          return (
-            <TouchableOpacity
-              key={item.route}
-              style={styles.dockItem}
-              onPress={() => navigation.navigate(item.route)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.dockIconWrapper, isActive && styles.dockIconWrapperActive]}>
-                {item.route === 'Profile' ? (
-                  <LottieView
-                    ref={lottieRef}
-                    source={avatarAnim}
-                    style={[styles.lottieIcon, isActive && styles.lottieIconActive]}
-                    autoPlay={false}
-                    loop={false}
-                    resizeMode="cover"
-                  />
-                ) : item.route === 'Home' && isActive ? (
-                  <LottieView
-                    ref={homeLottieRef}
-                    source={homeAnim}
-                    style={[styles.lottieIcon, isActive && styles.lottieIconActive]}
-                    autoPlay
-                    loop
-                    resizeMode="cover"
-                  />
-                ) : item.route === 'Search' && isActive ? (
-                  <LottieView
-                    ref={searchLottieRef}
-                    source={searchAnim}
-                    style={[styles.lottieIcon, isActive && styles.lottieIconActive]}
-                    autoPlay
-                    loop
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Ionicons
-                    name={isActive ? item.iconActive : item.icon}
-                    size={isActive ? 30 : 24}
-                    color={isActive ? COLORS.black : COLORS.gray400}
-                  />
-                )}
-                {isActive && <View style={styles.dockActiveDot} />}
-                {badge > 0 && (
-                  <View style={styles.dockBadge}>
-                    <Text style={styles.dockBadgeText}>{badge > 9 ? '9+' : badge}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={[styles.dockLabel, isActive && styles.dockLabelActive]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+        return (
+          <TouchableOpacity
+            key={item.route}
+            style={styles.dockItem}
+            onPress={() => navigation.navigate(item.route)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.dockIconWrapper}>
+              {item.route === 'Profile' ? (
+                <LottieView
+                  ref={lottieRef}
+                  source={avatarAnim}
+                  style={styles.lottieIcon}
+                  autoPlay={false}
+                  loop={false}
+                  resizeMode="cover"
+                />
+              ) : item.route === 'Home' && isActive ? (
+                <LottieView
+                  ref={homeLottieRef}
+                  source={homeAnim}
+                  style={styles.lottieIcon}
+                  autoPlay
+                  loop
+                  resizeMode="cover"
+                />
+              ) : item.route === 'Search' && isActive ? (
+                <LottieView
+                  ref={searchLottieRef}
+                  source={searchAnim}
+                  style={styles.lottieIcon}
+                  autoPlay
+                  loop
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons
+                  name={isActive ? item.iconActive : item.icon}
+                  size={24}
+                  color={isActive ? COLORS.black : COLORS.gray400}
+                />
+              )}
+              {isActive && <View style={styles.dockActiveDot} />}
+              {badge > 0 && (
+                <View style={styles.dockBadge}>
+                  <Text style={styles.dockBadgeText}>{badge > 9 ? '9+' : badge}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={[styles.dockLabel, isActive && styles.dockLabelActive]}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  outerWrap: {
-    position: 'absolute', left: 16, right: 16,
-    height: 90,
-    justifyContent: 'flex-end',
-  },
   dock: {
-    height: 64,
+    position: 'absolute', left: 16, right: 16, height: 64,
     flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.72)',
-    borderRadius: RADIUS.xxl,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: COLORS.white, borderRadius: RADIUS.xxl,
     ...SHADOWS.lg,
-    overflow: 'hidden',
+    borderWidth: 1, borderColor: COLORS.borderLight,
   },
   dockItem: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  dockIconWrapper: { alignItems: 'center', justifyContent: 'center' },
-  dockIconWrapperActive: { marginTop: -16 },
+  dockIconWrapper: { position: 'relative', alignItems: 'center' },
   lottieIcon: { width: 28, height: 28 },
-  lottieIconActive: { width: 36, height: 36 },
   dockActiveDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.text, marginTop: 2 },
   dockBadge: {
     position: 'absolute', top: -4, left: -8,
