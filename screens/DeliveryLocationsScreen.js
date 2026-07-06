@@ -257,13 +257,13 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
             <View style={styles.formGroup}>
               <Text style={[styles.formLabel, { textAlign: dir.textAlign }]}>{t('addresses.phone')}</Text>
               <Text style={[styles.phoneHint, { textAlign: dir.textAlign }]}>{t('addresses.phoneHint')}</Text>
-              <View style={styles.inputRow}>
+                <View style={[styles.inputRow, { flexDirection: dir.row }]}>
                 <Phone size={18} color="#94A3B8" />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { textAlign: dir.textAlign }]}
                   placeholder="+20 010-000-0000"
                   placeholderTextColor="#94A3B8"
-                  textAlign="right"
+                  textAlign={dir.textAlign}
                   keyboardType="phone-pad"
                   value={formData.phone ? `+20 ${formData.phone}` : ''}
                   onChangeText={(v) => {
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   headerContent: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
@@ -326,16 +326,16 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E2E8F0',
   },
   addressCardDefault: { borderColor: '#3B82F6', backgroundColor: '#F0F7FF' },
-  addressHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-start' },
+  addressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   addressInfo: { flex: 1 },
-  addressRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, marginBottom: 4 },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
   addressCity: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
-  addressStreet: { fontSize: 13, color: '#64748B', textAlign: 'right', marginBottom: 4, lineHeight: 18 },
+  addressStreet: { fontSize: 13, color: '#64748B', textAlign: 'left', marginBottom: 4, lineHeight: 18 },
   addressPhone: { fontSize: 13, color: '#64748B' },
-  defaultBadge: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4, backgroundColor: '#F0FDF4', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  defaultBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0FDF4', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   defaultText: { fontSize: 11, fontWeight: '600', color: '#22C55E' },
-  addressActions: { flexDirection: 'row-reverse', gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  actionBtn: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4 },
+  addressActions: { flexDirection: 'row', gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   actionBtnText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
@@ -343,18 +343,18 @@ const styles = StyleSheet.create({
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E2E8F0', alignSelf: 'center', marginBottom: 16 },
   modalTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginBottom: 20 },
   formGroup: { marginBottom: 16 },
-  formLabel: { fontSize: 13, fontWeight: '600', color: '#64748B', textAlign: 'right', marginBottom: 6 },
-  formInput: { backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#0F172A', minHeight: 48, textAlign: 'right' },
+  formLabel: { fontSize: 13, fontWeight: '600', color: '#64748B', textAlign: 'left', marginBottom: 6 },
+  formInput: { backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#0F172A', minHeight: 48, textAlign: 'left' },
   inputRow: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     borderBottomWidth: 1.5, borderBottomColor: '#E2E8F0',
     paddingBottom: 12, gap: 10,
   },
   input: {
     flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A',
-    textAlign: 'right',
+    textAlign: 'left',
     ...Platform.select({ ios: { paddingVertical: 4 }, android: { paddingVertical: 0 } }),
   },
-  phoneHint: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginBottom: 8 },
-  defaultRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
+  phoneHint: { fontSize: 12, color: '#94A3B8', textAlign: 'left', marginBottom: 8 },
+  defaultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
 });

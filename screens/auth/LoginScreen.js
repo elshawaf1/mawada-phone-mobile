@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     color: '#0F172A',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 32,
   },
   errorBox: {
@@ -182,13 +182,13 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#991B1B',
     fontSize: 14,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   inputWrapper: {
     marginBottom: 22,
   },
   label: {
-    textAlign: 'right',
+    textAlign: 'left',
     color: '#64748B',
     marginBottom: 10,
     fontSize: 14,

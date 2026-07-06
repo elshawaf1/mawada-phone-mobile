@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6, elevation: 2, overflow: 'hidden',
   },
   cardRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', padding: 14,
+    flexDirection: 'row', alignItems: 'center', padding: 14,
   },
   logoWrap: {
     width: 48, height: 48, borderRadius: 12, backgroundColor: '#F8FAFC',
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   logo: { width: '100%', height: '100%' },
   logoFallback: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center' },
-  brandName: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A', marginHorizontal: 12, textAlign: 'right' },
+  brandName: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A', marginHorizontal: 12, textAlign: 'left' },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
   emptyText: { fontSize: 14, color: '#94A3B8', marginTop: 12 },
 });

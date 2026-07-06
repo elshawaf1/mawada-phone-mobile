@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { COLORS, RADIUS, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
+import { useDirection } from '../hooks/useDirection';
 
 function formatPrice(n) {
   return Number(n || 0).toLocaleString();
@@ -30,6 +31,7 @@ function getProductImage(item) {
 
 export default function BundleCard({ bundle, onAddBundle }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
 
@@ -69,16 +71,16 @@ export default function BundleCard({ bundle, onAddBundle }) {
       <View style={styles.gradientBg}>
 
         {savings > 0 && (
-          <View style={styles.savingsBadge}>
+          <View style={[styles.savingsBadge, { flexDirection: dir.row }]}>
             <Ionicons name="flash" size={12} color="#0F172A" />
             <Text style={styles.savingsText}>{t('home.bundleYouSave', { amount: formatPrice(savings) })}</Text>
           </View>
         )}
 
         {bundle.description_ar ? (
-          <Text style={styles.bundleDesc}>{bundle.description_ar}</Text>
+          <Text style={[styles.bundleDesc, { textAlign: dir.textAlign }]}>{bundle.description_ar}</Text>
         ) : (
-          <Text style={styles.bundleDesc}>{t('home.offerMawdaDesc')}</Text>
+          <Text style={[styles.bundleDesc, { textAlign: dir.textAlign }]}>{t('home.offerMawdaDesc')}</Text>
         )}
 
         <View style={styles.productsFrame}>
@@ -95,6 +97,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
               <View key={item.id || index} style={[
                 styles.productRow,
                 index < allItems.length - 1 && styles.productRowBorder,
+                { flexDirection: dir.row },
               ]}>
                 <View style={styles.productImageWrap}>
                   {img ? (
@@ -107,8 +110,8 @@ export default function BundleCard({ bundle, onAddBundle }) {
                 </View>
 
                 <View style={styles.productInfo}>
-                  <Text style={styles.productName} numberOfLines={5}>{name}</Text>
-                  <View style={styles.priceRow}>
+                  <Text style={[styles.productName, { textAlign: dir.textAlign }]} numberOfLines={5}>{name}</Text>
+                  <View style={[styles.priceRow, { flexDirection: dir.row }]}>
                     {hasDiscount && (
                       <Text style={styles.originalItemPrice}>{formatPrice(origPrice)} {t('common.currency')}</Text>
                     )}
@@ -120,9 +123,9 @@ export default function BundleCard({ bundle, onAddBundle }) {
           })}
         </View>
 
-        <View style={styles.totalRow}>
+        <View style={[styles.totalRow, { flexDirection: dir.row }]}>
           <Text style={styles.totalLabel}>{t('common.total')}</Text>
-          <View style={styles.totalPrices}>
+          <View style={[styles.totalPrices, { flexDirection: dir.row }]}>
             {savings > 0 && (
               <Text style={styles.originalTotal}>{formatPrice(originalTotal)} {t('common.currency')}</Text>
             )}
@@ -132,7 +135,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
 
         <Animated.View style={{ transform: [{ scale: btnScale }] }}>
           <TouchableOpacity
-            style={styles.ctaButton}
+            style={[styles.ctaButton, { flexDirection: dir.row }]}
             activeOpacity={0.8}
             onPress={handleBtnPress}
             onPressIn={handlePressIn}
@@ -179,7 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(59,130,246,0.06)',
   },
   savingsBadge: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-end',
     backgroundColor: '#D4AF37',
@@ -197,7 +200,7 @@ const styles = StyleSheet.create({
   bundleDesc: {
     color: 'rgba(255,255,255,0.5)',
     fontSize: 12,
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 10,
     lineHeight: 17,
   },
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   productRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
     gap: 10,
@@ -259,10 +262,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   priceRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   totalRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
@@ -289,7 +292,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   totalPrices: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
@@ -304,7 +307,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   ctaButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',

@@ -74,7 +74,7 @@ export default function AllCategoriesScreen({ navigation }) {
             activeOpacity={0.85}
             onPress={() => navigation.navigate('CategoryProducts', { categoryId: item.id, categoryName: item.nameAr })}
           >
-            <View style={styles.cardRow}>
+            <View style={[styles.cardRow, { flexDirection: dir.row }]}>
               <View style={styles.imageWrap}>
                 {item.homeImageUrl || item.imageUrl ? (
                   <Image source={{ uri: item.homeImageUrl || item.imageUrl }} style={styles.cardImage} resizeMode="cover" />
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
   },

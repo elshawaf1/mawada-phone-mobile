@@ -44,7 +44,7 @@ export default function EditProfileScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.inputWrapper}>
           <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.fullName')}</Text>
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, { flexDirection: dir.row }]}>
             <User size={20} color="#94A3B8" />
             <TextInput style={styles.input} value={name} onChangeText={setName} textAlign={dir.textAlign} placeholderTextColor="#94A3B8" />
           </View>
@@ -52,7 +52,7 @@ export default function EditProfileScreen({ navigation }) {
 
         <View style={styles.inputWrapper}>
           <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.email')}</Text>
-          <View style={[styles.inputRow, styles.inputDisabled]}>
+          <View style={[styles.inputRow, styles.inputDisabled, { flexDirection: dir.row }]}>
             <Mail size={20} color="#CBD5E1" />
             <TextInput style={[styles.input, { color: '#94A3B8' }]} value={email} editable={false} textAlign={dir.textAlign} />
           </View>
@@ -60,7 +60,7 @@ export default function EditProfileScreen({ navigation }) {
 
         <View style={styles.inputWrapper}>
           <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.phone')}</Text>
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, { flexDirection: dir.row }]}>
             <Phone size={20} color="#94A3B8" />
             <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textAlign={dir.textAlign} placeholderTextColor="#94A3B8" />
           </View>
@@ -76,9 +76,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   content: { padding: 24 },
   inputWrapper: { width: '100%', marginBottom: 20 },
-  label: { textAlign: 'right', color: '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' },
+  label: { textAlign: 'left', color: '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' },
   inputRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 14,
@@ -88,5 +88,5 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   inputDisabled: { backgroundColor: '#F8FAFC', borderColor: '#F1F5F9' },
-  input: { flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A', textAlign: 'right' },
+  input: { flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A', textAlign: 'left' },
 });

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { TouchableOpacity, Text, StyleSheet, Animated, ActivityIndicator, View } from 'react-native';
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
+import { useDirection } from '../hooks/useDirection';
 
 export default function Button({
   title,
@@ -16,6 +17,7 @@ export default function Button({
   height = 54,
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const dir = useDirection();
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -96,7 +98,7 @@ export default function Button({
         {loading ? (
           <ActivityIndicator color={variantStyles.text.color} />
         ) : (
-          <View style={styles.content}>
+          <View style={[styles.content, { flexDirection: dir.row }]}>
             {icon && iconPosition === 'right' && <View style={styles.iconRight}>{icon}</View>}
             <Text style={[styles.text, variantStyles.text, textStyle]}>{title}</Text>
             {icon && iconPosition === 'left' && <View style={styles.iconLeft}>{icon}</View>}
@@ -116,7 +118,7 @@ const styles = StyleSheet.create({
   },
   fullWidth: { width: '100%' },
   content: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -3,6 +3,7 @@ import { Animated, Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
+import { useDirection } from '../hooks/useDirection';
 
 const ToastContext = createContext(null);
 
@@ -39,6 +40,7 @@ export function ToastProvider({ children }) {
   const translateY = useRef(new Animated.Value(100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
+  const dir = useDirection();
   const timerRef = useRef(null);
 
   const show = useCallback((message, type = 'info', duration = 3000) => {
@@ -74,9 +76,9 @@ export function ToastProvider({ children }) {
             { bottom: insets.bottom + 80, transform: [{ translateY }], opacity },
           ]}
         >
-          <View style={[styles.toast, { backgroundColor: BG_COLORS[toast.type], borderColor: BORDER_COLORS[toast.type] }]}>
+          <View style={[styles.toast, { flexDirection: dir.row }, { backgroundColor: BG_COLORS[toast.type], borderColor: BORDER_COLORS[toast.type] }]}>
             <Ionicons name={ICONS[toast.type]} size={20} color={ICON_COLORS[toast.type]} />
-            <Text style={[styles.message, { color: ICON_COLORS[toast.type] }]}>{toast.message}</Text>
+            <Text style={[styles.message, { textAlign: dir.textAlign }, { color: ICON_COLORS[toast.type] }]}>{toast.message}</Text>
           </View>
         </Animated.View>
       )}
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toast: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 16,
@@ -113,6 +115,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.medium,
-    textAlign: 'right',
+    textAlign: 'left',
   },
 });

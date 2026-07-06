@@ -39,6 +39,7 @@ const notifConfig = {
 };
 
 function NotifCard({ notif, onMarkRead, t }) {
+  const dir = useDirection();
   const readAnim = useRef(new Animated.Value(notif.isRead ? 0 : 1)).current;
 
   useEffect(() => {
@@ -50,20 +51,20 @@ function NotifCard({ notif, onMarkRead, t }) {
   const iconColor = (notifConfig[notif.type] || notifConfig.info).color;
 
   return (
-    <View style={[styles.notifCard, !notif.isRead && styles.notifCardUnread]}>
+    <View style={[styles.notifCard, { flexDirection: dir.row }, !notif.isRead && styles.notifCardUnread]}>
       <View style={[styles.notifIcon, { backgroundColor: iconBg }]}>
         <IconComp size={20} color={iconColor} />
       </View>
 
       <View style={styles.notifContent}>
-        <View style={styles.notifTopRow}>
+        <View style={[styles.notifTopRow, { flexDirection: dir.row }]}>
           <Animated.View style={[styles.unreadDot, { opacity: readAnim, transform: [{ scale: readAnim }] }]} />
           <Text style={styles.notifTime}>{formatTime(notif.createdAt, t)}</Text>
         </View>
-        <Text style={styles.notifTitle} numberOfLines={1}>
+        <Text style={[styles.notifTitle, { textAlign: dir.textAlign }]} numberOfLines={1}>
           {notif.titleAr || notif.title}
         </Text>
-        <Text style={styles.notifBody} numberOfLines={2}>
+        <Text style={[styles.notifBody, { textAlign: dir.textAlign }]} numberOfLines={2}>
           {notif.bodyAr || notif.body}
         </Text>
       </View>
@@ -225,13 +226,13 @@ export default function NotificationScreen({ navigation }) {
     <View style={styles.container}>
       <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
         <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent, { flexDirection: dir.row }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
             <ChevronRight color={COLORS.text} size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
           {unreadCount > 0 ? (
-            <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
+            <TouchableOpacity onPress={markAllRead} style={[styles.markAllBtn, { flexDirection: dir.row }]}>
               <CheckCheck size={16} color={COLORS.blue} />
               <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
             </TouchableOpacity>
@@ -242,7 +243,7 @@ export default function NotificationScreen({ navigation }) {
       </View>
 
       {unreadCount > 0 && (
-        <View style={styles.unreadBanner}>
+        <View style={[styles.unreadBanner, { flexDirection: dir.row }]}>
           <Bell size={16} color={COLORS.primary} />
           <Text style={styles.unreadText}>
             {unreadCount === 1 ? t('notifications.unreadBanner', { count: unreadCount }) : t('notifications.unreadBannerPlural', { count: unreadCount })}
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
   },
   headerContent: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
@@ -308,14 +309,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   markAllBtn: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   markAllText: { fontSize: 13, fontWeight: '600', color: COLORS.blue },
   spacer: { width: 60 },
   unreadBanner: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#EFF6FF',
     paddingHorizontal: 16,
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   notifCard: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 14,
@@ -356,15 +357,15 @@ const styles = StyleSheet.create({
   },
   notifContent: { flex: 1 },
   notifTopRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.blue },
   notifTime: { fontSize: 11, color: COLORS.gray400 },
-  notifTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, textAlign: 'right', marginBottom: 4 },
-  notifBody: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'right', lineHeight: 20 },
+  notifTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text, textAlign: 'left', marginBottom: 4 },
+  notifBody: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'left', lineHeight: 20 },
   chevron: { marginRight: 4 },
   emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
   emptyIconWrapper: {

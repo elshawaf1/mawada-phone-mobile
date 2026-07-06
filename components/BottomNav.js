@@ -110,7 +110,7 @@ export default function BottomNav({ navigation, activeRoute }) {
 const styles = StyleSheet.create({
   dock: {
     position: 'absolute', left: 16, right: 16, height: 64,
-    flexDirection: 'row-reverse', justifyContent: 'space-around', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
     backgroundColor: COLORS.white, borderRadius: RADIUS.xxl,
     ...SHADOWS.lg,
     borderWidth: 1, borderColor: COLORS.borderLight,

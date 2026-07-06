@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
 
   bentoRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     gap: 12,
   },
   card: {
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     paddingVertical: 16,
     paddingHorizontal: 14,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     minHeight: 148,
     ...SHADOWS.sm,
   },
@@ -170,20 +170,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.text,
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 4,
   },
   cardLink: {
     fontSize: 12,
     fontWeight: '600',
     textDecorationLine: 'underline',
-    textAlign: 'right',
+    textAlign: 'left',
     letterSpacing: 0.1,
   },
   cardHint: {
     fontSize: 11,
     color: COLORS.textTertiary,
-    textAlign: 'right',
+    textAlign: 'left',
     marginTop: 6,
   },
 

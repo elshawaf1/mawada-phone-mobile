@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronLeft, Send, Phone } from 'lucide-react-native';
+import { useDirection } from '../hooks/useDirection';
 
 const { width } = Dimensions.get('window');
 
@@ -61,6 +62,7 @@ function nextId() {
 }
 
 export default function ChatScreen({ navigation }) {
+  const dir = useDirection();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -97,12 +99,12 @@ export default function ChatScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
 
       {/* ── HEADER ── */}
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: dir.row }]}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()}>
           <ChevronLeft color="#fff" size={20} />
         </TouchableOpacity>
 
-        <View style={styles.headerInfo}>
+        <View style={[styles.headerInfo, { flexDirection: dir.row }]}>
           <View style={styles.agentAvatarRing}>
             <View style={styles.agentAvatar}>
               <Ionicons name="headset-outline" size={18} color="#fff" />
@@ -145,6 +147,7 @@ export default function ChatScreen({ navigation }) {
               style={[
                 styles.msgRow,
                 msg.from === 'user' ? styles.msgRowUser : styles.msgRowBot,
+                msg.from === 'user' && { flexDirection: dir.row },
               ]}
             >
               {msg.from === 'bot' && (
@@ -163,11 +166,12 @@ export default function ChatScreen({ navigation }) {
                   style={[
                     styles.bubbleText,
                     msg.from === 'user' ? styles.bubbleTextUser : styles.bubbleTextBot,
+                    { textAlign: dir.textAlign },
                   ]}
                 >
                   {msg.text}
                 </Text>
-                <View style={styles.bubbleMeta}>
+                <View style={[styles.bubbleMeta, { flexDirection: dir.row }]}>
                   {msg.from === 'user' && (
                     <Ionicons
                       name="checkmark-done"
@@ -195,7 +199,7 @@ export default function ChatScreen({ navigation }) {
                 <Ionicons name="headset-outline" size={13} color="#fff" />
               </View>
               <View style={[styles.bubble, styles.bubbleBot, styles.typingBubble]}>
-                <View style={styles.typingDots}>
+                <View style={[styles.typingDots, { flexDirection: dir.row }]}>
                   <View style={[styles.dot, styles.dot1]} />
                   <View style={[styles.dot, styles.dot2]} />
                   <View style={[styles.dot, styles.dot3]} />
@@ -210,7 +214,7 @@ export default function ChatScreen({ navigation }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.quickRepliesBar}
-          contentContainerStyle={styles.quickRepliesContent}
+          contentContainerStyle={[styles.quickRepliesContent, { flexDirection: dir.row }]}
         >
           {QUICK_REPLIES.map((q) => (
             <TouchableOpacity
@@ -224,13 +228,13 @@ export default function ChatScreen({ navigation }) {
         </ScrollView>
 
         {/* ── INPUT BAR ── */}
-        <View style={styles.inputBar}>
+        <View style={[styles.inputBar, { flexDirection: dir.row }]}>
           <TouchableOpacity
             style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
             onPress={() => sendMessage()}
             disabled={!input.trim()}
           >
-            <Send size={18} color="#fff" style={{ transform: [{ scaleX: -1 }] }} />
+            <Send size={18} color="#fff" style={dir.translateStart} />
           </TouchableOpacity>
 
           <TextInput
@@ -261,7 +265,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     backgroundColor: '#0F172A',
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -272,7 +276,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerInfo: { flex: 1, flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   agentAvatarRing: { position: 'relative' },
   agentAvatar: {
     width: 40, height: 40, borderRadius: 20,
@@ -298,7 +302,7 @@ const styles = StyleSheet.create({
   dateBadgeText: { fontSize: 11, color: '#64748B', fontWeight: '600' },
 
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
-  msgRowUser: { flexDirection: 'row-reverse' },
+  msgRowUser: { flexDirection: 'row' },
   msgRowBot: { flexDirection: 'row' },
 
   botAvatarSmall: {
@@ -321,15 +325,15 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 1,
   },
   bubbleText: { fontSize: 14, lineHeight: 21 },
-  bubbleTextUser: { color: '#fff', textAlign: 'right' },
-  bubbleTextBot: { color: '#0F172A', textAlign: 'right' },
-  bubbleMeta: { flexDirection: 'row-reverse', justifyContent: 'flex-start', alignItems: 'center', marginTop: 4 },
+  bubbleTextUser: { color: '#fff', textAlign: 'left' },
+  bubbleTextBot: { color: '#0F172A', textAlign: 'left' },
+  bubbleMeta: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginTop: 4 },
   bubbleTime: { fontSize: 10 },
   bubbleTimeUser: { color: 'rgba(255,255,255,0.55)' },
   bubbleTimeBot: { color: '#94A3B8' },
 
   typingBubble: { paddingVertical: 14 },
-  typingDots: { flexDirection: 'row-reverse', gap: 5, alignItems: 'center', paddingHorizontal: 4 },
+  typingDots: { flexDirection: 'row', gap: 5, alignItems: 'center', paddingHorizontal: 4 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#94A3B8' },
   dot1: { opacity: 1 },
   dot2: { opacity: 0.6 },
@@ -337,7 +341,7 @@ const styles = StyleSheet.create({
 
   // Quick replies
   quickRepliesBar: { maxHeight: 48, backgroundColor: '#F8FAFC', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
-  quickRepliesContent: { flexDirection: 'row-reverse', paddingHorizontal: 12, paddingVertical: 8, gap: 8, alignItems: 'center' },
+  quickRepliesContent: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 8, alignItems: 'center' },
   quickChip: {
     backgroundColor: '#fff', borderRadius: 16,
     paddingHorizontal: 12, paddingVertical: 6,
@@ -347,7 +351,7 @@ const styles = StyleSheet.create({
 
   // Input bar
   inputBar: {
-    flexDirection: 'row-reverse', alignItems: 'flex-end',
+    flexDirection: 'row', alignItems: 'flex-end',
     backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8,
     borderTopWidth: 1, borderTopColor: '#F1F5F9',
     gap: 8,

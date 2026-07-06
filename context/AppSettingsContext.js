@@ -1,8 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocales } from 'expo-localization';
 import { translations } from '../constants/translations';
 
 const AppSettingsContext = createContext(null);
+
+function getDeviceLanguage() {
+  try {
+    const locale = getLocales()[0];
+    const code = locale?.languageCode || locale?.lang || '';
+    return code.startsWith('ar') ? 'ar' : 'en';
+  } catch {
+    return 'ar';
+  }
+}
 
 const DARK_COLORS = {
   white: '#0F172A', black: '#FFFFFF', primary: '#1E293B', primaryLight: '#334155',
@@ -42,12 +54,42 @@ export function AppSettingsProvider({ children }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem('darkMode')
-      .then((d) => {
-        if (d !== null) setDarkMode(d === 'true');
+    AsyncStorage.multiGet(['locale', 'darkMode'])
+      .then(([l, d]) => {
+        const savedLocale = l[1];
+        const finalLocale = savedLocale || getDeviceLanguage();
+        setLocale(finalLocale);
+
+        const isRTL = finalLocale === 'ar';
+        if (I18nManager.isRTL !== isRTL) {
+          I18nManager.allowRTL(true);
+          I18nManager.forceRTL(isRTL);
+        }
+
+        if (d[1] !== null) setDarkMode(d[1] === 'true');
       })
-      .catch(() => {})
+      .catch(() => {
+        const fallback = getDeviceLanguage();
+        setLocale(fallback);
+        I18nManager.allowRTL(true);
+        I18nManager.forceRTL(fallback === 'ar');
+      })
       .finally(() => setLoaded(true));
+  }, []);
+
+  const toggleLocale = useCallback(() => {
+    const next = locale === 'ar' ? 'en' : 'ar';
+    setLocale(next);
+    AsyncStorage.setItem('locale', next);
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(next === 'ar');
+  }, [locale]);
+
+  const setLocaleAndPersist = useCallback((newLocale) => {
+    setLocale(newLocale);
+    AsyncStorage.setItem('locale', newLocale);
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(newLocale === 'ar');
   }, []);
 
   const toggleDarkMode = useCallback(() => {
@@ -76,12 +118,14 @@ export function AppSettingsProvider({ children }) {
 
   const colors = useMemo(() => (darkMode ? DARK_COLORS : LIGHT_COLORS), [darkMode]);
 
+  const isRTL = useMemo(() => locale === 'ar', [locale]);
+
   const value = useMemo(() => ({
     locale, darkMode, loaded,
-    t, toggleDarkMode,
+    t, toggleLocale, toggleDarkMode, setLocaleAndPersist,
     colors, weekdays, months,
-    isRTL: true,
-  }), [darkMode, loaded, t, toggleDarkMode, colors, weekdays, months]);
+    isRTL,
+  }), [locale, darkMode, loaded, t, toggleLocale, toggleDarkMode, setLocaleAndPersist, colors, weekdays, months, isRTL]);
 
   if (!loaded) return null;
 

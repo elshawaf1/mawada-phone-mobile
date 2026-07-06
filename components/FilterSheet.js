@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
+import { useDirection } from '../hooks/useDirection';
 
 const SORT_OPTIONS = ['latest', 'priceLow', 'priceHigh', 'name'];
 
@@ -12,6 +13,7 @@ export default function FilterSheet({
   visible, onClose, sortBy, onSortChange, brands, selectedBrandId, onBrandChange,
   selectedCondition, onConditionChange, t, onOpenPrice,
 }) {
+  const dir = useDirection();
   const activePrice = false;
 
   const sortLabel = (key) => {
@@ -44,7 +46,7 @@ export default function FilterSheet({
           <View style={styles.handleRow}>
             <View style={styles.handle} />
           </View>
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, { flexDirection: dir.row }]}>
             <TouchableOpacity onPress={onClose}>
               <Text style={styles.doneText}>{t('common.done')}</Text>
             </TouchableOpacity>
@@ -55,13 +57,13 @@ export default function FilterSheet({
           <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
             {/* Sort */}
             <Text style={styles.sectionLabel}>{t('search.sortBy')}</Text>
-            <View style={styles.chipRow}>
+            <View style={[styles.chipRow, { flexDirection: dir.row }]}>
               {SORT_OPTIONS.map((key) => {
                 const active = sortBy === key;
                 return (
                   <TouchableOpacity
                     key={key}
-                    style={[styles.chip, active && styles.chipActive]}
+                    style={[styles.chip, { flexDirection: dir.row }, active && styles.chipActive]}
                     onPress={() => { onSortChange(key); onClose(); }}
                     activeOpacity={0.7}
                   >
@@ -81,7 +83,7 @@ export default function FilterSheet({
 
             {/* Price Range */}
             <Text style={styles.sectionLabel}>{t('search.priceRange')}</Text>
-            <TouchableOpacity style={styles.priceRow} onPress={() => { onClose(); onOpenPrice(); }} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.priceRow, { flexDirection: dir.row }]} onPress={() => { onClose(); onOpenPrice(); }} activeOpacity={0.7}>
               <Ionicons name="pricetag-outline" size={18} color={COLORS.gray500} />
               <Text style={styles.priceText}>{t('search.priceRange')}</Text>
               <Ionicons name="chevron-forward-outline" size={18} color={COLORS.gray400} />
@@ -89,9 +91,9 @@ export default function FilterSheet({
 
             {/* Condition */}
             <Text style={styles.sectionLabel}>{t('search.condition')}</Text>
-            <View style={styles.chipRow}>
+            <View style={[styles.chipRow, { flexDirection: dir.row }]}>
               <TouchableOpacity
-                style={[styles.chip, !selectedCondition && styles.chipActive]}
+                style={[styles.chip, { flexDirection: dir.row }, !selectedCondition && styles.chipActive]}
                 onPress={() => { onConditionChange(null); onClose(); }}
                 activeOpacity={0.7}
               >
@@ -100,7 +102,7 @@ export default function FilterSheet({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.chip, selectedCondition === 'new' && styles.chipActive]}
+                style={[styles.chip, { flexDirection: dir.row }, selectedCondition === 'new' && styles.chipActive]}
                 onPress={() => { onConditionChange('new'); onClose(); }}
                 activeOpacity={0.7}
               >
@@ -115,7 +117,7 @@ export default function FilterSheet({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.chip, selectedCondition === 'used' && styles.chipActive]}
+                style={[styles.chip, { flexDirection: dir.row }, selectedCondition === 'used' && styles.chipActive]}
                 onPress={() => { onConditionChange('used'); onClose(); }}
                 activeOpacity={0.7}
               >
@@ -135,9 +137,9 @@ export default function FilterSheet({
             {brands.length > 0 && (
               <>
                 <Text style={styles.sectionLabel}>{t('search.filterByBrand')}</Text>
-                <View style={styles.chipRow}>
+                <View style={[styles.chipRow, { flexDirection: dir.row }]}>
                   <TouchableOpacity
-                    style={[styles.chip, !selectedBrandId && styles.chipActive]}
+                    style={[styles.chip, { flexDirection: dir.row }, !selectedBrandId && styles.chipActive]}
                     onPress={() => { onBrandChange(null); onClose(); }}
                     activeOpacity={0.7}
                   >
@@ -150,7 +152,7 @@ export default function FilterSheet({
                     return (
                       <TouchableOpacity
                         key={brand.id}
-                        style={[styles.chip, active && styles.chipActive]}
+                        style={[styles.chip, { flexDirection: dir.row }, active && styles.chipActive]}
                         onPress={() => { onBrandChange(active ? null : brand.id); onClose(); }}
                         activeOpacity={0.7}
                       >
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   handleRow: { alignItems: 'center', paddingVertical: 12 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.gray300 },
   headerRow: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 20,
   },
   doneText: { fontSize: FONT_SIZES.md, color: COLORS.primary, fontWeight: FONT_WEIGHTS.bold },
@@ -195,9 +197,9 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.gray500,
     textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, marginTop: 18,
   },
-  chipRow: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20,
     backgroundColor: COLORS.gray50, borderWidth: 1, borderColor: COLORS.gray200,
   },
@@ -205,7 +207,7 @@ const styles = StyleSheet.create({
   chipText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.gray500 },
   chipTextActive: { color: COLORS.white },
   priceRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingVertical: 14, paddingHorizontal: 16,
     borderRadius: RADIUS.lg, backgroundColor: COLORS.gray50,
     borderWidth: 1, borderColor: COLORS.gray200,

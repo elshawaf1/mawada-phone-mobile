@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mawada Phone",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "scheme": "mawada",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-      "plugins": [
+    "plugins": [
       "./plugins/withKoin",
       "./plugins/withSdp",
       "./plugins/withPaymob",
@@ -38,7 +38,8 @@
         {
           "color": "#0F2A44"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "notification": {
       "icon": "./assets/icon.png",

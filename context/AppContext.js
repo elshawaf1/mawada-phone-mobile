@@ -1,13 +1,42 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../services/supabase';
 
 const AppContext = createContext(null);
+
+const CART_KEY = '@mawada_cart';
+const SAVED_KEY = '@mawada_saved';
 
 export function AppProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [savedForLater, setSavedForLater] = useState([]);
   const [coupon, setCoupon] = useState(null);
   const [favorites, setFavorites] = useState([]);
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [cartRaw, savedRaw] = await AsyncStorage.multiGet([CART_KEY, SAVED_KEY]);
+        if (cartRaw[1]) setCart(JSON.parse(cartRaw[1]));
+        if (savedRaw[1]) setSavedForLater(JSON.parse(savedRaw[1]));
+      } catch (e) {
+        console.error('Failed to load cart from storage', e);
+      } finally {
+        loadedRef.current = true;
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    AsyncStorage.setItem(CART_KEY, JSON.stringify(cart)).catch(() => {});
+  }, [cart]);
+
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    AsyncStorage.setItem(SAVED_KEY, JSON.stringify(savedForLater)).catch(() => {});
+  }, [savedForLater]);
 
   const addToCart = useCallback((product) => {
     setCart((prev) => {

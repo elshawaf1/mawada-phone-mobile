@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   headerContent: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,

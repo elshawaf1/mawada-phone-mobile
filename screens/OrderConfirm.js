@@ -14,7 +14,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation, Smartphone, Clock } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, Banknote, CreditCard, Wallet, Truck, MapPin, Check, Camera, Navigation, Clock } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import { captureRef } from 'react-native-view-shot';
@@ -22,18 +22,20 @@ import * as Sharing from 'expo-sharing';
 import Button from '../components/Button';
 import { supabase, supabaseUrl } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
+import { useDirection } from '../hooks/useDirection';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 function PaymentIcon({ method }) {
   if (method === 'VISA') return <CreditCard size={14} color="#22C55E" strokeWidth={2.25} />;
   if (method === 'WALLET') return <Wallet size={14} color="#22C55E" strokeWidth={2.25} />;
-  if (method === 'INSTAPAY') return <Smartphone size={14} color="#059669" strokeWidth={2.25} />;
+  if (method === 'INSTAPAY') return <Image source={require('../assets/instapay.png')} style={{ width: 16, height: 16, borderRadius: 3 }} resizeMode="contain" />;
   return <Banknote size={14} color="#22C55E" strokeWidth={2.25} />;
 }
 
 export default function OrderConfirmScreen({ navigation, route }) {
   const { t, weekdays, months } = useTranslation();
+  const dir = useDirection();
   const order = route?.params?.order;
   const captureRef2 = useRef(null);
 
@@ -224,20 +226,20 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </Text>
 
         {/* Boarding-pass Order ID */}
-        <View style={styles.boardingPass}>
+        <View style={[styles.boardingPass, { flexDirection: dir.row }]}>
           <View style={styles.bpLeft}>
-            <Text style={styles.bpLabel}>{t('orders.orderNumber')}</Text>
-            <Text style={styles.bpCode} selectable>{displayId}</Text>
+            <Text style={[styles.bpLabel, { textAlign: dir.textAlign }]}>{t('orders.orderNumber')}</Text>
+            <Text style={[styles.bpCode, { textAlign: dir.textAlign }]} selectable>{displayId}</Text>
           </View>
           <View style={styles.bpDivider} />
-          <TouchableOpacity style={styles.bpRight} onPress={handleShareOrder} activeOpacity={0.7}>
+          <TouchableOpacity style={[styles.bpRight, { flexDirection: dir.row }]} onPress={handleShareOrder} activeOpacity={0.7}>
             <Ionicons name="copy-outline" size={14} color="#38BDF8" />
             <Text style={styles.bpCopy}>نسخ</Text>
           </TouchableOpacity>
         </View>
 
         {/* Delivery Estimate with Lottie Location */}
-        <View style={styles.estimateRow}>
+        <View style={[styles.estimateRow, { flexDirection: dir.row }]}>
           <View style={styles.estimatePin}>
             <LottieView
               source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
@@ -249,8 +251,8 @@ export default function OrderConfirmScreen({ navigation, route }) {
           <Text style={styles.estimateText}>{t('orders.confirmEstimate', { date: getDeliveryEstimate() })}</Text>
         </View>
 
-        <View style={styles.metaRow}>
-          <View style={styles.metaTag}>
+        <View style={[styles.metaRow, { flexDirection: dir.row }]}>
+          <View style={[styles.metaTag, { flexDirection: dir.row }]}>
             <PaymentIcon method={paymentMethod} />
             <Text style={styles.metaTagText}>{paymentMethodLabels[paymentMethod] || paymentMethod}</Text>
           </View>
@@ -259,7 +261,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
       {/* Timeline */}
       <View style={styles.timelineWrap}>
-        <View style={styles.stepper}>
+        <View style={[styles.stepper, { flexDirection: dir.row }]}>
           {timelineSteps.map((step, idx) => {
             const isLast = idx === timelineSteps.length - 1;
             return (
@@ -296,12 +298,12 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
       {/* Receipt Card — Glassmorphism */}
       <View style={styles.glassCard}>
-        <Text style={styles.cardTitle}>{t('orders.detail')}</Text>
+        <Text style={[styles.cardTitle, { textAlign: dir.textAlign }]}>{t('orders.detail')}</Text>
         {items.map((item, index) => {
           const img = productImage(item);
           return (
             <View key={item.id || index}>
-              <View style={styles.itemRow}>
+              <View style={[styles.itemRow, { flexDirection: dir.row }]}>
                 <View style={styles.itemThumb}>
                   {img ? (
                     <Image source={{ uri: img }} style={styles.itemImage} resizeMode="cover" />
@@ -310,7 +312,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
                   )}
                 </View>
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemName} numberOfLines={1}>{item.nameAr || item.products?.nameAr || t('orderConfirm.itemFallback')}</Text>
+                  <Text style={[styles.itemName, { textAlign: dir.textAlign }]} numberOfLines={1}>{item.nameAr || item.products?.nameAr || t('orderConfirm.itemFallback')}</Text>
                   <Text style={styles.itemMeta}>×{item.quantity}</Text>
                 </View>
                 <Text style={styles.itemPrice}>{formatPrice(item.unitPrice)} {t('common.egp')}</Text>
@@ -322,22 +324,22 @@ export default function OrderConfirmScreen({ navigation, route }) {
 
         <View style={styles.costDivider} />
 
-        <View style={styles.costRow}>
+        <View style={[styles.costRow, { flexDirection: dir.row }]}>
           <Text style={styles.costLabel}>{t('orders.itemsPrice')}</Text>
           <Text style={styles.costValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
         </View>
         {discount > 0 && (
-          <View style={styles.costRow}>
+          <View style={[styles.costRow, { flexDirection: dir.row }]}>
             <Text style={styles.costLabelGreen}>{t('common.discount')}</Text>
             <Text style={styles.costValueGreen}>-{formatPrice(discount)} {t('common.egp')}</Text>
           </View>
         )}
-        <View style={styles.costRow}>
+        <View style={[styles.costRow, { flexDirection: dir.row }]}>
           <Text style={styles.costLabel}>{t('orders.delivery')}</Text>
           <Text style={styles.costValue}>{delivery > 0 ? `${formatPrice(delivery)} ${t('common.egp')}` : t('common.free')}</Text>
         </View>
         <View style={styles.costDivider} />
-        <View style={styles.costRow}>
+        <View style={[styles.costRow, { flexDirection: dir.row }]}>
           <Text style={styles.totalLabel}>{t('common.total')}</Text>
           <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
         </View>
@@ -346,8 +348,8 @@ export default function OrderConfirmScreen({ navigation, route }) {
       {/* Address — Lottie Pin */}
       {address && (
         <View style={styles.glassCard}>
-          <Text style={styles.cardTitle}>{t('orders.address')}</Text>
-          <View style={styles.addrRow}>
+          <Text style={[styles.cardTitle, { textAlign: dir.textAlign }]}>{t('orders.address')}</Text>
+          <View style={[styles.addrRow, { flexDirection: dir.row }]}>
             <View style={styles.addrIconWrap}>
               <LottieView
                 source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
@@ -360,7 +362,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
               <Text style={styles.addrLabel}>{address.label || t('orders.addressFallback')}</Text>
               <Text style={styles.addrDetail}>{address.street}{address.region ? ` - ${address.region}` : ''}</Text>
               {address.phone && (
-                <TouchableOpacity style={styles.addrPhone} onPress={() => Linking.openURL(`tel:${address.phone}`).catch(() => {})} activeOpacity={0.7}>
+                <TouchableOpacity style={[styles.addrPhone, { flexDirection: dir.row }]} onPress={() => Linking.openURL(`tel:${address.phone}`).catch(() => {})} activeOpacity={0.7}>
                   <Ionicons name="call-outline" size={12} color="#22C55E" />
                   <Text style={styles.addrPhoneText}>+20 {address.phone}</Text>
                 </TouchableOpacity>
@@ -373,7 +375,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
       {/* Actions — Action Strip */}
       {paymentStatus === 'FAILED' ? (
         <>
-          <TouchableOpacity style={styles.ctaPrimary} onPress={handleRetry} activeOpacity={0.85}>
+          <TouchableOpacity style={[styles.ctaPrimary, { flexDirection: dir.row }]} onPress={handleRetry} activeOpacity={0.85}>
             <Text style={styles.ctaPrimaryText}>{t('orders.confirmRetry')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.textLink} onPress={() => navigation.navigate('Chat')} activeOpacity={0.7}>
@@ -382,12 +384,12 @@ export default function OrderConfirmScreen({ navigation, route }) {
         </>
       ) : (
         <>
-          <TouchableOpacity style={styles.ctaPrimary} onPress={handleNavigateOrders} activeOpacity={0.85}>
+          <TouchableOpacity style={[styles.ctaPrimary, { flexDirection: dir.row }]} onPress={handleNavigateOrders} activeOpacity={0.85}>
             <Navigation size={16} color="#FFF" strokeWidth={2.5} />
             <Text style={styles.ctaPrimaryText}>{t('orders.track')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionStrip} onPress={handleScreenshot} activeOpacity={0.7} disabled={capturing}>
+          <TouchableOpacity style={[styles.actionStrip, { flexDirection: dir.row }]} onPress={handleScreenshot} activeOpacity={0.7} disabled={capturing}>
             <Camera size={16} color="#64748B" strokeWidth={2} />
             <Text style={styles.actionStripText}>{t('orderConfirm.screenshotShare')}</Text>
           </TouchableOpacity>
@@ -453,29 +455,29 @@ const styles = StyleSheet.create({
 
   /* Boarding-pass Order ID */
   boardingPass: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F8FAFC', borderRadius: 14,
     borderWidth: 1, borderColor: '#E2E8F0',
     marginBottom: 14, overflow: 'hidden',
   },
   bpLeft: { flex: 1, paddingVertical: 14, paddingHorizontal: 18 },
-  bpLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', textAlign: 'right', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
+  bpLabel: { fontSize: 10, fontWeight: '600', color: '#94A3B8', textAlign: 'left', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 },
   bpCode: {
     color: '#0F172A', fontSize: 16, fontWeight: '800',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    letterSpacing: 1.2, textAlign: 'right',
+    letterSpacing: 1.2, textAlign: 'left',
   },
   bpDivider: {
     width: 1, height: 40, backgroundColor: '#E2E8F0',
   },
   bpRight: {
     paddingHorizontal: 18, paddingVertical: 14,
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
   },
   bpCopy: { fontSize: 12, fontWeight: '600', color: '#38BDF8' },
 
   estimateRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     marginBottom: 10,
   },
   estimatePin: {
@@ -485,10 +487,10 @@ const styles = StyleSheet.create({
   estimateText: { fontSize: 12, color: '#64748B', fontWeight: '500' },
 
   metaRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
   },
   metaTag: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
   },
   metaTagText: { color: '#94A3B8', fontSize: 11, fontWeight: '500' },
 
@@ -498,7 +500,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.03, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1,
   },
   stepper: {
-    flexDirection: 'row-reverse', alignItems: 'flex-start', justifyContent: 'space-between',
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
   },
   stepCol: { alignItems: 'center', flex: 1 },
   stepCircle: {
@@ -532,24 +534,24 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#F1F5F9',
   },
   cardTitle: {
-    fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 12,
+    fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'left', marginBottom: 12,
   },
   itemRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
   },
   itemThumb: {
     width: 44, height: 44, borderRadius: 10, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginLeft: 10, overflow: 'hidden',
   },
-  itemImage: { width: 44, height: 44, borderRadius: 10, transform: [{ scaleX: -1 }] },
+  itemImage: { width: 44, height: 44, borderRadius: 10 },
   itemInfo: { flex: 1, alignItems: 'flex-end' },
-  itemName: { fontSize: 13, fontWeight: '600', color: '#334155', textAlign: 'right' },
+  itemName: { fontSize: 13, fontWeight: '600', color: '#334155', textAlign: 'left' },
   itemMeta: { fontSize: 11, color: '#94A3B8', marginTop: 1 },
   itemPrice: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
   itemDivider: { height: StyleSheet.hairlineWidth, backgroundColor: '#F1F5F9' },
 
   costDivider: { height: StyleSheet.hairlineWidth, backgroundColor: '#F1F5F9', marginVertical: 10 },
-  costRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginVertical: 3 },
+  costRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 3 },
   costLabel: { fontSize: 13, color: '#64748B' },
   costValue: { fontSize: 13, color: '#334155', fontWeight: '600' },
   costLabelGreen: { fontSize: 13, color: '#22C55E', fontWeight: '600' },
@@ -558,7 +560,7 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
 
   /* ── Address ── */
-  addrRow: { flexDirection: 'row-reverse', alignItems: 'flex-start' },
+  addrRow: { flexDirection: 'row', alignItems: 'flex-start' },
   addrIconWrap: {
     width: 40, height: 40, borderRadius: 12, backgroundColor: '#EFF6FF',
     justifyContent: 'center', alignItems: 'center', marginLeft: 10,
@@ -567,7 +569,7 @@ const styles = StyleSheet.create({
   addrLabel: { fontSize: 14, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
   addrDetail: { fontSize: 12, color: '#64748B', lineHeight: 17 },
   addrPhone: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     marginTop: 6, backgroundColor: '#F0FDF4', borderRadius: 8,
     paddingVertical: 4, paddingHorizontal: 10, alignSelf: 'flex-start',
   },
@@ -575,13 +577,13 @@ const styles = StyleSheet.create({
 
   /* ── Actions ── */
   ctaPrimary: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#0F172A', borderRadius: 50, paddingVertical: 16, marginBottom: 12,
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 8,
   },
   ctaPrimaryText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
   actionStrip: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     paddingVertical: 12, marginBottom: 8,
   },
   actionStripText: { fontSize: 13, color: '#64748B', fontWeight: '600' },

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { COLORS, RADIUS } from '../constants';
+import { useDirection } from '../hooks/useDirection';
 
 function SkeletonBox({ width, height, borderRadius = RADIUS.md, style }) {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
@@ -50,8 +51,9 @@ export function ProductCardSkeleton({ index }) {
 }
 
 export function ProductGridSkeleton({ count = 4 }) {
+  const dir = useDirection();
   return (
-    <View style={styles.grid}>
+    <View style={[styles.grid, { flexDirection: dir.row }]}>
       {Array.from({ length: count }, (_, i) => (
         <ProductCardSkeleton key={i} index={i} />
       ))}
@@ -60,8 +62,9 @@ export function ProductGridSkeleton({ count = 4 }) {
 }
 
 export function HorizontalCardSkeleton({ count = 3 }) {
+  const dir = useDirection();
   return (
-    <View style={styles.horizontalScroll}>
+    <View style={[styles.horizontalScroll, { flexDirection: dir.row }]}>
       {Array.from({ length: count }, (_, i) => (
         <View key={i} style={styles.horizontalCard}>
           <SkeletonBox width="100%" height={130} borderRadius={RADIUS.xl} />
@@ -84,10 +87,11 @@ export function BannerSkeleton() {
 }
 
 export function ListSkeleton({ rows = 4 }) {
+  const dir = useDirection();
   return (
     <View style={styles.list}>
       {Array.from({ length: rows }, (_, i) => (
-        <View key={i} style={styles.listRow}>
+        <View key={i} style={[styles.listRow, { flexDirection: dir.row }]}>
           <SkeletonBox width={44} height={44} borderRadius={RADIUS.full} />
           <View style={styles.listContent}>
             <SkeletonBox width="70%" height={14} borderRadius={RADIUS.sm} />
@@ -109,14 +113,14 @@ const styles = StyleSheet.create({
   },
   productInfo: { gap: 6, padding: 4 },
   grid: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingTop: 8,
   },
   horizontalScroll: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     paddingHorizontal: 16,
     gap: 12,
   },
@@ -135,7 +139,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   listRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },

@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { ChevronRight, Lock, CreditCard } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useDirection } from '../hooks/useDirection';
 
 export default function CardDetailsScreen({ navigation }) {
+  const dir = useDirection();
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
@@ -37,7 +39,7 @@ export default function CardDetailsScreen({ navigation }) {
       <StatusBar style="light" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: dir.row }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <ChevronRight color="#FFFFFF" size={22} />
         </TouchableOpacity>
@@ -51,8 +53,8 @@ export default function CardDetailsScreen({ navigation }) {
         <View style={styles.cardPreviewWrapper}>
           <View style={styles.cardBackground}>
             {/* Top row: chip + wireless */}
-            <View style={styles.cardTopRow}>
-              <View style={styles.chipAndWireless}>
+            <View style={[styles.cardTopRow, { flexDirection: dir.row }]}>
+              <View style={[styles.chipAndWireless, { flexDirection: dir.row }]}>
                 <View style={styles.cardChip} />
                 <CreditCard size={20} color="rgba(255,255,255,0.6)" />
               </View>
@@ -64,7 +66,7 @@ export default function CardDetailsScreen({ navigation }) {
             </Text>
 
             {/* Bottom row: expiry + VISA */}
-            <View style={styles.cardBottomRow}>
+            <View style={[styles.cardBottomRow, { flexDirection: dir.row }]}>
               <View style={styles.expiryContainer}>
                 <Text style={styles.previewExpiryLabel}>MONTH/YEAR</Text>
                 <Text style={styles.previewExpiryValue}>{expiry || '00/00'}</Text>
@@ -78,7 +80,7 @@ export default function CardDetailsScreen({ navigation }) {
         <View style={styles.formCard}>
 
           <View style={styles.inputWrapper}>
-            <Text style={styles.fieldLabel}>رقم البطاقة</Text>
+            <Text style={[styles.fieldLabel, { textAlign: dir.textAlign }]}>رقم البطاقة</Text>
             <TextInput
               style={styles.textInput}
               keyboardType="numeric"
@@ -90,9 +92,9 @@ export default function CardDetailsScreen({ navigation }) {
             />
           </View>
 
-          <View style={styles.rowInputs}>
+          <View style={[styles.rowInputs, { flexDirection: dir.row }]}>
             <View style={[styles.inputWrapper, { flex: 1, marginLeft: 16 }]}>
-              <Text style={styles.fieldLabel}>CVV</Text>
+              <Text style={[styles.fieldLabel, { textAlign: dir.textAlign }]}>CVV</Text>
               <TextInput
                 style={styles.textInput}
                 keyboardType="numeric"
@@ -106,7 +108,7 @@ export default function CardDetailsScreen({ navigation }) {
             </View>
 
             <View style={[styles.inputWrapper, { flex: 1 }]}>
-              <Text style={styles.fieldLabel}>تاريخ الانتهاء (MM/YY)</Text>
+              <Text style={[styles.fieldLabel, { textAlign: dir.textAlign }]}>تاريخ الانتهاء (MM/YY)</Text>
               <TextInput
                 style={styles.textInput}
                 keyboardType="numeric"
@@ -120,7 +122,7 @@ export default function CardDetailsScreen({ navigation }) {
           </View>
 
           <View style={styles.inputWrapper}>
-            <Text style={styles.fieldLabel}>اسم البطاقة (اختياري)</Text>
+            <Text style={[styles.fieldLabel, { textAlign: dir.textAlign }]}>اسم البطاقة (اختياري)</Text>
             <TextInput
               style={styles.textInput}
               placeholder="مثال: بطاقي الشخصية"
@@ -130,7 +132,7 @@ export default function CardDetailsScreen({ navigation }) {
             />
           </View>
 
-          <View style={styles.disclaimerRow}>
+          <View style={[styles.disclaimerRow, { flexDirection: dir.row }]}>
             <Lock color="#64748B" size={14} style={{ marginLeft: 6 }} />
             <Text style={styles.disclaimerText}>
               نحفظ بيانات بطاقتك بشكل آمن. لا نخزّن أبداً رمز CVV.
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
   },
   header: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -190,12 +192,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardTopRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   chipAndWireless: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Courier',
   },
   cardBottomRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
@@ -255,7 +257,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     marginBottom: 4,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   textInput: {
     height: 40,
@@ -266,10 +268,10 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   rowInputs: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
   },
   disclaimerRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,

@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   row: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   rowIconDestructive: { backgroundColor: COLORS.redLight },
   rowContent: {
     flex: 1,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: 12,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
 
   logoutSection: { marginTop: 24, paddingHorizontal: 16 },
   logoutButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.white,

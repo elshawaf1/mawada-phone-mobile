@@ -289,7 +289,7 @@ export default function SearchScreen({ navigation, route }) {
     }
     if (!hasMore && results.length > 0) {
       return (
-        <View style={styles.noMoreWrap}>
+        <View style={[styles.noMoreWrap, { flexDirection: dirRow }]}>
           <View style={styles.noMoreLine} />
           <Text style={styles.noMoreText}>{t('search.noMore')}</Text>
           <View style={styles.noMoreLine} />
@@ -304,17 +304,17 @@ export default function SearchScreen({ navigation, route }) {
       {/* Recent Searches */}
       {recentSearches.length > 0 && (
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={[styles.sectionHeader, { flexDirection: dirRow }]}>
             <Text style={styles.sectionTitle}>{t('search.recentSearches')}</Text>
             <TouchableOpacity onPress={clearRecentSearches} activeOpacity={0.7}>
               <Text style={styles.sectionAction}>{t('search.clearRecent')}</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.chipRow}>
+          <View style={[styles.chipRow, { flexDirection: dirRow }]}>
             {recentSearches.map((term, i) => (
               <TouchableOpacity
                 key={`r-${i}`}
-                style={styles.recentChip}
+                style={[styles.recentChip, { flexDirection: dirRow }]}
                 onPress={() => handleRecentTap(term)}
                 activeOpacity={0.7}
               >
@@ -329,7 +329,7 @@ export default function SearchScreen({ navigation, route }) {
       {/* Popular */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('search.popular')}</Text>
-        <View style={styles.chipRow}>
+        <View style={[styles.chipRow, { flexDirection: dirRow }]}>
           {POPULAR_SEARCHES.map((term, i) => (
             <TouchableOpacity
               key={`p-${i}`}
@@ -343,7 +343,7 @@ export default function SearchScreen({ navigation, route }) {
         </View>
       </View>
 
-      <View style={styles.helperWrap}>
+      <View style={[styles.helperWrap, { flexDirection: dirRow }]}>
         <Ionicons name="search-outline" size={14} color={COLORS.gray400} style={{ marginLeft: 4 }} />
         <Text style={styles.helperText}>{t('search.helper')}</Text>
       </View>
@@ -381,9 +381,9 @@ export default function SearchScreen({ navigation, route }) {
         {/* Filter bar — only when results are shown */}
         {hasSearched && !loading && !error && (
           <View style={styles.filterBar}>
-            <View style={styles.filterBarContent}>
+            <View style={[styles.filterBarContent, { flexDirection: dirRow }]}>
               <TouchableOpacity
-                style={[styles.filterChip, hasActiveFilters && styles.filterChipActive]}
+                style={[styles.filterChip, { flexDirection: dirRow }, hasActiveFilters && styles.filterChipActive]}
                 onPress={() => setFilterVisible(true)}
                 activeOpacity={0.7}
               >
@@ -432,7 +432,7 @@ export default function SearchScreen({ navigation, route }) {
         </View>
       ) : hasSearched && results.length > 0 ? (
         <>
-          <View style={styles.resultCountRow}>
+          <View style={[styles.resultCountRow, { flexDirection: dirRow }]}>
             <Text style={styles.resultCountText}>
               {t('search.resultsCount', { count: results.length })}
             </Text>
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.gray100,
   },
   headerRow: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 6, gap: 10,
   },
   backBtn: {
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray50, alignItems: 'center', justifyContent: 'center',
   },
   searchField: {
-    flex: 1, flexDirection: 'row-reverse', alignItems: 'center',
+    flex: 1, flexDirection: 'row', alignItems: 'center',
     height: 42, borderRadius: RADIUS.xxl,
     backgroundColor: COLORS.gray50, paddingHorizontal: 14,
     borderWidth: 1, borderColor: COLORS.gray200,
@@ -538,9 +538,9 @@ const styles = StyleSheet.create({
 
   /* Filter bar */
   filterBar: { paddingHorizontal: 16, paddingVertical: 6 },
-  filterBarContent: { flexDirection: 'row-reverse', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  filterBarContent: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   filterChip: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.gray200,
     backgroundColor: COLORS.white, position: 'relative',
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
     position: 'absolute', top: 3, left: 3,
   },
-  sortChips: { flexDirection: 'row-reverse', gap: 6 },
+  sortChips: { flexDirection: 'row', gap: 6 },
   sortChip: {
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: RADIUS.full, backgroundColor: COLORS.gray50,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
 
   /* Results */
   resultCountRow: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4,
   },
   resultCountText: {
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
   /* Loading more */
   loadingMore: { paddingVertical: 20, alignItems: 'center' },
   noMoreWrap: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 24, gap: 12,
   },
   noMoreLine: { height: 1, flex: 1, backgroundColor: COLORS.gray200 },
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   emptyState: { paddingTop: 20, paddingBottom: 40 },
   section: { marginBottom: 24 },
   sectionHeader: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 10,
   },
   sectionTitle: {
@@ -620,9 +620,9 @@ const styles = StyleSheet.create({
   sectionAction: {
     fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.gray500,
   },
-  chipRow: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   recentChip: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: RADIUS.full, backgroundColor: COLORS.white,
     borderWidth: 1, borderColor: COLORS.gray200,
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
 
   /* Helper */
   helperWrap: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     marginTop: 8,
   },
   helperText: { fontSize: FONT_SIZES.sm, color: COLORS.gray400 },

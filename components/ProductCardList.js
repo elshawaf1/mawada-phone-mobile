@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { COLORS, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
+import { useDirection } from '../hooks/useDirection';
 
 function formatPrice(n) {
   return Number(n || 0).toLocaleString();
@@ -11,6 +12,7 @@ function formatPrice(n) {
 
 export default function ProductCardList({ item, onPress, onAddToCart, onRemoveFromCart, inCart, justAdded }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const cartScale = useRef(new Animated.Value(1)).current;
 
@@ -48,7 +50,7 @@ export default function ProductCardList({ item, onPress, onAddToCart, onRemoveFr
 
   return (
     <Animated.View style={[styles.row, { transform: [{ scale: scaleAnim }] }]}>
-      <TouchableOpacity style={styles.container} activeOpacity={1} onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+        <TouchableOpacity style={[styles.container, { flexDirection: dir.row }]} activeOpacity={1} onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
         {/* Right: Image */}
         <View style={styles.imageZone}>
           {primaryImage ? (
@@ -78,13 +80,13 @@ export default function ProductCardList({ item, onPress, onAddToCart, onRemoveFr
         {/* Left: Info */}
         <View style={styles.info}>
           {brandName && (
-            <Text style={styles.brand} numberOfLines={1}>{brandName}</Text>
+            <Text style={[styles.brand, { textAlign: dir.textAlign }]} numberOfLines={1}>{brandName}</Text>
           )}
 
-          <Text style={styles.title} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
+          <Text style={[styles.title, { textAlign: dir.textAlign }]} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
 
           {hasRating && (
-            <View style={styles.ratingRow}>
+            <View style={[styles.ratingRow, { flexDirection: dir.row }]}>
               <Ionicons name="star" size={11} color="#F59E0B" />
               <Text style={styles.ratingText}>{Number(item.rating).toFixed(1)}</Text>
               {item.reviewCount != null && (
@@ -93,11 +95,11 @@ export default function ProductCardList({ item, onPress, onAddToCart, onRemoveFr
             </View>
           )}
 
-          <View style={styles.priceRow}>
+          <View style={[styles.priceRow, { flexDirection: dir.row }]}>
             {oldPrice && (
-              <Text style={styles.oldPrice}>{formatPrice(oldPrice)} {t('common.currency')}</Text>
+              <Text style={[styles.oldPrice, { textAlign: dir.textAlign }]}>{formatPrice(oldPrice)} {t('common.currency')}</Text>
             )}
-            <Text style={styles.price} numberOfLines={1}>{priceText}</Text>
+            <Text style={[styles.price, { textAlign: dir.textAlign }]} numberOfLines={1}>{priceText}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -110,7 +112,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   container: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -159,17 +161,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 2,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   title: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1E293B',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 20,
   },
   ratingRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
     marginTop: 4,
@@ -184,7 +186,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   priceRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: 6,
@@ -193,13 +195,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#E63946',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   oldPrice: {
     fontSize: 11,
     textDecorationLine: 'line-through',
     color: '#94A3B8',
-    textAlign: 'right',
+    textAlign: 'left',
   },
 
   cartWrap: {

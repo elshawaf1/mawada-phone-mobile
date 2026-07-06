@@ -39,6 +39,7 @@ const searchAnim = require('../assets/wired-outline-19-magnifier-zoom-search-hov
 
 function SearchBar({ onPress, t }) {
   const lottieRef = useRef(null);
+  const dir = useDirection();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,7 +50,7 @@ function SearchBar({ onPress, t }) {
   }, []);
 
   return (
-    <TouchableOpacity style={styles.searchBar} activeOpacity={0.8} onPress={onPress}>
+    <TouchableOpacity style={[styles.searchBar, { flexDirection: dir.row }]} activeOpacity={0.8} onPress={onPress}>
       <LottieView
         ref={lottieRef}
         source={searchAnim}
@@ -58,13 +59,14 @@ function SearchBar({ onPress, t }) {
         loop={false}
         resizeMode="cover"
       />
-      <Text style={styles.searchPlaceholder}>{t('home.searchPlaceholder')}</Text>
+      <Text style={[styles.searchPlaceholder, { textAlign: dir.textAlign }]}>{t('home.searchPlaceholder')}</Text>
     </TouchableOpacity>
   );
 }
 
 function HeroCarousel({ banners, navigation, t }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const dir = useDirection();
 
   if (!banners || banners.length === 0) return null;
 
@@ -103,8 +105,8 @@ function HeroCarousel({ banners, navigation, t }) {
             )}
             <View style={styles.bannerOverlay} />
             <View style={styles.bannerContent}>
-              <Text style={styles.bannerTitle}>{item.titleAr || item.title}</Text>
-              <View style={styles.bannerBtn}>
+              <Text style={[styles.bannerTitle, { textAlign: dir.textAlign }]}>{item.titleAr || item.title}</Text>
+              <View style={[styles.bannerBtn, { flexDirection: dir.row }]}>
                 <Text style={styles.bannerBtnText}>{t('home.shopNow')}</Text>
                 <Ionicons name="arrow-forward" size={14} color="#FFF" />
               </View>
@@ -114,7 +116,7 @@ function HeroCarousel({ banners, navigation, t }) {
         keyExtractor={(item) => item.id}
       />
 
-      <View style={styles.paginationContainer}>
+      <View style={[styles.paginationContainer, { flexDirection: dir.row }]}>
         {banners.map((_, i) => (
           <View
             key={i}
@@ -133,11 +135,11 @@ function BrandSegmentedControl({ brands, activeBrand, setActiveBrand, t }) {
   const allBrands = [{ id: 'all', nameAr: t('home.all'), name: 'All' }, ...(brands || [])];
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.brandScroll, { transform: [{ scaleX: -1 }] }]} contentContainerStyle={styles.brandContainer}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.brandScroll} contentContainerStyle={styles.brandContainer}>
       {allBrands.map((brand) => {
         const isActive = activeBrand === brand.id;
         return (
-          <View key={brand.id} style={{ transform: [{ scaleX: -1 }] }}>
+          <View key={brand.id}>
             <TouchableOpacity
               style={[styles.brandItem, isActive && styles.brandItemActive]}
               onPress={() => setActiveBrand(brand.id)}
@@ -201,6 +203,7 @@ function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress }) {
 }
 
 function CategoryGrid({ categories, navigation, t }) {
+  const dir = useDirection();
   if (!categories || categories.length < 2) return null
   const cats = categories.slice(0, 4)
   while (cats.length < 4) {
@@ -212,13 +215,13 @@ function CategoryGrid({ categories, navigation, t }) {
 
   return (
     <View style={styles.categorySection}>
-      <View style={styles.catSectionHeader}>
+      <View style={[styles.catSectionHeader, { flexDirection: dir.row }]}>
         <Text style={styles.catSectionTitle}>{t('home.categories')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('AllCategories')} activeOpacity={0.7}>
           <Text style={styles.sectionSeeAll}>{t('home.seeAllCategories')}</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.catGrid}>
+      <View style={[styles.catGrid, { flexDirection: dir.row }]}>
         <View style={styles.catCol}>
           <AnimatedCatCard cat={cats[0]} cardW={CARD_W} isTall bgIdx={0} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[0].id, categoryName: cats[0].nameAr })} />
           <View style={{ height: GAP }} />
@@ -239,6 +242,7 @@ function QuickActions({ navigation, t }) {
   const heartRef = useRef(null);
   const clockRef = useRef(null);
   const saleRef = useRef(null);
+  const dir = useDirection();
 
   useEffect(() => {
     const heartInterval = setInterval(() => {
@@ -264,7 +268,7 @@ function QuickActions({ navigation, t }) {
 
   return (
     <View style={styles.quickActionsSection}>
-      <View style={styles.quickActionsGrid}>
+      <View style={[styles.quickActionsGrid, { flexDirection: dir.row }]}>
         {actions.map((action) => (
           <TouchableOpacity
             key={action.key}
@@ -290,12 +294,13 @@ function QuickActions({ navigation, t }) {
 }
 
 function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMap, t }) {
+  const dir = useDirection();
   const featured = products.filter(p => p.isFeatured);
   if (featured.length === 0) return null;
 
   return (
     <View style={styles.featuredSection}>
-      <View style={styles.sectionHeader}>
+      <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
         <Text style={styles.sectionTitle}>{t('home.featured')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Search')}>
           <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
@@ -542,7 +547,7 @@ export default function HomeScreen({ navigation }) {
     return (
       <MainLayout navigation={navigation} activeRoute="Home" style={styles.root}>
         <View style={styles.headerSection}>
-          <View style={[styles.headerRow, { paddingTop: 60 }]}>
+          <View style={[styles.headerRow, { paddingTop: 60, flexDirection: dir.row }]}>
             <View style={styles.headerRight}>
               <Text style={styles.greetingText}>{t('home.greeting')}</Text>
             </View>
@@ -580,11 +585,11 @@ export default function HomeScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0F172A']} tintColor="#0F172A" />}
         ListHeaderComponent={
           <View style={styles.headerSection}>
-            <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
+            <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) + 8, flexDirection: dir.row }]}>
               <View style={styles.headerRight}>
                 <Text style={styles.greetingText}>{user ? t('home.greetingUser', { name: user.name }) : t('home.greeting')}</Text>
               </View>
-              <View style={styles.headerLeft}>
+              <View style={[styles.headerLeft, { flexDirection: dir.row }]}>
                 <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Notifications')}>
                   <Ionicons name="notifications-outline" size={22} color={COLORS.text} />
                   {unreadCount > 0 && (
@@ -616,8 +621,8 @@ export default function HomeScreen({ navigation }) {
             {bundles.length > 0 && (
               <View style={styles.bundleSectionWrap}>
                 <View style={styles.bundleSection}>
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitleLight}>{t('home.offerMawda')}</Text>
+                  <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
+                    <Text style={[styles.sectionTitleLight, { textAlign: dir.textAlign }]}>{t('home.offerMawda')}</Text>
                   </View>
                   {bundles.slice(0, 2).map((bundle) => (
                   <BundleCard
@@ -646,21 +651,21 @@ export default function HomeScreen({ navigation }) {
 
             {brands.length > 0 && (
               <>
-                <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
                   <Text style={styles.sectionTitle}>{t('home.brands')}</Text>
                 </View>
                 <BrandSegmentedControl brands={brands} activeBrand={activeBrand} setActiveBrand={setActiveBrand} t={t} />
               </>
             )}
 
-            <View style={[styles.sectionHeader, { marginTop: 8 }]}>
+            <View style={[styles.sectionHeader, { marginTop: 8, flexDirection: dir.row }]}>
               <Text style={styles.sectionTitle}>{t('home.products')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Search')}>
                 <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.conditionFilter}>
+            <View style={[styles.conditionFilter, { flexDirection: dir.row }]}>
               {[{ key: 'all', label: t('home.all') }, { key: 'new', label: t('home.newProducts') }, { key: 'used', label: t('home.usedProducts') }].map((opt) => {
                 const isActive = activeCondition === opt.key;
                 return (
@@ -713,11 +718,11 @@ const styles = StyleSheet.create({
 
   headerSection: { backgroundColor: '#F8F9FA' },
   headerRow: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 8, paddingBottom: 8,
   },
   headerRight: { alignItems: 'flex-end' },
-  headerLeft: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   greetingText: { fontSize: 22, fontWeight: FONT_WEIGHTS.extrabold, color: COLORS.text, letterSpacing: -0.3 },
   headerIconBtn: {
     width: 40, height: 40, borderRadius: 20,
@@ -725,11 +730,11 @@ const styles = StyleSheet.create({
   },
 
   searchBar: {
-    flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: COLORS.gray50,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.gray50,
     borderRadius: RADIUS.lg, height: 50, paddingHorizontal: 14, marginHorizontal: 8, marginBottom: 12,
     borderWidth: 1, borderColor: COLORS.gray200,
   },
-  searchPlaceholder: { flex: 1, fontSize: 15, color: COLORS.textTertiary, textAlign: 'right', marginRight: 10 },
+  searchPlaceholder: { flex: 1, fontSize: 15, color: COLORS.textTertiary, textAlign: 'left', marginRight: 10 },
   searchLottie: { width: 24, height: 24, marginRight: 10 },
 
   carouselContainer: { marginBottom: 16 },
@@ -740,15 +745,15 @@ const styles = StyleSheet.create({
   bannerOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.3)' },
   bannerContent: { flex: 1, alignItems: 'flex-end', zIndex: 2, justifyContent: 'center', padding: 20 },
   bannerAccent: { position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: 60 },
-  bannerTitle: { fontSize: 20, fontWeight: FONT_WEIGHTS.extrabold, color: COLORS.white, textAlign: 'right', marginBottom: 12 },
-  bannerBtn: { borderRadius: RADIUS.lg, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row-reverse', alignItems: 'center', gap: 6, alignSelf: 'flex-end', backgroundColor: COLORS.primary },
+  bannerTitle: { fontSize: 20, fontWeight: FONT_WEIGHTS.extrabold, color: COLORS.white, textAlign: 'left', marginBottom: 12 },
+  bannerBtn: { borderRadius: RADIUS.lg, paddingHorizontal: 14, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', backgroundColor: COLORS.primary },
   bannerBtnText: { fontSize: 13, fontWeight: FONT_WEIGHTS.bold, color: COLORS.white },
-  paginationContainer: { flexDirection: 'row-reverse', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
+  paginationContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, gap: 6 },
   paginationDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.gray300 },
   paginationDotActive: { width: 16, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
 
   categorySection: { marginBottom: 8, paddingTop: 24, paddingBottom: 12 },
-  catSectionHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 28 },
+  catSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 28 },
   catSectionTitle: {
     fontSize: 20,
     fontWeight: FONT_WEIGHTS.extrabold,
@@ -756,7 +761,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
 
-  catGrid: { flexDirection: 'row-reverse', paddingHorizontal: 8 },
+  catGrid: { flexDirection: 'row', paddingHorizontal: 8 },
   catCol: { flex: 1 },
   catCard: {
     overflow: 'hidden', backgroundColor: COLORS.white, borderRadius: 20,
@@ -787,12 +792,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A', borderRadius: 16, marginHorizontal: 12, marginBottom: 16, paddingVertical: 10,
   },
   sectionTitleLight: {
-    fontSize: 18, fontWeight: '800', color: '#FFF', textAlign: 'right',
+    fontSize: 18, fontWeight: '800', color: '#FFF', textAlign: 'left',
   },
 
 
   sectionHeader: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 8, marginBottom: 8,
   },
   sectionTitle: { fontSize: 18, fontWeight: FONT_WEIGHTS.extrabold, color: COLORS.text },
@@ -816,7 +821,7 @@ const styles = StyleSheet.create({
   brandTextActive: { color: COLORS.white },
 
   conditionFilter: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     paddingHorizontal: 16,
     marginBottom: 12,
     gap: 8,
@@ -854,7 +859,7 @@ const styles = StyleSheet.create({
   },
 
   quickActionsSection: { marginBottom: 16, paddingTop: 8 },
-  quickActionsGrid: { flexDirection: 'row-reverse', gap: 10, paddingHorizontal: 16 },
+  quickActionsGrid: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
   quickActionCard: {
     flex: 1, alignItems: 'center', gap: 10,
     paddingVertical: 18, borderRadius: 20,

@@ -58,7 +58,7 @@ export default function UpdatePasswordScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.inputWrapper}>
           <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.currentPassword')}</Text>
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, { flexDirection: dir.row }]}>
             <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)}>
               {showCurrent ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
             </TouchableOpacity>
@@ -69,7 +69,7 @@ export default function UpdatePasswordScreen({ navigation }) {
 
         <View style={styles.inputWrapper}>
           <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.newPassword')}</Text>
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow, { flexDirection: dir.row }]}>
             <TouchableOpacity onPress={() => setShowNew(!showNew)}>
               {showNew ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
             </TouchableOpacity>
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   content: { padding: 24 },
   inputWrapper: { marginBottom: 22 },
-  label: { textAlign: 'right', color: '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' },
-  inputRow: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#F1F5F9' },
-  input: { flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A', textAlign: 'right' },
+  label: { textAlign: 'left', color: '#64748B', marginBottom: 8, fontSize: 13, fontWeight: '600' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+  input: { flex: 1, paddingHorizontal: 10, fontSize: 15, color: '#0F172A', textAlign: 'left' },
 });

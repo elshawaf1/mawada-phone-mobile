@@ -250,7 +250,7 @@ export default function OrderDetailScreen({ navigation, route }) {
   const renderContent = () => (
     <>
       {/* Status Badge */}
-      <View style={styles.statusBadgeRow}>
+      <View style={[styles.statusBadgeRow, { flexDirection: dir.row }]}>
         <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
           <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
             {STATUS_LABELS[order.status] || order.status}
@@ -265,17 +265,17 @@ export default function OrderDetailScreen({ navigation, route }) {
 
       {/* Timeline */}
       {isCancelled ? (
-        <View style={styles.cancelledBanner}>
+        <View style={[styles.cancelledBanner, { flexDirection: dir.row }]}>
           <Ionicons name="close-circle" size={20} color="#991B1B" />
           <Text style={styles.cancelledText}>{t('orders.cancelledBanner')}</Text>
         </View>
       ) : (
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
+          <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
             <Clock size={16} color="#0F172A" strokeWidth={2.25} />
             <Text style={styles.cardTitle}>{t('orders.status')}</Text>
           </View>
-          <View style={styles.horizontalTimeline}>
+          <View style={[styles.horizontalTimeline, { flexDirection: dir.row }]}>
             {TIMELINE_STEPS.map((step, idx) => {
               const state = stepState(order.status, step.key);
               const isLast = idx === TIMELINE_STEPS.length - 1;
@@ -319,17 +319,17 @@ export default function OrderDetailScreen({ navigation, route }) {
       {/* Address */}
       {address && (
         <View style={styles.card}>
-          <View style={styles.cardHeader}>
+          <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
             <MapPin size={16} color="#0F172A" strokeWidth={2.25} />
             <Text style={styles.cardTitle}>{t('orders.address')}</Text>
           </View>
-          <Text style={styles.addressLabel}>{address.label || t('orders.addressFallback')}</Text>
-          <Text style={styles.addressText}>
+          <Text style={[styles.addressLabel, { textAlign: dir.textAlign }]}>{address.label || t('orders.addressFallback')}</Text>
+          <Text style={[styles.addressText, { textAlign: dir.textAlign }]}>
             {address.street}{address.region ? ` - ${address.region}` : ''}
           </Text>
-          {address.city && <Text style={styles.addressText}>{address.city}</Text>}
+          {address.city && <Text style={[styles.addressText, { textAlign: dir.textAlign }]}>{address.city}</Text>}
           {address.phone && (
-            <TouchableOpacity style={styles.phoneRow} onPress={() => {}} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.phoneRow, { flexDirection: dir.row }]} onPress={() => {}} activeOpacity={0.7}>
               <Ionicons name="call-outline" size={13} color="#22C55E" />
               <Text style={styles.phoneText}>+20 {address.phone}</Text>
             </TouchableOpacity>
@@ -339,7 +339,7 @@ export default function OrderDetailScreen({ navigation, route }) {
 
       {/* Products */}
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
+          <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
           <Package size={16} color="#0F172A" strokeWidth={2.25} />
           <Text style={styles.cardTitle}>{t('common.products')} ({items.length})</Text>
         </View>
@@ -349,7 +349,7 @@ export default function OrderDetailScreen({ navigation, route }) {
           const img = product.product_images?.[0]?.url;
           const attrs = [variant.color, variant.storage, variant.ram].filter(Boolean).join(' · ');
           return (
-            <View key={item.id || idx} style={[styles.itemRow, idx === 0 && { borderTopWidth: 0 }]}>
+            <View key={item.id || idx} style={[styles.itemRow, idx === 0 && { borderTopWidth: 0 }, { flexDirection: dir.row }]}>
               <View style={styles.itemImageWrapper}>
                 {img ? (
                   <Image source={{ uri: img }} style={styles.itemImage} resizeMode="cover" />
@@ -360,11 +360,11 @@ export default function OrderDetailScreen({ navigation, route }) {
                 )}
               </View>
               <View style={styles.itemInfo}>
-                <Text style={styles.itemTitle} numberOfLines={2}>
+                <Text style={[styles.itemTitle, { textAlign: dir.textAlign }]} numberOfLines={2}>
                   {product.nameAr || t('common.product')}
                 </Text>
-                {attrs ? <Text style={styles.itemVariant}>{attrs}</Text> : null}
-                <Text style={styles.itemQty}>{t('orders.quantity', { count: item.quantity })}</Text>
+                {attrs ? <Text style={[styles.itemVariant, { textAlign: dir.textAlign }]}>{attrs}</Text> : null}
+                <Text style={[styles.itemQty, { textAlign: dir.textAlign }]}>{t('orders.quantity', { count: item.quantity })}</Text>
               </View>
               <Text style={styles.itemPrice}>{formatPrice(item.unitPrice * item.quantity)} {t('common.egp')}</Text>
             </View>
@@ -374,33 +374,33 @@ export default function OrderDetailScreen({ navigation, route }) {
 
       {/* Payment Summary */}
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
+          <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
           <CreditCard size={16} color="#0F172A" strokeWidth={2.25} />
           <Text style={styles.cardTitle}>{t('orders.paymentSummary')}</Text>
         </View>
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
           <Text style={styles.summaryValue}>{formatPrice(order.subtotal)} {t('common.egp')}</Text>
           <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
         </View>
         {Number(order.shippingCost) > 0 && (
-          <View style={styles.summaryRow}>
+          <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
             <Text style={styles.summaryValue}>{formatPrice(order.shippingCost)} {t('common.egp')}</Text>
             <Text style={styles.summaryLabel}>{t('orders.delivery')}</Text>
           </View>
         )}
         {Number(order.discount) > 0 && (
-          <View style={styles.summaryRow}>
+          <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
             <Text style={styles.summaryValueGreen}>- {formatPrice(order.discount)} {t('common.egp')}</Text>
             <Text style={styles.summaryLabelGreen}>{t('common.discount')}</Text>
           </View>
         )}
         <View style={styles.divider} />
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
           <Text style={styles.totalValue}>{formatPrice(order.total)} {t('common.egp')}</Text>
           <Text style={styles.totalLabel}>{t('common.total')}</Text>
         </View>
         <View style={styles.divider} />
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
           <View style={[styles.badge, { backgroundColor: '#F1F5F9' }]}>
             <Text style={[styles.badgeText, { color: '#334155' }]}>
               {PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod}
@@ -408,7 +408,7 @@ export default function OrderDetailScreen({ navigation, route }) {
           </View>
           <Text style={styles.summaryLabel}>{t('orders.paymentMethod')}</Text>
         </View>
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
           <View style={[styles.badge, { backgroundColor: paymentColor.bg }]}>
             <Text style={[styles.badgeText, { color: paymentColor.text }]}>
               {PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus}
@@ -417,7 +417,7 @@ export default function OrderDetailScreen({ navigation, route }) {
           <Text style={styles.summaryLabel}>{t('orders.paymentStatus')}</Text>
         </View>
         {order.couponCode && (
-          <View style={styles.summaryRow}>
+          <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
             <Text style={styles.summaryValue}>{order.couponCode}</Text>
             <Text style={styles.summaryLabel}>{t('orders.couponCode')}</Text>
           </View>
@@ -433,7 +433,7 @@ export default function OrderDetailScreen({ navigation, route }) {
         title={order.orderNumber}
         onBack={() => navigation.goBack()}
         rightAction={
-          <View style={styles.headerActions}>
+          <View style={[styles.headerActions, { flexDirection: dir.row }]}>
             <TouchableOpacity style={styles.headerIconBtn} onPress={handleShare} activeOpacity={0.7}>
               <Share2 size={18} color="#0F172A" strokeWidth={2} />
             </TouchableOpacity>
@@ -463,7 +463,7 @@ export default function OrderDetailScreen({ navigation, route }) {
       {payable && !capturing && (
         <View style={[styles.bottomCta, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <TouchableOpacity
-            style={styles.payNowButton}
+            style={[styles.payNowButton, { flexDirection: dir.row }]}
             activeOpacity={0.85}
             onPress={() => navigation.navigate('ResumePayment', { orderId: order.id })}
           >
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 14, color: '#94A3B8', marginTop: 12 },
 
   headerActions: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
   },
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   captureView: { backgroundColor: '#F8FAFC', padding: 16 },
 
   statusBadgeRow: {
-    flexDirection: 'row-reverse', gap: 8, marginBottom: 12,
+    flexDirection: 'row', gap: 8, marginBottom: 12,
   },
   statusBadge: {
     borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12,
@@ -519,18 +519,18 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 4 }, shadowRadius: 10, elevation: 2,
   },
   cardHeader: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 8, marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12,
   },
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
 
   cancelledBanner: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, backgroundColor: '#FEE2E2', borderRadius: 16, padding: 14, marginBottom: 12,
   },
   cancelledText: { color: '#991B1B', fontSize: 14, fontWeight: '700' },
 
   horizontalTimeline: {
-    flexDirection: 'row-reverse', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 8,
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 8,
   },
   stepContainer: { alignItems: 'center', flex: 1, maxWidth: 80 },
   stepCircle: {
@@ -548,30 +548,30 @@ const styles = StyleSheet.create({
   stepLabelActive: { color: '#F59E0B', fontWeight: '700' },
   stepLabelPending: { color: '#94A3B8' },
 
-  addressLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 4 },
-  addressText: { fontSize: 13, color: '#64748B', textAlign: 'right', marginBottom: 2 },
+  addressLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'left', marginBottom: 4 },
+  addressText: { fontSize: 13, color: '#64748B', textAlign: 'left', marginBottom: 2 },
   phoneRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     marginTop: 6, backgroundColor: '#F0FDF4', borderRadius: 8,
     paddingVertical: 5, paddingHorizontal: 10, alignSelf: 'flex-start',
   },
   phoneText: { fontSize: 12, color: '#22C55E', fontWeight: '600' },
 
   itemRow: {
-    flexDirection: 'row-reverse', alignItems: 'center', paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
     borderTopWidth: 1, borderTopColor: '#F1F5F9',
   },
   itemImageWrapper: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', backgroundColor: '#F1F5F9' },
   itemImage: { width: 56, height: 56 },
   itemImagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
   itemInfo: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
-  itemTitle: { fontSize: 13, fontWeight: '600', color: '#0F172A', textAlign: 'right' },
-  itemVariant: { fontSize: 11, color: '#94A3B8', textAlign: 'right', marginTop: 2 },
-  itemQty: { fontSize: 11, color: '#64748B', textAlign: 'right', marginTop: 2 },
+  itemTitle: { fontSize: 13, fontWeight: '600', color: '#0F172A', textAlign: 'left' },
+  itemVariant: { fontSize: 11, color: '#94A3B8', textAlign: 'left', marginTop: 2 },
+  itemQty: { fontSize: 11, color: '#64748B', textAlign: 'left', marginTop: 2 },
   itemPrice: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
 
   summaryRow: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8,
   },
   summaryLabel: { fontSize: 13, color: '#64748B' },
   summaryValue: { fontSize: 13, color: '#0F172A', fontWeight: '600' },
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.08, shadowOffset: { width: 0, height: -2 }, shadowRadius: 8, elevation: 4,
   },
   payNowButton: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 14,
   },
   payNowButtonText: { color: '#fff', fontSize: 15, fontWeight: '700' },

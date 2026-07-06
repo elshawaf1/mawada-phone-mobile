@@ -17,9 +17,11 @@ import {
   Image,
   BackHandler,
 } from 'react-native';
-import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3, Smartphone, Copy, CheckCheck } from 'lucide-react-native';
+import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
+
+import { Linking } from 'react-native';
 import LottieView from 'lottie-react-native';
 
 if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true);
@@ -31,7 +33,8 @@ import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/AppSettingsContext';
 import { db } from '../services/api';
 import { COLORS } from '../constants';
-import { supabase, supabaseUrl } from '../services/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
+import { useDirection } from '../hooks/useDirection';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 const POLL_INTERVAL = 3000;
@@ -74,14 +77,14 @@ const PAYMENT_METHODS = [
     type: 'INSTAPAY',
     labelKey: 'payment.instapay',
     hintKey: 'payment.instapayHint',
-    Icon: Smartphone,
+    iconImage: require('../assets/instapay.png'),
     color: '#059669',
     bgColor: '#ECFDF5',
   },
 ];
 
-const StepIndicator = ({ step, total }) => (
-  <View style={styles.stepRow}>
+const StepIndicator = ({ step, total, dir }) => (
+  <View style={[styles.stepRow, { flexDirection: dir.row }]}>
     {Array.from({ length: total }, (_, i) => (
       <React.Fragment key={i}>
         <View style={[styles.stepDot, i < step && styles.stepDotActive, i === step && styles.stepDotCurrent]}>
@@ -95,6 +98,7 @@ const StepIndicator = ({ step, total }) => (
 
 export default function PaymentScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { clearCart: clearAppCart, coupon } = useApp();
@@ -113,7 +117,7 @@ export default function PaymentScreen({ navigation, route }) {
   const [instapayOrderId, setInstapayOrderId] = useState(null);
   const [instapayOrderData, setInstapayOrderData] = useState(null);
   const [uploadingProof, setUploadingProof] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [proofImageUri, setProofImageUri] = useState(null);
 
   const sdkCallbackFired = useRef(false);
   const pollTimer = useRef(null);
@@ -436,6 +440,62 @@ export default function PaymentScreen({ navigation, route }) {
     setProcessing(true);
 
     try {
+      if (method.type === 'INSTAPAY') {
+        const orderId = `ord_${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+
+        const { error: dbErr } = await supabase.from('orders').insert({
+          id: orderId,
+          orderNumber,
+          userId: user.id,
+          status: 'PENDING',
+          paymentMethod: 'INSTAPAY',
+          paymentStatus: 'PENDING',
+          subtotal,
+          shippingCost,
+          discount,
+          total,
+          couponCode: coupon?.code || null,
+          notes: orderNotes || null,
+          addressId: deliveryType === 'delivery' ? (deliveryAddress?.id || null) : null,
+          branchId: deliveryType === 'branch' ? (selectedBranch?.id || null) : null,
+        });
+        if (dbErr) throw new Error(dbErr.message);
+
+        if (items?.length > 0) {
+          const orderItems = items.map((item) => ({
+            id: `oi_${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+            orderId,
+            productId: item.productId || null,
+            variantId: item.variantId || null,
+            quantity: item.quantity || 1,
+            unitPrice: Number(item.unitPrice) || 0,
+          }));
+          const { error: oiErr } = await supabase.from('order_items').insert(orderItems);
+          if (oiErr) console.error('[InstaPay] order_items insert error:', oiErr.message);
+        }
+
+        setProcessing(false);
+        setInstapayOrderId(orderId);
+        setInstapayOrderData({
+          id: orderId,
+          orderNumber,
+          paymentMethod: 'INSTAPAY',
+          paymentStatus: 'PENDING',
+          subtotal,
+          shippingCost,
+          discount,
+          total,
+          order_items: items.map((item) => ({
+            ...item,
+            nameAr: item.name || t('common.product'),
+            unitPrice: item.unitPrice,
+          })),
+        });
+        setShowInstapayGuide(true);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
       const idempotencyKey = Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -495,27 +555,6 @@ export default function PaymentScreen({ navigation, route }) {
           })),
         };
         openSDK(data.clientSecret, orderData);
-      } else if (method.type === 'INSTAPAY') {
-        await db.clearCart(user.id);
-        clearAppCart();
-        setProcessing(false);
-        setInstapayOrderId(data.orderId);
-        setInstapayOrderData({
-          id: data.orderId,
-          orderNumber: data.orderNumber,
-          paymentMethod: 'INSTAPAY',
-          paymentStatus: 'PENDING',
-          subtotal,
-          shippingCost,
-          discount,
-          total,
-          order_items: items.map((item) => ({
-            ...item,
-            nameAr: item.name || t('common.product'),
-            unitPrice: item.unitPrice,
-          })),
-        });
-        setShowInstapayGuide(true);
       } else {
         await db.clearCart(user.id);
         clearAppCart();
@@ -549,10 +588,12 @@ export default function PaymentScreen({ navigation, route }) {
 
   const INSTAPAY_LINK = 'https://ipn.eg/S/chdzw/instapay/9f8SGC';
 
-  const handleCopyLink = async () => {
-    await Clipboard.setStringAsync(INSTAPAY_LINK);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
+  const handleOpenInstapay = async () => {
+    try {
+      await Linking.openURL(INSTAPAY_LINK);
+    } catch {
+      Alert.alert(t('common.error'), t('payment.instapayNotInstalled'));
+    }
   };
 
   const handlePickProof = async () => {
@@ -564,11 +605,9 @@ export default function PaymentScreen({ navigation, route }) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
-      allowsEditing: true,
-      aspect: [4, 3],
     });
     if (!result.canceled) {
-      await uploadProof(result.assets[0].uri);
+      setProofImageUri(result.assets[0].uri);
     }
   };
 
@@ -580,11 +619,9 @@ export default function PaymentScreen({ navigation, route }) {
     }
     const result = await ImagePicker.launchCameraAsync({
       quality: 0.8,
-      allowsEditing: true,
-      aspect: [4, 3],
     });
     if (!result.canceled) {
-      await uploadProof(result.assets[0].uri);
+      setProofImageUri(result.assets[0].uri);
     }
   };
 
@@ -592,26 +629,51 @@ export default function PaymentScreen({ navigation, route }) {
     setUploadingProof(true);
     try {
       const fileName = `proof_${instapayOrderId}_${Date.now()}.jpg`;
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const { error: uploadErr } = await supabase.storage
-        .from('payment-proof-images')
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
-      if (uploadErr) throw uploadErr;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri,
+        name: fileName,
+        type: 'image/jpeg',
+      });
+
+      const res = await fetch(
+        `${supabaseUrl}/storage/v1/object/payment-proof-images/${fileName}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': supabaseAnonKey,
+            'x-upsert': 'true',
+          },
+          body: formData,
+        }
+      );
+      if (!res.ok) {
+        const errBody = await res.text();
+        console.error('Upload failed:', res.status, errBody);
+        throw new Error(`Upload failed: ${res.status}`);
+      }
+
       const { data: urlData } = supabase.storage
         .from('payment-proof-images')
         .getPublicUrl(fileName);
+
       await supabase.from('orders').update({
         paymentProofUrl: urlData.publicUrl,
         paymentProofStatus: 'PENDING',
       }).eq('id', instapayOrderId);
+      await db.clearCart(user.id);
+      clearAppCart();
       setShowInstapayProof(false);
       navigation.replace('OrderConfirm', {
         order: { ...instapayOrderData, paymentProofStatus: 'PENDING' },
       });
     } catch (err) {
       console.error('Upload proof error:', err);
-      Alert.alert(t('common.error'), 'فشل في رفع الصورة');
+      Alert.alert(t('common.error'), t('payment.proofUploadFailed'));
     } finally {
       setUploadingProof(false);
     }
@@ -621,26 +683,26 @@ export default function PaymentScreen({ navigation, route }) {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
         <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent, { flexDirection: dir.row }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
             <ChevronLeft color={COLORS.text} size={22} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('payment.title')}</Text>
           <View style={styles.spacer} />
         </View>
-        <StepIndicator step={2} total={3} />
+        <StepIndicator step={2} total={3} dir={dir} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Delivery Type */}
         <View style={styles.sectionLabel}>
-          <Text style={styles.sectionLabelText}>{t('payment.chooseMethod')}</Text>
+          <Text style={[styles.sectionLabelText, { textAlign: dir.textAlign }]}>{t('payment.chooseMethod')}</Text>
         </View>
 
-        <View style={styles.segmentedControl}>
+        <View style={[styles.segmentedControl, { flexDirection: dir.row }]}>
           <TouchableOpacity
-            style={[styles.segmentTab, deliveryType === 'delivery' && styles.segmentTabActive]}
+            style={[styles.segmentTab, { flexDirection: dir.row }, deliveryType === 'delivery' && styles.segmentTabActive]}
             onPress={() => setDeliveryType('delivery')}
             activeOpacity={0.7}
           >
@@ -650,7 +712,7 @@ export default function PaymentScreen({ navigation, route }) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.segmentTab, deliveryType === 'branch' && styles.segmentTabActive]}
+            style={[styles.segmentTab, { flexDirection: dir.row }, deliveryType === 'branch' && styles.segmentTabActive]}
             onPress={() => setDeliveryType('branch')}
             activeOpacity={0.7}
           >
@@ -669,7 +731,7 @@ export default function PaymentScreen({ navigation, route }) {
                 <ActivityIndicator size="small" color="#94A3B8" />
               </View>
             ) : deliveryAddress ? (
-              <View style={styles.locLayer}>
+              <View style={[styles.locLayer, { flexDirection: dir.row }]}>
                 <View style={styles.locIconWrap}>
                   <LottieView
                     source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
@@ -679,9 +741,9 @@ export default function PaymentScreen({ navigation, route }) {
                   />
                 </View>
                 <View style={styles.locTextWrap}>
-                  <Text style={styles.locLabel}>{deliveryAddress.label || deliveryAddress.city}</Text>
-                  <Text style={styles.locDetail}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
-                  <Text style={styles.locPhone}>+20 {deliveryAddress.phone}</Text>
+                  <Text style={[styles.locLabel, { textAlign: dir.textAlign }]}>{deliveryAddress.label || deliveryAddress.city}</Text>
+                  <Text style={[styles.locDetail, { textAlign: dir.textAlign }]}>{deliveryAddress.street}{deliveryAddress.region ? ` - ${deliveryAddress.region}` : ''}</Text>
+                  <Text style={[styles.locPhone, { textAlign: dir.textAlign }]}>+20 {deliveryAddress.phone}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.locEditBtn}
@@ -692,7 +754,7 @@ export default function PaymentScreen({ navigation, route }) {
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity style={styles.locEmpty} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
+              <TouchableOpacity style={[styles.locEmpty, { flexDirection: dir.row }]} onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })} activeOpacity={0.7}>
                 <LottieView
                   source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
                   autoPlay
@@ -707,7 +769,7 @@ export default function PaymentScreen({ navigation, route }) {
 
         {deliveryType === 'branch' && (
           <View style={styles.locModule}>
-            <View style={styles.locLayer}>
+            <View style={[styles.locLayer, { flexDirection: dir.row }]}>
               <View style={styles.locIconWrap}>
                 <LottieView
                   source={require('../assets/wired-lineal-18-location-pin-hover-jump.json')}
@@ -717,8 +779,8 @@ export default function PaymentScreen({ navigation, route }) {
                 />
               </View>
               <View style={styles.locTextWrap}>
-                <Text style={styles.locLabel}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
-                <Text style={styles.locDetail}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
+                <Text style={[styles.locLabel, { textAlign: dir.textAlign }]}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
+                <Text style={[styles.locDetail, { textAlign: dir.textAlign }]}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
               </View>
               <TouchableOpacity style={styles.locEditBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
                 <Edit3 size={15} color="#3B82F6" strokeWidth={2.2} />
@@ -729,13 +791,13 @@ export default function PaymentScreen({ navigation, route }) {
 
         {/* Payment Methods */}
         <View style={styles.sectionLabel}>
-          <Text style={styles.sectionLabelText}>{t('payment.supportedMethods')}</Text>
+          <Text style={[styles.sectionLabelText, { textAlign: dir.textAlign }]}>{t('payment.supportedMethods')}</Text>
         </View>
 
         <View style={styles.methodsWrap}>
           {PAYMENT_METHODS.map((method) => {
             const isSelected = selectedMethod === method.id;
-            const { Icon, color, bgColor } = method;
+            const { Icon, color, bgColor, iconImage } = method;
             const label = method.label ? method.label : t(method.labelKey);
             const hint = method.hint ? method.hint : t(method.hintKey);
             return (
@@ -743,6 +805,7 @@ export default function PaymentScreen({ navigation, route }) {
                 key={method.id}
                 style={[
                   styles.methodItem,
+                  { flexDirection: dir.row },
                   isSelected && { borderColor: '#16A34A', backgroundColor: '#F0FDF4' },
                 ]}
                 onPress={() => {
@@ -752,11 +815,15 @@ export default function PaymentScreen({ navigation, route }) {
                 activeOpacity={0.7}
               >
                 <View style={[styles.methodIconCircle, { backgroundColor: isSelected ? '#16A34A' : '#F1F5F9' }]}>
-                  <Icon size={20} color={isSelected ? '#fff' : '#94A3B8'} />
+                  {iconImage ? (
+                    <Image source={iconImage} style={[styles.methodIconImage, !isSelected && { opacity: 0.35 }]} resizeMode="contain" />
+                  ) : (
+                    <Icon size={20} color={isSelected ? '#fff' : '#94A3B8'} />
+                  )}
                 </View>
                 <View style={styles.methodTextCol}>
-                  <Text style={[styles.methodName, isSelected && { color: '#16A34A' }]}>{label}</Text>
-                  <Text style={[styles.methodDesc, !isSelected && { color: '#CBD5E1' }]}>{hint}</Text>
+                  <Text style={[styles.methodName, { textAlign: dir.textAlign }, isSelected && { color: '#16A34A' }]}>{label}</Text>
+                  <Text style={[styles.methodDesc, { textAlign: dir.textAlign }, !isSelected && { color: '#CBD5E1' }]}>{hint}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -766,7 +833,7 @@ export default function PaymentScreen({ navigation, route }) {
         {/* Products — Expandable */}
         <View style={styles.summaryCard}>
           <TouchableOpacity
-            style={styles.summaryHeader}
+            style={[styles.summaryHeader, { flexDirection: dir.row }]}
             onPress={() => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setProductsExpanded(!productsExpanded);
@@ -774,8 +841,8 @@ export default function PaymentScreen({ navigation, route }) {
             activeOpacity={0.7}
           >
             <View style={styles.summaryHeaderRight}>
-              <Text style={styles.summaryTitle}>{t('common.products')}</Text>
-              <Text style={styles.summaryTotalInline}>{items.length} {t('common.product')}</Text>
+              <Text style={[styles.summaryTitle, { textAlign: dir.textAlign }]}>{t('common.products')}</Text>
+              <Text style={[styles.summaryTotalInline, { textAlign: dir.textAlign }]}>{items.length} {t('common.product')}</Text>
             </View>
             <Animated.View style={{ transform: [{ rotate: productsExpanded ? '180deg' : '0deg' }] }}>
               <ChevronDown size={18} color="#94A3B8" />
@@ -786,7 +853,7 @@ export default function PaymentScreen({ navigation, route }) {
             <View style={styles.summaryDetails}>
               <View style={styles.summaryDivider} />
               {items.map((item, index) => (
-                <View key={index} style={styles.productItemRow}>
+                <View key={index} style={[styles.productItemRow, { flexDirection: dir.row }]}>
                   {item.image ? (
                     <Image source={{ uri: item.image }} style={styles.productItemImage} />
                   ) : (
@@ -795,8 +862,8 @@ export default function PaymentScreen({ navigation, route }) {
                     </View>
                   )}
                   <View style={styles.productItemInfo}>
-                    <Text style={styles.productItemName} numberOfLines={2}>{item.name}</Text>
-                    <Text style={styles.productItemQty}>×{item.quantity || 1}</Text>
+                    <Text style={[styles.productItemName, { textAlign: dir.textAlign }]} numberOfLines={2}>{item.name}</Text>
+                    <Text style={[styles.productItemQty, { textAlign: dir.textAlign }]}>×{item.quantity || 1}</Text>
                   </View>
                   <Text style={styles.productItemPrice}>{formatPrice((Number(item.unitPrice) || 0) * (item.quantity || 1))} {t('common.egp')}</Text>
                 </View>
@@ -808,7 +875,7 @@ export default function PaymentScreen({ navigation, route }) {
         {/* Order Summary — Expandable */}
         <View style={styles.summaryCard}>
           <TouchableOpacity
-            style={styles.summaryHeader}
+            style={[styles.summaryHeader, { flexDirection: dir.row }]}
             onPress={() => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setSummaryExpanded(!summaryExpanded);
@@ -816,8 +883,8 @@ export default function PaymentScreen({ navigation, route }) {
             activeOpacity={0.7}
           >
             <View style={styles.summaryHeaderRight}>
-              <Text style={styles.summaryTitle}>{t('orders.total')}</Text>
-              <Text style={styles.summaryTotalInline}>{formatPrice(total)} {t('common.egp')}</Text>
+              <Text style={[styles.summaryTitle, { textAlign: dir.textAlign }]}>{t('orders.total')}</Text>
+              <Text style={[styles.summaryTotalInline, { textAlign: dir.textAlign }]}>{formatPrice(total)} {t('common.egp')}</Text>
             </View>
             <Animated.View style={{ transform: [{ rotate: summaryExpanded ? '180deg' : '0deg' }] }}>
               <ChevronDown size={18} color="#94A3B8" />
@@ -827,22 +894,22 @@ export default function PaymentScreen({ navigation, route }) {
           {summaryExpanded && (
             <View style={styles.summaryDetails}>
               <View style={styles.summaryDivider} />
-              <View style={styles.summaryRow}>
+              <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                 <Text style={styles.summaryValue}>{formatPrice(subtotal)} {t('common.egp')}</Text>
                 <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
               </View>
               {discount > 0 && (
-                <View style={styles.summaryRow}>
+                <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                   <Text style={[styles.summaryValue, { color: '#16A34A' }]}>-{formatPrice(discount)} {t('common.egp')}</Text>
                   <Text style={styles.summaryLabel}>{t('common.discount')}</Text>
                 </View>
               )}
-              <View style={styles.summaryRow}>
+              <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                 <Text style={styles.summaryValue}>{shippingCost > 0 ? `${formatPrice(shippingCost)} ${t('common.egp')}` : t('common.free')}</Text>
                 <Text style={styles.summaryLabel}>{t('common.shipping')}</Text>
               </View>
               <View style={[styles.summaryDivider, { marginTop: 12 }]} />
-              <View style={styles.summaryRow}>
+              <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                 <Text style={styles.totalValue}>{formatPrice(total)} {t('common.egp')}</Text>
                 <Text style={styles.totalLabel}>{t('common.total')}</Text>
               </View>
@@ -852,17 +919,17 @@ export default function PaymentScreen({ navigation, route }) {
 
         {/* Return Policy */}
         <View style={styles.returnPolicySection}>
-          <View style={styles.returnPolicyHeader}>
-            <Text style={styles.returnPolicyTitle}>{t('payment.returnPolicy')}</Text>
+          <View style={[styles.returnPolicyHeader, { flexDirection: dir.row }]}>
+            <Text style={[styles.returnPolicyTitle, { textAlign: dir.textAlign }]}>{t('payment.returnPolicy')}</Text>
           </View>
-          <Text style={styles.returnPolicyItem}>• {t('payment.return14')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.return30')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.zeroGuarantee')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.intlGuarantee')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.usedGuarantee')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.accessoryReturn')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.warrantyReplace')}</Text>
-          <Text style={styles.returnPolicyItem}>• {t('payment.invoiceRequired')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.return14')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.return30')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.zeroGuarantee')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.intlGuarantee')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.usedGuarantee')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.accessoryReturn')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.warrantyReplace')}</Text>
+          <Text style={[styles.returnPolicyItem, { textAlign: dir.textAlign }]}>• {t('payment.invoiceRequired')}</Text>
         </View>
 
         {processing && (
@@ -873,7 +940,7 @@ export default function PaymentScreen({ navigation, route }) {
         )}
 
         <TouchableOpacity
-          style={[styles.checkoutFloat, processing && { opacity: 0.6 }]}
+          style={[styles.checkoutFloat, { flexDirection: dir.row }, processing && { opacity: 0.6 }]}
           onPress={handleCheckout}
           activeOpacity={0.85}
           disabled={processing}
@@ -890,32 +957,30 @@ export default function PaymentScreen({ navigation, route }) {
           <View style={styles.modalBackdrop} />
           <View style={styles.modalCard}>
             <View style={styles.modalHandleRow}><View style={styles.modalHandle} /></View>
-            <View style={styles.modalHeader}>
-              <View style={[styles.modalIconCircle, { backgroundColor: '#ECFDF5' }]}>
-                <Smartphone size={24} color="#059669" />
-              </View>
-              <Text style={styles.modalTitle}>{t('payment.instapayGuideTitle')}</Text>
-            </View>
+            <Text style={styles.modalTitle}>{t('payment.instapayGuideTitle')}</Text>
+            <Text style={styles.modalSubtitle}>{t('payment.instapayGuideSub')}</Text>
 
-            {[
-              { num: 1, titleKey: 'instapayStep1', subKey: 'instapayStep1Sub' },
-              { num: 2, titleKey: 'instapayStep2', subKey: 'instapayStep2Sub' },
-              { num: 3, titleKey: 'instapayStep3', subKey: 'instapayStep3Sub' },
-              { num: 4, titleKey: 'instapayStep4', subKey: 'instapayStep4Sub' },
-            ].map((step, i) => (
-              <View key={step.num} style={styles.guideStepRow}>
-                <View style={styles.guideStepLeft}>
-                  <View style={[styles.guideStepNum, i < 3 && styles.guideStepNumActive]}>
-                    <Text style={[styles.guideStepNumText, i < 3 && { color: '#fff' }]}>{step.num}</Text>
+            <View style={styles.guideStepsContainer}>
+              {[
+                { num: 1, titleKey: 'instapayStep1', subKey: 'instapayStep1Sub' },
+                { num: 2, titleKey: 'instapayStep2', subKey: 'instapayStep2Sub' },
+                { num: 3, titleKey: 'instapayStep3', subKey: 'instapayStep3Sub' },
+                { num: 4, titleKey: 'instapayStep4', subKey: 'instapayStep4Sub' },
+              ].map((step, i) => (
+                <View key={step.num} style={[styles.guideStepRow, { flexDirection: dir.row }]}>
+                  <View style={styles.guideStepLeft}>
+                    <View style={styles.guideStepNum}>
+                      <Text style={styles.guideStepNumText}>{step.num}</Text>
+                    </View>
+                    {i < 3 && <View style={styles.guideStepLine} />}
                   </View>
-                  {i < 3 && <View style={styles.guideStepLine} />}
+                  <View style={styles.guideStepContent}>
+                    <Text style={[styles.guideStepTitle, { textAlign: dir.textAlign }]}>{t(`payment.${step.titleKey}`)}</Text>
+                    <Text style={[styles.guideStepSub, { textAlign: dir.textAlign }]}>{t(`payment.${step.subKey}`)}</Text>
+                  </View>
                 </View>
-                <View style={styles.guideStepContent}>
-                  <Text style={styles.guideStepTitle}>{t(`payment.${step.titleKey}`)}</Text>
-                  <Text style={styles.guideStepSub}>{t(`payment.${step.subKey}`)}</Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
 
             <TouchableOpacity
               style={styles.modalBtn}
@@ -934,58 +999,68 @@ export default function PaymentScreen({ navigation, route }) {
           <View style={styles.modalBackdrop} />
           <View style={styles.modalCard}>
             <View style={styles.modalHandleRow}><View style={styles.modalHandle} /></View>
-            <View style={styles.modalHeader}>
-              <View style={[styles.modalIconCircle, { backgroundColor: '#ECFDF5' }]}>
-                <Smartphone size={24} color="#059669" />
-              </View>
-              <Text style={styles.modalTitle}>{t('payment.instapay')}</Text>
+            <Text style={styles.modalTitle}>{t('payment.instapay')}</Text>
+
+            <View style={styles.linkCard}>
+              <TouchableOpacity style={styles.openAppLink} onPress={handleOpenInstapay} activeOpacity={0.7}>
+                <Text style={styles.openAppLinkText}>{t('payment.instapayOpenApp')}</Text>
+              </TouchableOpacity>
+              <View style={styles.usernameSeparator} />
+              <Text style={styles.usernameLabel}>{t('payment.instapayUsername')}</Text>
             </View>
 
-            {/* Link section */}
-            <View style={styles.linkCard}>
-              <Text style={styles.linkLabel}>{t('payment.instapayLinkLabel')}</Text>
-              <View style={styles.linkRow}>
-                <Text style={styles.linkText} numberOfLines={1}>{INSTAPAY_LINK}</Text>
-                <TouchableOpacity style={styles.linkCopyBtn} onPress={handleCopyLink} activeOpacity={0.7}>
-                  {linkCopied ? (
-                    <CheckCheck size={18} color="#059669" />
-                  ) : (
-                    <Copy size={18} color="#64748B" />
-                  )}
+            {proofImageUri ? (
+              <View style={styles.proofPreviewWrap}>
+                <Image source={{ uri: proofImageUri }} style={styles.proofPreviewImage} resizeMode="contain" />
+                <TouchableOpacity
+                  style={styles.proofRetakeBtn}
+                  onPress={() => setProofImageUri(null)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.proofRetakeText}>{t('payment.instapayRetake')}</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.usernameRow}>
-                <Text style={styles.usernameLabel}>{t('payment.instapayUsername')}</Text>
+            ) : (
+              <View style={[styles.uploadBtnsRow, { flexDirection: dir.row }]}>
+                <TouchableOpacity
+                  style={styles.uploadBtnPrimary}
+                  onPress={handlePickProof}
+                  activeOpacity={0.85}
+                  disabled={uploadingProof}
+                >
+                  <Text style={styles.uploadBtnPrimaryText}>{t('payment.instapaySend')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.uploadBtnSecondary}
+                  onPress={handleTakeProof}
+                  activeOpacity={0.85}
+                  disabled={uploadingProof}
+                >
+                  <Text style={styles.uploadBtnSecondaryText}>{t('payment.instapayCamera')}</Text>
+                </TouchableOpacity>
               </View>
-            </View>
+            )}
 
-            {/* Upload buttons */}
-            <View style={styles.uploadBtnsRow}>
+            {proofImageUri && (
               <TouchableOpacity
-                style={styles.uploadBtnPrimary}
-                onPress={handlePickProof}
+                style={styles.modalBtn}
+                onPress={() => uploadProof(proofImageUri)}
                 activeOpacity={0.85}
                 disabled={uploadingProof}
               >
                 {uploadingProof ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.uploadBtnPrimaryText}>{t('payment.instapaySend')}</Text>
+                  <Text style={styles.modalBtnText}>{t('payment.instapayUploadProof')}</Text>
                 )}
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.uploadBtnSecondary}
-                onPress={handleTakeProof}
-                activeOpacity={0.85}
-                disabled={uploadingProof}
-              >
-                <Text style={styles.uploadBtnSecondaryText}>📸</Text>
-              </TouchableOpacity>
-            </View>
+            )}
+
+            <Text style={styles.approvalNote}>{t('payment.instapayApprovalNote')}</Text>
 
             <TouchableOpacity
               style={styles.modalCancelBtn}
-              onPress={() => { setShowInstapayProof(false); setProcessing(false); navigation.goBack(); }}
+              onPress={() => { setShowInstapayProof(false); setProcessing(false); setProofImageUri(null); }}
               activeOpacity={0.7}
             >
               <Text style={styles.modalCancelText}>{t('payment.instapayCancel')}</Text>
@@ -1010,7 +1085,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   headerContent: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
@@ -1024,7 +1099,7 @@ const styles = StyleSheet.create({
   spacer: { width: 38 },
 
   stepRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
@@ -1045,10 +1120,10 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
 
   sectionLabel: { marginBottom: 10, marginTop: 4 },
-  sectionLabelText: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
+  sectionLabelText: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'left' },
 
   segmentedControl: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     backgroundColor: '#E2E8F0',
     borderRadius: 14,
     padding: 3,
@@ -1056,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   segmentTab: {
     flex: 1, paddingVertical: 10,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'center', alignItems: 'center',
     borderRadius: 11, gap: 6,
   },
@@ -1078,22 +1153,22 @@ const styles = StyleSheet.create({
     marginBottom: 16, padding: 2,
   },
   locLayer: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 12, padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
   },
   locIconWrap: {
     width: 44, height: 44, borderRadius: 14,
     backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
   locTextWrap: { flex: 1, alignItems: 'flex-end' },
-  locLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'right', marginBottom: 3 },
-  locDetail: { fontSize: 12, color: '#64748B', textAlign: 'right', lineHeight: 17 },
-  locPhone: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 3, fontWeight: '500' },
+  locLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'left', marginBottom: 3 },
+  locDetail: { fontSize: 12, color: '#64748B', textAlign: 'left', lineHeight: 17 },
+  locPhone: { fontSize: 12, color: '#94A3B8', textAlign: 'left', marginTop: 3, fontWeight: '500' },
   locEditBtn: {
     width: 36, height: 36, borderRadius: 10,
     backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
   },
   locEmpty: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     padding: 22, gap: 10,
   },
   locEmptyText: { color: '#3B82F6', fontSize: 14, fontWeight: '600' },
@@ -1101,7 +1176,7 @@ const styles = StyleSheet.create({
   /* ── Payment Methods — Border Only On Selection ── */
   methodsWrap: { gap: 8, marginBottom: 20 },
   methodItem: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F8FAFC', borderRadius: 14,
     padding: 12, gap: 12,
     borderWidth: 1.5, borderColor: 'transparent',
@@ -1110,9 +1185,12 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
+  methodIconImage: {
+    width: 30, height: 30, borderRadius: 6,
+  },
   methodTextCol: { flex: 1, alignItems: 'flex-end' },
-  methodName: { fontSize: 14, fontWeight: '700', color: '#94A3B8', textAlign: 'right' },
-  methodDesc: { fontSize: 11, color: '#CBD5E1', textAlign: 'right', marginTop: 1 },
+  methodName: { fontSize: 14, fontWeight: '700', color: '#94A3B8', textAlign: 'left' },
+  methodDesc: { fontSize: 11, color: '#CBD5E1', textAlign: 'left', marginTop: 1 },
   radioDot: {
     width: 18, height: 18, borderRadius: 9,
     borderWidth: 2, borderColor: '#E2E8F0',
@@ -1126,15 +1204,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   summaryHeader: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: 16,
   },
   summaryHeaderRight: { flex: 1, alignItems: 'flex-end' },
-  summaryTitle: { fontSize: 13, fontWeight: '600', color: '#94A3B8', textAlign: 'right', marginBottom: 2 },
-  summaryTotalInline: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'right', letterSpacing: -0.3 },
+  summaryTitle: { fontSize: 13, fontWeight: '600', color: '#94A3B8', textAlign: 'left', marginBottom: 2 },
+  summaryTotalInline: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'left', letterSpacing: -0.3 },
   summaryDetails: { padding: 0, paddingHorizontal: 16, paddingBottom: 16 },
   summaryRow: {
-    flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 6,
   },
   summaryLabel: { fontSize: 13, color: '#64748B' },
@@ -1144,7 +1222,7 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
 
   productItemRow: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     paddingVertical: 8,
   },
   productItemImage: {
@@ -1154,10 +1232,10 @@ const styles = StyleSheet.create({
   productItemInfo: { flex: 1 },
   productItemName: {
     fontSize: 13, fontWeight: '600', color: '#0F172A',
-    textAlign: 'right', lineHeight: 18,
+    textAlign: 'left', lineHeight: 18,
   },
   productItemQty: {
-    fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2,
+    fontSize: 12, color: '#94A3B8', textAlign: 'left', marginTop: 2,
   },
   productItemPrice: {
     fontSize: 13, fontWeight: '700', color: '#0F172A',
@@ -1169,12 +1247,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#E2E8F0',
     padding: 12, marginBottom: 16,
   },
-  returnPolicyHeader: { flexDirection: 'row-reverse', alignItems: 'center', marginBottom: 10 },
-  returnPolicyTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
-  returnPolicyItem: { fontSize: 14, fontWeight: '700', color: '#334155', textAlign: 'right', lineHeight: 22, marginBottom: 6, writingDirection: 'rtl' },
+  returnPolicyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  returnPolicyTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'left' },
+  returnPolicyItem: { fontSize: 14, fontWeight: '700', color: '#334155', textAlign: 'left', lineHeight: 22, marginBottom: 6, writingDirection: 'rtl' },
 
   checkoutFloat: {
-    flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#0F172A', borderRadius: 50, paddingVertical: 16, marginBottom: 20,
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 8,
   },
@@ -1189,7 +1267,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(15,23,42,0.6)',
   },
   modalCard: {
     backgroundColor: '#fff',
@@ -1199,91 +1277,97 @@ const styles = StyleSheet.create({
   },
   modalHandleRow: { alignItems: 'center', paddingVertical: 12 },
   modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1' },
-  modalHeader: {
-    alignItems: 'center', marginBottom: 20, gap: 12,
-  },
-  modalIconCircle: {
-    width: 56, height: 56, borderRadius: 28,
-    alignItems: 'center', justifyContent: 'center',
-  },
   modalTitle: {
-    fontSize: 20, fontWeight: '800', color: '#0F172A', textAlign: 'center',
+    fontSize: 22, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 13, fontWeight: '500', color: '#94A3B8', textAlign: 'center', marginBottom: 20,
   },
 
   /* Guide Steps */
+  guideStepsContainer: { marginBottom: 8 },
   guideStepRow: {
-    flexDirection: 'row-reverse', marginBottom: 0,
+    flexDirection: 'row', marginBottom: 0,
   },
   guideStepLeft: {
     alignItems: 'center', width: 32, marginLeft: 12,
   },
   guideStepNum: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#0F172A', alignItems: 'center', justifyContent: 'center',
   },
-  guideStepNumActive: { backgroundColor: '#059669' },
-  guideStepNumText: { fontSize: 13, fontWeight: '700', color: '#94A3B8' },
+  guideStepNumText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   guideStepLine: {
     width: 2, height: 28, backgroundColor: '#E2E8F0', marginTop: 4,
   },
   guideStepContent: { flex: 1, paddingVertical: 2 },
-  guideStepTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'right' },
-  guideStepSub: { fontSize: 12, color: '#94A3B8', textAlign: 'right', marginTop: 2, lineHeight: 18 },
+  guideStepTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'left' },
+  guideStepSub: { fontSize: 12, color: '#94A3B8', textAlign: 'left', marginTop: 2, lineHeight: 18 },
 
   modalBtn: {
-    backgroundColor: '#059669', borderRadius: 16,
+    backgroundColor: '#0F172A', borderRadius: 16,
     paddingVertical: 16, alignItems: 'center', marginTop: 24,
-    shadowColor: '#059669', shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
   },
   modalBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 
   /* Proof Upload */
   linkCard: {
-    backgroundColor: '#F8FAFC', borderRadius: 16,
+    backgroundColor: '#F8FAFC', borderRadius: 20,
     borderWidth: 1, borderColor: '#E2E8F0',
-    padding: 16, marginBottom: 16,
+    padding: 20, marginBottom: 16,
   },
-  linkLabel: {
-    fontSize: 12, fontWeight: '600', color: '#94A3B8',
-    textAlign: 'right', marginBottom: 8,
+  openAppLink: {
+    alignItems: 'center', paddingVertical: 4,
   },
-  linkRow: {
-    flexDirection: 'row-reverse', alignItems: 'center',
-    backgroundColor: '#fff', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderWidth: 1, borderColor: '#E2E8F0', gap: 10,
+  openAppLinkText: {
+    fontSize: 16, fontWeight: '700', color: '#0F172A',
+    textDecorationLine: 'underline', textDecorationColor: '#0F172A',
   },
-  linkText: {
-    flex: 1, fontSize: 13, fontWeight: '600', color: '#059669',
-    textAlign: 'left', writingDirection: 'ltr',
-  },
-  linkCopyBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
-  },
-  usernameRow: {
-    flexDirection: 'row-reverse', justifyContent: 'center', marginTop: 12,
+  usernameSeparator: {
+    height: 1, backgroundColor: '#E2E8F0', marginVertical: 16,
   },
   usernameLabel: {
-    fontSize: 16, fontWeight: '800', color: '#0F172A',
-    textAlign: 'center',
+    fontSize: 22, fontWeight: '900', color: '#0F172A',
+    textAlign: 'center', letterSpacing: 1,
   },
 
   uploadBtnsRow: {
-    flexDirection: 'row-reverse', gap: 10, marginBottom: 12,
+    flexDirection: 'row', gap: 10, marginBottom: 12,
   },
   uploadBtnPrimary: {
-    flex: 1, backgroundColor: '#059669', borderRadius: 14,
+    flex: 1, backgroundColor: '#0F172A', borderRadius: 14,
     paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#059669', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25, shadowRadius: 10, elevation: 6,
   },
-  uploadBtnPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  uploadBtnPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
   uploadBtnSecondary: {
-    width: 54, height: 54, borderRadius: 14,
-    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#E2E8F0',
+    flex: 1, backgroundColor: '#fff', borderRadius: 14,
+    paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: '#0F172A',
+  },
+  uploadBtnSecondaryText: { fontSize: 15, fontWeight: '800', color: '#0F172A', letterSpacing: 0.3 },
+
+  proofPreviewWrap: {
+    marginBottom: 16, borderRadius: 16, overflow: 'hidden',
+    backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0',
+  },
+  proofPreviewImage: {
+    width: '100%', height: 200, borderRadius: 16,
+  },
+  proofRetakeBtn: {
+    alignItems: 'center', paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: '#E2E8F0',
+  },
+  proofRetakeText: {
+    fontSize: 14, fontWeight: '700', color: '#0F172A',
+  },
+
+  approvalNote: {
+    fontSize: 12, fontWeight: '500', color: '#94A3B8',
+    textAlign: 'center', marginBottom: 4, lineHeight: 18,
   },
 
   modalCancelBtn: {

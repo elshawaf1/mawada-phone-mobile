@@ -4,6 +4,7 @@ import ProductCardList from './ProductCardList';
 import ProductMatchLabel from './ProductMatchLabel';
 import { useTranslation } from '../context/AppSettingsContext';
 import { SPACING } from '../constants';
+import { useDirection } from '../hooks/useDirection';
 
 export default function RelatedProductsGrid({
   products,
@@ -16,13 +17,14 @@ export default function RelatedProductsGrid({
   addedMap,
 }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const displayTitle = title || t('home.youMayAlsoLike');
 
   if (!products || products.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: dir.row }]}>
         <Text style={styles.title}>{displayTitle}</Text>
       </View>
 
@@ -50,7 +52,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   header: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,

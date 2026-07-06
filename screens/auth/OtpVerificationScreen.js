@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/AppSettingsContext';
+import { useDirection } from '../../hooks/useDirection';
 import Button from '../../components/Button';
 import ScreenHeader from '../../components/ScreenHeader';
 
@@ -20,6 +21,7 @@ const RESEND_COOLDOWN = 60;
 
 export default function OtpVerificationScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const { verifyEmailOtp } = useAuth();
   const { email, type = 'signup', name, phone } = route?.params || {};
 
@@ -159,7 +161,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
 
       <View style={styles.inner}>
 
-        <Text style={styles.infoText}>
+        <Text style={[styles.infoText, { textAlign: dir.textAlign }]}>
           {isSignup ? t('auth.otpSubtitle') : t('auth.resetPasswordDesc')}
         </Text>
 
@@ -193,7 +195,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
 
         {error ? (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={[styles.errorText, { textAlign: dir.textAlign }]}>{error}</Text>
           </View>
         ) : null}
 
@@ -234,7 +236,7 @@ const styles = StyleSheet.create({
   infoText: {
     color: '#64748B',
     fontSize: 15,
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 22,
     marginBottom: 12,
   },
@@ -289,7 +291,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#991B1B',
     fontSize: 13,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   successBox: {
     backgroundColor: '#F0FDF4',

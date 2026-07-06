@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SCREEN, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
+import { useDirection } from '../hooks/useDirection';
 
 const CARD_W = (SCREEN.width - 24) / 2;
 
@@ -22,6 +23,7 @@ export default function ProductCard({
   onToggleFavorite,
 }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const heartScale = useRef(new Animated.Value(1)).current;
   const cartScale = useRef(new Animated.Value(1)).current;
@@ -119,14 +121,14 @@ export default function ProductCard({
 
         <View style={styles.info}>
           {brandName && (
-            <Text style={styles.brandName} numberOfLines={1} ellipsizeMode="tail">{brandName}</Text>
+            <Text style={[styles.brandName, { textAlign: dir.textAlign }]} numberOfLines={1} ellipsizeMode="tail">{brandName}</Text>
           )}
 
-          <Text style={styles.title} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
+          <Text style={[styles.title, { textAlign: dir.textAlign }]} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
 
-          <View style={styles.metaRow}>
+          <View style={[styles.metaRow, { flexDirection: dir.row }]}>
             {hasRating && (
-              <View style={styles.ratingRow}>
+              <View style={[styles.ratingRow, { flexDirection: dir.row }]}>
                 <Ionicons name="star" size={11} color="#F59E0B" />
                 <Text style={styles.ratingText}>{Number(item.rating).toFixed(1)}</Text>
                 {item.reviewCount != null && (
@@ -141,9 +143,9 @@ export default function ProductCard({
 
           <View style={styles.priceArea}>
             {oldPrice && (
-              <Text style={styles.oldPrice}>{formatPrice(oldPrice)} {t('common.currency')}</Text>
+              <Text style={[styles.oldPrice, { textAlign: dir.textAlign }]}>{formatPrice(oldPrice)} {t('common.currency')}</Text>
             )}
-            <Text style={styles.price} numberOfLines={1} ellipsizeMode="tail">{priceText}</Text>
+            <Text style={[styles.price, { textAlign: dir.textAlign }]} numberOfLines={1} ellipsizeMode="tail">{priceText}</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -255,7 +257,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     color: '#94A3B8',
-    textAlign: 'right',
+    textAlign: 'left',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 2,
@@ -265,19 +267,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#1E293B',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 18,
   },
 
   metaRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
     gap: 8,
     marginTop: 4,
   },
   ratingRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
   },
@@ -303,13 +305,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#E63946',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   oldPrice: {
     fontSize: 11,
     textDecorationLine: 'line-through',
     color: '#94A3B8',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 1,
   },
 });

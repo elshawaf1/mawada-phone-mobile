@@ -226,7 +226,7 @@ export default function MyOrdersScreen({ navigation }) {
         onPress={() => navigation.navigate('OrderDetail', { orderId: order.id, order })}
         style={styles.cardTouchable}
       >
-        <View style={styles.cardInner}>
+        <View style={[styles.cardInner, { flexDirection: dir.row }]}>
           <View style={[styles.accentBar, { backgroundColor: statusColor.accent }]} />
           <View style={styles.cardBody}>
             <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   tabsRow: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
   },
   tab: {
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   cardInner: {
     backgroundColor: '#fff',
     borderRadius: 24,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 6 },
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
     paddingLeft: 14,
   },
   cardHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
@@ -517,12 +517,12 @@ const styles = StyleSheet.create({
   itemSummary: {
     fontSize: 13,
     color: '#64748B',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 10,
   },
 
   badgesRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   },
 
   totalRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   },
 
   ctaButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0F172A',
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
   ctaButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
   trackButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0F172A',

@@ -97,23 +97,23 @@ export default function RegisterScreen({ navigation }) {
       </ImageBackground>
 
       <View style={styles.formContainer}>
-        <Text style={styles.title}>{t('auth.createAccount')}</Text>
+        <Text style={[styles.title, { textAlign: dir.textAlign }]}>{t('auth.createAccount')}</Text>
 
         {error ? (
           <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={[styles.errorText, { textAlign: dir.textAlign }]}>{error}</Text>
           </View>
         ) : null}
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.fullName')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.fullName')}</Text>
           <View style={styles.inputRow}>
             <User size={18} color="#94A3B8" />
             <TextInput
               style={styles.input}
               placeholder="أحمد محمد"
               placeholderTextColor="#94A3B8"
-              textAlign="right"
+              textAlign={dir.textAlign}
               value={name}
               onChangeText={setName}
             />
@@ -121,14 +121,14 @@ export default function RegisterScreen({ navigation }) {
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.email')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.email')}</Text>
           <View style={styles.inputRow}>
             <Mail size={18} color="#94A3B8" />
             <TextInput
               style={styles.input}
               placeholder="example@mail.com"
               placeholderTextColor="#94A3B8"
-              textAlign="right"
+              textAlign={dir.textAlign}
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -138,14 +138,14 @@ export default function RegisterScreen({ navigation }) {
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.phone')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.phone')}</Text>
           <View style={styles.inputRow}>
             <Phone size={18} color="#94A3B8" />
             <TextInput
               style={styles.input}
               placeholder="+20 000-000-0000"
               placeholderTextColor="#94A3B8"
-              textAlign="right"
+              textAlign={dir.textAlign}
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -154,7 +154,7 @@ export default function RegisterScreen({ navigation }) {
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.password')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.password')}</Text>
           <View style={styles.inputRow}>
             <TouchableOpacity onPress={() => setIsPasswordVisible((prev) => !prev)}>
               {isPasswordVisible ? <EyeOff size={18} color="#94A3B8" /> : <Eye size={18} color="#94A3B8" />}
@@ -166,14 +166,14 @@ export default function RegisterScreen({ navigation }) {
               secureTextEntry={!isPasswordVisible}
               placeholder="••••••••"
               placeholderTextColor="#94A3B8"
-              textAlign="right"
+              textAlign={dir.textAlign}
             />
             <Lock size={18} color="#94A3B8" />
           </View>
         </View>
 
         <View style={styles.inputWrapper}>
-          <Text style={styles.label}>{t('auth.confirmPassword')}</Text>
+          <Text style={[styles.label, { textAlign: dir.textAlign }]}>{t('auth.confirmPassword')}</Text>
           <View style={styles.inputRow}>
             <TouchableOpacity onPress={() => setIsConfirmVisible((prev) => !prev)}>
               {isConfirmVisible ? <EyeOff size={18} color="#94A3B8" /> : <Eye size={18} color="#94A3B8" />}
@@ -185,7 +185,7 @@ export default function RegisterScreen({ navigation }) {
               secureTextEntry={!isConfirmVisible}
               placeholder="••••••••"
               placeholderTextColor="#94A3B8"
-              textAlign="right"
+              textAlign={dir.textAlign}
             />
             <Lock size={18} color="#94A3B8" />
           </View>
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
     color: '#0F172A',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 28,
   },
   errorBox: {
@@ -246,13 +246,13 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#991B1B',
     fontSize: 14,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   inputWrapper: {
     marginBottom: 20,
   },
   label: {
-    textAlign: 'right',
+    textAlign: 'left',
     color: '#64748B',
     marginBottom: 10,
     fontSize: 14,

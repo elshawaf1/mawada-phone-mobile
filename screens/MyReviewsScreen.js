@@ -52,7 +52,7 @@ const getRelativeTime = (iso, t) => {
   return t('time.daysAgo', { n: days });
 };
 
-const StarRating = ({ rating, size = 16 }) => {
+const StarRating = ({ rating, size = 16, dir }) => {
   const stars = [];
   for (let i = 1; i <= 5; i++) {
     stars.push(
@@ -64,7 +64,7 @@ const StarRating = ({ rating, size = 16 }) => {
       />
     );
   }
-  return <View style={styles.starsRow}>{stars}</View>;
+  return <View style={[styles.starsRow, { flexDirection: dir.row }]}>{stars}</View>;
 };
 
 
@@ -193,7 +193,7 @@ export default function MyReviewsScreen({ navigation }) {
         onPress={() => navigation.navigate('Item', { productId: review.productId })}
         style={styles.cardTouchable}
       >
-        <View style={styles.cardInner}>
+        <View style={[styles.cardInner, { flexDirection: dir.row }]}>
           <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
           <View style={styles.cardBody}>
             <View style={[styles.cardTopRow, { flexDirection: dir.row }]}>
@@ -206,10 +206,10 @@ export default function MyReviewsScreen({ navigation }) {
                 <Trash2 size={14} color="#CBD5E1" strokeWidth={2} />
               </TouchableOpacity>
               <View style={[styles.cardInfo, { alignItems: dir.alignItems }]}>
-                <Text style={styles.productName} numberOfLines={1}>
+                <Text style={[styles.productName, { textAlign: dir.textAlign }]} numberOfLines={1}>
                   {review.products?.nameAr || t('common.product')}
                 </Text>
-                <StarRating rating={review.rating} size={15} />
+                <StarRating rating={review.rating} size={15} dir={dir} />
               </View>
               <View style={styles.imageWrap}>
                 {img ? (
@@ -229,7 +229,7 @@ export default function MyReviewsScreen({ navigation }) {
             ) : null}
 
             <View style={[styles.cardBottom, { flexDirection: dir.row }]}>
-              <View style={[styles.ratingPill, { backgroundColor: `${accentColor}18` }]}>
+              <View style={[styles.ratingPill, { backgroundColor: `${accentColor}18`, flexDirection: dir.row }]}>
                 <Ionicons name="star" size={11} color={accentColor} />
                 <Text style={[styles.ratingPillText, { color: accentColor }]}>
                   {Number(review.rating).toFixed(1)}
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   tabsRow: {
     paddingHorizontal: 2,
     paddingBottom: 14,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   cardInner: {
     backgroundColor: '#fff',
     borderRadius: 24,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 6 },
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   cardTopRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
   },
@@ -421,10 +421,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#0F172A',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   starsRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     gap: 1,
   },
 
@@ -448,17 +448,17 @@ const styles = StyleSheet.create({
     color: '#64748B',
     lineHeight: 19,
     marginTop: 10,
-    textAlign: 'right',
+    textAlign: 'left',
   },
 
   cardBottom: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 10,
   },
   ratingPill: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 10,

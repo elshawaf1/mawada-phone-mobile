@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Paymob, { PaymentStatus } from 'paymob-reactnative';
 import { useTranslation } from '../context/AppSettingsContext';
 import { supabase } from '../services/supabase';
+import { useDirection } from '../hooks/useDirection';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 
@@ -32,6 +33,7 @@ const POLL_INTERVAL = 2000;
 const POLL_MAX_ATTEMPTS = 8;
 
 const MethodBadge = ({ type }) => {
+  const dir = useDirection();
   const config = {
     VISA: { icon: CreditCard, label: 'بطاقة ائتمان', color: '#2563EB', bg: '#EFF6FF' },
     WALLET: { icon: Wallet, label: 'مَحْفَظَة إِلِكْتُرُونِيَّة', color: '#7C3AED', bg: '#F5F3FF' },
@@ -40,15 +42,17 @@ const MethodBadge = ({ type }) => {
 
   const Icon = config.icon;
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
+    <View style={[styles.badge, { backgroundColor: config.bg, flexDirection: dir.row }]}>
       <Icon size={14} color={config.color} />
       <Text style={[styles.badgeText, { color: config.color }]}>{config.label}</Text>
     </View>
   );
 };
 
-const StepIndicator = ({ step, total }) => (
-  <View style={styles.stepRow}>
+const StepIndicator = ({ step, total }) => {
+  const dir = useDirection();
+  return (
+    <View style={[styles.stepRow, { flexDirection: dir.row }]}>
     {Array.from({ length: total }, (_, i) => (
       <React.Fragment key={i}>
         <View style={[styles.stepDot, i < step && styles.stepDotActive, i === step && styles.stepDotCurrent]}>
@@ -61,11 +65,13 @@ const StepIndicator = ({ step, total }) => (
         {i < total - 1 && <View style={[styles.stepLine, i < step && styles.stepLineActive]} />}
       </React.Fragment>
     ))}
-  </View>
-);
+    </View>
+  );
+};
 
 export default function PaymobPaymentScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const dir = useDirection();
   const insets = useSafeAreaInsets();
   const { clientSecret, orderId, orderNumber, paymentMethod, order } = route.params || {};
 
@@ -350,7 +356,7 @@ export default function PaymobPaymentScreen({ navigation, route }) {
             <Text style={styles.statusSubtext}>
               أَكْمِل الدَّفْع فِي النَّافِذَة الْمَنفَذَة
             </Text>
-            <View style={styles.phaseTag}>
+            <View style={[styles.phaseTag, { flexDirection: dir.row }]}>
               <View style={[styles.phaseDot, { backgroundColor: '#2563EB' }]} />
               <Text style={styles.phaseTagText}>Paymob SDK</Text>
             </View>
@@ -430,18 +436,18 @@ export default function PaymobPaymentScreen({ navigation, route }) {
             </Text>
 
             <View style={styles.orderMiniCard}>
-              <View style={styles.miniRow}>
+              <View style={[styles.miniRow, { flexDirection: dir.row }]}>
                 <Text style={styles.miniValue}>#{orderNumber}</Text>
                 <Text style={styles.miniLabel}>{t('orders.orderNumber')}</Text>
               </View>
               <View style={styles.miniDivider} />
-              <View style={styles.miniRow}>
+              <View style={[styles.miniRow, { flexDirection: dir.row }]}>
                 <Text style={styles.miniValue}>{formatPrice(order?.total)} {t('common.egp')}</Text>
                 <Text style={styles.miniLabel}>{t('common.total')}</Text>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.retryButton} onPress={handleRetry} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.retryButton, { flexDirection: dir.row }]} onPress={handleRetry} activeOpacity={0.7}>
               <CreditCard size={18} color="#fff" />
               <Text style={styles.retryText}>{t('payment.retryPayment')}</Text>
             </TouchableOpacity>
@@ -461,7 +467,7 @@ export default function PaymobPaymentScreen({ navigation, route }) {
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" translucent={false} />
 
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent, { flexDirection: dir.row }]}>
           <TouchableOpacity style={styles.backButton} onPress={handleGoBack} activeOpacity={0.7}>
             <ChevronLeft color="#fff" size={22} />
           </TouchableOpacity>
@@ -478,7 +484,7 @@ export default function PaymobPaymentScreen({ navigation, route }) {
       <View style={styles.bottomBar}>
         <MethodBadge type={paymentMethod} />
         {order && (
-          <View style={styles.bottomSummary}>
+          <View style={[styles.bottomSummary, { flexDirection: dir.row }]}>
             <Text style={styles.bottomTotal}>{formatPrice(order.total)} {t('common.egp')}</Text>
             <Text style={styles.bottomOrderNum}>#{orderNumber}</Text>
           </View>
@@ -500,7 +506,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   headerContent: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
@@ -514,7 +520,7 @@ const styles = StyleSheet.create({
   spacer: { width: 38 },
 
   stepRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
@@ -545,7 +551,7 @@ const styles = StyleSheet.create({
   },
 
   phaseTag: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#EFF6FF',
@@ -615,7 +621,7 @@ const styles = StyleSheet.create({
   },
   errorTitle: { fontSize: 20, fontWeight: '800', color: '#DC2626', textAlign: 'center' },
   retryButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: '#0F172A', borderRadius: 14,
     paddingVertical: 14, paddingHorizontal: 32,
@@ -631,7 +637,7 @@ const styles = StyleSheet.create({
     width: '100%', marginTop: 4,
     shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 1,
   },
-  miniRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  miniRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   miniLabel: { fontSize: 13, color: '#94A3B8' },
   miniValue: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
   miniDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 6 },
@@ -664,12 +670,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', gap: 10,
   },
   badge: {
-    flexDirection: 'row-reverse', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6,
   },
   badgeText: { fontSize: 12, fontWeight: '600' },
   bottomSummary: {
-    flexDirection: 'row-reverse', alignItems: 'center', gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   bottomTotal: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
   bottomOrderNum: { fontSize: 13, color: '#94A3B8', fontFamily: 'monospace' },

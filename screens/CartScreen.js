@@ -37,7 +37,7 @@ function CartItem({ item, listType, onToggle, onUpdateQty, onRemove, onMoveToSav
 
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
-      <View style={styles.itemRow}>
+      <View style={[styles.itemRow, { flexDirection: dir.row }]}>
         {onToggle && (
           <TouchableOpacity style={[styles.checkbox, item.selected && styles.checkboxActive]} onPress={() => onToggle(item.id)}>
             {item.selected && <Check size={12} color="#fff" strokeWidth={3} />}
@@ -47,29 +47,29 @@ function CartItem({ item, listType, onToggle, onUpdateQty, onRemove, onMoveToSav
           {item.image ? <Image source={{ uri: item.image }} style={styles.itemImage} resizeMode="contain" /> : <Ionicons name="phone-portrait-outline" size={28} color={COLORS.gray300} />}
         </View>
         <View style={styles.itemDetails}>
-          <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={[styles.itemTitle, { textAlign: dir.textAlign }]} numberOfLines={2}>{item.title}</Text>
           {item.variant && (
-            <Text style={styles.itemVariant}>
+            <Text style={[styles.itemVariant, { textAlign: dir.textAlign }]}>
               {[item.variant.storage, item.variant.ram, item.variant.color].filter(Boolean).join(' / ')}
               {item.variant.batteryHealth != null ? ` | ${t('item.battery', { health: item.variant.batteryHealth })}` : ''}
             </Text>
           )}
           <Text style={styles.itemPrice}>{fmt(price)} {t('common.egp')}</Text>
-          <View style={styles.itemFooter}>
+          <View style={[styles.itemFooter, { flexDirection: dir.row }]}>
             {listType === 'cart' ? (
               <>
-                <View style={styles.stepper}>
+                <View style={[styles.stepper, { flexDirection: dir.row }]}>
                   <TouchableOpacity style={styles.stepBtn} onPress={() => onUpdateQty(item.id, -1)}><Minus size={12} color={COLORS.text} /></TouchableOpacity>
                   <Text style={styles.stepVal}>{item.quantity}</Text>
                   <TouchableOpacity style={styles.stepBtn} onPress={() => onUpdateQty(item.id, 1)}><Plus size={12} color={COLORS.text} /></TouchableOpacity>
                 </View>
-                <View style={styles.actionBtns}>
+                <View style={[styles.actionBtns, { flexDirection: dir.row }]}>
                   <TouchableOpacity style={styles.actionBtn} onPress={handleRemove}><Trash2 size={14} color={COLORS.error} /></TouchableOpacity>
                   <TouchableOpacity style={styles.actionBtn} onPress={() => onMoveToSaved(item.id)}><Tag size={14} color={COLORS.textSecondary} /></TouchableOpacity>
                 </View>
               </>
             ) : (
-              <TouchableOpacity style={styles.moveToCartBtn} onPress={() => onMoveToCart(item.id)}>
+              <TouchableOpacity style={[styles.moveToCartBtn, { flexDirection: dir.row }]} onPress={() => onMoveToCart(item.id)}>
                 <ShoppingBag size={12} color={COLORS.text} />
                 <Text style={styles.moveToCartText}>{t('cart.moveToCart')}</Text>
               </TouchableOpacity>
@@ -182,7 +182,7 @@ export default function CartScreen({ navigation }) {
       <ScreenHeader
         onBack={() => navigation.navigate('Home')}
         title={
-          <View style={styles.headerCenter}>
+          <View style={[styles.headerCenter, { flexDirection: dir.row }]}>
             <Text style={styles.headerTitleText}>{t('cart.title')}</Text>
             {cart.length > 0 && (
               <View style={styles.headerCountBadge}><Text style={styles.headerCountText}>{cartCount}</Text></View>
@@ -191,7 +191,7 @@ export default function CartScreen({ navigation }) {
         }
         rightAction={
           cart.length > 0 ? (
-            <TouchableOpacity style={styles.selectAllBtn} onPress={toggleAllCartSelect}>
+            <TouchableOpacity style={[styles.selectAllBtn, { flexDirection: dir.row }]} onPress={toggleAllCartSelect}>
               <View style={[styles.checkbox, allSelected && styles.checkboxActive]}>
                 {allSelected && <Check size={12} color={COLORS.white} strokeWidth={3} />}
               </View>
@@ -213,7 +213,7 @@ export default function CartScreen({ navigation }) {
           />
           <Text style={styles.emptyTitle}>{t('cart.empty')}</Text>
           <Text style={styles.emptySubtitle}>{t('cart.emptySub')}</Text>
-          <TouchableOpacity style={styles.ctaButton} onPress={() => navigation.navigate('Home')} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.ctaButton, { flexDirection: dir.row }]} onPress={() => navigation.navigate('Home')} activeOpacity={0.8}>
             <Text style={styles.ctaText}>{t('cart.browse')}</Text>
             <ShoppingBag size={18} color="#1E293B" style={styles.ctaIcon} />
           </TouchableOpacity>
@@ -221,9 +221,9 @@ export default function CartScreen({ navigation }) {
       ) : (
         <>
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <TouchableOpacity style={styles.couponToggle} onPress={() => setShowCoupon(!showCoupon)}>
+            <TouchableOpacity style={[styles.couponToggle, { flexDirection: dir.row }]} onPress={() => setShowCoupon(!showCoupon)}>
               <Tag size={16} color={COLORS.textSecondary} />
-              <Text style={styles.couponToggleText}>
+              <Text style={[styles.couponToggleText, { textAlign: dir.textAlign }]}>
                 {coupon ? t('cart.couponApplied', { percent: coupon.discount || '‏' }) : t('cart.haveCoupon')}
               </Text>
               {showCoupon ? <ChevronUp size={16} color={COLORS.gray400} /> : <ChevronDown size={16} color={COLORS.gray400} />}
@@ -231,7 +231,7 @@ export default function CartScreen({ navigation }) {
 
             {showCoupon && (
               <View style={styles.couponSection}>
-                <View style={styles.couponRow}>
+                <View style={[styles.couponRow, { flexDirection: dir.row }]}>
                   <TextInput
                     style={styles.couponInput} placeholder={t('cart.couponPlaceholder')}
                     placeholderTextColor={COLORS.gray400} value={couponCode}
@@ -241,7 +241,7 @@ export default function CartScreen({ navigation }) {
                     <Text style={styles.applyBtnText}>{t('cart.apply')}</Text>
                   </TouchableOpacity>
                 </View>
-                {couponMsg ? <Text style={[styles.couponMsg, !couponMsg.includes(t('cart.couponInvalid')) && styles.couponMsgSuccess]}>{couponMsg}</Text> : null}
+                {couponMsg ? <Text style={[styles.couponMsg, { textAlign: dir.textAlign }, !couponMsg.includes(t('cart.couponInvalid')) && styles.couponMsgSuccess]}>{couponMsg}</Text> : null}
                 {coupon && (
                   <TouchableOpacity style={styles.removeCouponBtn} onPress={() => { removeCoupon(); setCouponMsg(''); }}>
                     <Text style={styles.removeCouponText}>{t('cart.removeCoupon')}</Text>
@@ -252,7 +252,7 @@ export default function CartScreen({ navigation }) {
 
             <View style={styles.itemsCard}>
               {cart.length > 0 && (
-                <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
                   <Text style={styles.sectionTitle}>{t('cart.items', { count: cart.length })}</Text>
                 </View>
               )}
@@ -262,7 +262,7 @@ export default function CartScreen({ navigation }) {
 
               {savedForLater.length > 0 && (
                 <View style={styles.savedSection}>
-                  <View style={styles.sectionHeader}>
+                  <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
                     <Gift size={16} color={COLORS.textSecondary} />
                     <Text style={styles.sectionTitle}>{t('cart.savedForLater', { count: savedForLater.length })}</Text>
                   </View>
@@ -275,31 +275,31 @@ export default function CartScreen({ navigation }) {
 
             {selected.length > 0 && !freeShip && (
               <View style={styles.shipCard}>
-                <View style={styles.shipHeader}>
+                <View style={[styles.shipHeader, { flexDirection: dir.row }]}>
                   <Truck size={16} color={COLORS.success} />
-                  <Text style={styles.shipTitle}>{t('cart.freeShippingProgress', { amount: fmt(freeShipThreshold - subtotal) })}</Text>
+                  <Text style={[styles.shipTitle, { textAlign: dir.textAlign }]}>{t('cart.freeShippingProgress', { amount: fmt(freeShipThreshold - subtotal) })}</Text>
                 </View>
                 <View style={styles.progressBg}><View style={[styles.progressFill, { width: `${shipProgress}%` }]} /></View>
-                <Text style={styles.shipSubtext}>{t('cart.freeShippingPercent', { percent: Math.round(shipProgress) })}</Text>
+                <Text style={[styles.shipSubtext, { textAlign: dir.textAlign }]}>{t('cart.freeShippingPercent', { percent: Math.round(shipProgress) })}</Text>
               </View>
             )}
 
             {freeShip && selected.length > 0 && (
-              <View style={[styles.shipCard, styles.shipCardFree]}>
+              <View style={[styles.shipCard, styles.shipCardFree, { flexDirection: dir.row }]}>
                 <Truck size={16} color={COLORS.success} />
-                <Text style={styles.freeShipText}>{t('cart.freeShippingAchieved')}</Text>
+                <Text style={[styles.freeShipText, { textAlign: dir.textAlign }]}>{t('cart.freeShippingAchieved')}</Text>
               </View>
             )}
 
             {selected.length > 0 && (
               <>
-                <View style={styles.deliveryEstimateCard}>
+                <View style={[styles.deliveryEstimateCard, { flexDirection: dir.row }]}>
                   <Clock size={16} color={COLORS.textSecondary} />
-                  <Text style={styles.deliveryEstimateText}>{t('cart.deliveryEstimate', { days: estimatedDays })}</Text>
+                  <Text style={[styles.deliveryEstimateText, { textAlign: dir.textAlign }]}>{t('cart.deliveryEstimate', { days: estimatedDays })}</Text>
                 </View>
 
                 <View style={styles.orderNotesCard}>
-                  <View style={styles.orderNotesHeader}>
+                  <View style={[styles.orderNotesHeader, { flexDirection: dir.row }]}>
                     <FileText size={16} color={COLORS.textSecondary} />
                     <Text style={styles.orderNotesTitle}>{t('cart.orderNotes')}</Text>
                   </View>
@@ -319,25 +319,25 @@ export default function CartScreen({ navigation }) {
 
             {selected.length > 0 && (
               <Animated.View style={[styles.summaryCard, { opacity: animateOpacity, transform: [{ translateY: animateSlide }] }]}>
-                <Text style={styles.summaryTitle}>{t('cart.summary')}</Text>
-                <View style={styles.summaryRow}>
+                <Text style={[styles.summaryTitle, { textAlign: dir.textAlign }]}>{t('cart.summary')}</Text>
+                <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                   <Text style={styles.summaryVal}>{fmt(subtotal)} {t('common.egp')}</Text>
                   <Text style={styles.summaryLabel}>{t('common.subtotal')}</Text>
                 </View>
                 {coupon && (
-                  <View style={styles.summaryRow}>
+                  <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                     <Text style={[styles.summaryVal, { color: COLORS.success }]}>-{fmt(discount)} {t('common.egp')}</Text>
                     <Text style={styles.summaryLabel}>{t('common.discount')} ({coupon.code})</Text>
                   </View>
                 )}
-                <View style={styles.summaryRow}>
+                <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                   <Text style={[styles.summaryVal, { color: freeShip ? COLORS.success : COLORS.text }]}>
                     {freeShip ? t('common.free') : `${deliveryFee} ${t('common.egp')}`}
                   </Text>
                   <Text style={styles.summaryLabel}>{t('common.shipping')}</Text>
                 </View>
                 <View style={styles.totalLine} />
-                <View style={styles.summaryRow}>
+                <View style={[styles.summaryRow, { flexDirection: dir.row }]}>
                   <Text style={styles.totalVal}>{fmt(total)} {t('common.egp')}</Text>
                   <Text style={styles.totalLabel}>{t('common.total')}</Text>
                 </View>
@@ -347,12 +347,12 @@ export default function CartScreen({ navigation }) {
             <View style={{ height: 100 }} />
           </ScrollView>
 
-          <Animated.View style={[styles.bottomBar, { paddingBottom: 12 + insets.bottom, opacity: animateOpacity, transform: [{ translateY: animateSlide }] }]}>
+          <Animated.View style={[styles.bottomBar, { flexDirection: dir.row, paddingBottom: 12 + insets.bottom, opacity: animateOpacity, transform: [{ translateY: animateSlide }] }]}>
             <View style={styles.bottomLeft}>
               <Text style={styles.bottomLabel}>{t('common.total')}</Text>
               <Text style={styles.bottomTotal}>{fmt(total)} {t('common.egp')}</Text>
             </View>
-            <TouchableOpacity style={[styles.checkoutBtn, selected.length === 0 && styles.checkoutBtnDisabled]} onPress={handleCheckout} disabled={selected.length === 0} activeOpacity={0.85}>
+            <TouchableOpacity style={[styles.checkoutBtn, { flexDirection: dir.row }, selected.length === 0 && styles.checkoutBtnDisabled]} onPress={handleCheckout} disabled={selected.length === 0} activeOpacity={0.85}>
               <Text style={styles.checkoutBtnText}>{t('cart.checkout', { count: selected.length })}</Text>
               <ChevronLeft size={18} color="#fff" />
             </TouchableOpacity>
@@ -368,93 +368,93 @@ export default function CartScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.white },
-  headerCenter: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitleText: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   headerCountBadge: { backgroundColor: COLORS.error, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
   headerCountText: { color: COLORS.white, fontSize: 12, fontWeight: '700' },
-  selectAllBtn: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  selectAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   selectAllText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
 
   emptyContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 56 },
   emptyLottie: { width: 160, height: 160, marginBottom: 24 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 8, textAlign: 'center' },
   emptySubtitle: { fontSize: 14, color: '#94A3B8', textAlign: 'center', marginBottom: 32, lineHeight: 20 },
-  ctaButton: { flexDirection: 'row-reverse', backgroundColor: COLORS.gray100, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  ctaButton: { flexDirection: 'row', backgroundColor: COLORS.gray100, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   ctaText: { fontSize: 15, fontWeight: '600', color: '#1E293B' },
   ctaIcon: { marginRight: 8 },
 
   scroll: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 20 },
 
-  couponToggle: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: COLORS.gray50, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, gap: 8 },
-  couponToggleText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, textAlign: 'right' },
+  couponToggle: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.gray50, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, gap: 8 },
+  couponToggleText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, textAlign: 'left' },
 
   couponSection: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10 },
-  couponRow: { flexDirection: 'row-reverse', gap: 10 },
-  couponInput: { flex: 1, height: 44, backgroundColor: COLORS.gray50, borderRadius: 12, paddingHorizontal: 14, fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: COLORS.gray200, textAlign: 'right' },
+  couponRow: { flexDirection: 'row', gap: 10 },
+  couponInput: { flex: 1, height: 44, backgroundColor: COLORS.gray50, borderRadius: 12, paddingHorizontal: 14, fontSize: 14, color: COLORS.text, borderWidth: 1, borderColor: COLORS.gray200, textAlign: 'left' },
   applyBtn: { height: 44, paddingHorizontal: 20, backgroundColor: COLORS.primary, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   applyBtnDisabled: { backgroundColor: COLORS.gray300 },
   applyBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  couponMsg: { textAlign: 'right', fontSize: 12, color: COLORS.error, marginTop: 6 },
+  couponMsg: { textAlign: 'left', fontSize: 12, color: COLORS.error, marginTop: 6 },
   couponMsgSuccess: { color: COLORS.success },
   removeCouponBtn: { marginTop: 8, alignItems: 'center' },
   removeCouponText: { fontSize: 12, color: COLORS.error, fontWeight: '600' },
 
   itemsCard: { backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
-  sectionHeader: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, marginBottom: 6 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
   checkbox: { width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: COLORS.gray300, justifyContent: 'center', alignItems: 'center' },
   checkboxActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
 
-  itemRow: { flexDirection: 'row-reverse', alignItems: 'flex-start', paddingVertical: 10, gap: 10 },
+  itemRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 10, gap: 10 },
   itemImageBg: { width: 80, height: 80, borderRadius: 16, backgroundColor: COLORS.gray50, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: COLORS.gray100 },
   itemImage: { width: '80%', height: '80%' },
   itemDetails: { flex: 1, alignItems: 'flex-end' },
-  itemTitle: { fontSize: 14, fontWeight: '600', color: COLORS.primary, textAlign: 'right', lineHeight: 20, marginBottom: 2 },
-  itemVariant: { fontSize: 11, color: COLORS.gray400, textAlign: 'right', marginBottom: 4 },
+  itemTitle: { fontSize: 14, fontWeight: '600', color: COLORS.primary, textAlign: 'left', lineHeight: 20, marginBottom: 2 },
+  itemVariant: { fontSize: 11, color: COLORS.gray400, textAlign: 'left', marginBottom: 4 },
   itemPrice: { fontSize: 16, fontWeight: '800', color: COLORS.error, marginBottom: 8 },
-  itemFooter: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
-  stepper: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: COLORS.gray50, borderRadius: 10, borderWidth: 1, borderColor: COLORS.gray200 },
+  itemFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
+  stepper: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.gray50, borderRadius: 10, borderWidth: 1, borderColor: COLORS.gray200 },
   stepBtn: { paddingHorizontal: 12, paddingVertical: 6 },
   stepVal: { color: COLORS.text, fontWeight: '700', fontSize: 14, paddingHorizontal: 8, minWidth: 28, textAlign: 'center' },
-  actionBtns: { flexDirection: 'row-reverse', gap: 6 },
+  actionBtns: { flexDirection: 'row', gap: 6 },
   actionBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' },
   divider: { height: 1, backgroundColor: COLORS.gray100, marginVertical: 2 },
 
   savedSection: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORS.gray100 },
-  moveToCartBtn: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4, backgroundColor: COLORS.gray50, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
+  moveToCartBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.gray50, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
   moveToCartText: { fontSize: 11, fontWeight: '600', color: COLORS.primary },
 
   shipCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
-  shipCardFree: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4' },
-  shipHeader: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, marginBottom: 10 },
-  shipTitle: { flex: 1, fontSize: 12, color: COLORS.textSecondary, textAlign: 'right' },
+  shipCardFree: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4' },
+  shipHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  shipTitle: { flex: 1, fontSize: 12, color: COLORS.textSecondary, textAlign: 'left' },
   progressBg: { height: 6, backgroundColor: COLORS.gray100, borderRadius: 3, overflow: 'hidden', marginBottom: 6 },
   progressFill: { height: '100%', backgroundColor: COLORS.success, borderRadius: 3 },
-  shipSubtext: { fontSize: 11, color: COLORS.gray400, textAlign: 'right' },
-  freeShipText: { fontSize: 13, fontWeight: '700', color: COLORS.success, textAlign: 'right' },
+  shipSubtext: { fontSize: 11, color: COLORS.gray400, textAlign: 'left' },
+  freeShipText: { fontSize: 13, fontWeight: '700', color: COLORS.success, textAlign: 'left' },
 
-  deliveryEstimateCard: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: '#EFF6FF', borderRadius: 14, padding: 14, marginBottom: 10 },
-  deliveryEstimateText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#1D4ED8', textAlign: 'right' },
+  deliveryEstimateCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#EFF6FF', borderRadius: 14, padding: 14, marginBottom: 10 },
+  deliveryEstimateText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#1D4ED8', textAlign: 'left' },
 
   orderNotesCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
-  orderNotesHeader: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, marginBottom: 10 },
+  orderNotesHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   orderNotesTitle: { fontSize: 13, fontWeight: '700', color: COLORS.text },
-  orderNotesInput: { backgroundColor: COLORS.gray50, borderRadius: 12, padding: 14, fontSize: 14, color: COLORS.text, minHeight: 80, borderWidth: 1, borderColor: COLORS.gray200, textAlign: 'right' },
+  orderNotesInput: { backgroundColor: COLORS.gray50, borderRadius: 12, padding: 14, fontSize: 14, color: COLORS.text, minHeight: 80, borderWidth: 1, borderColor: COLORS.gray200, textAlign: 'left' },
 
   summaryCard: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
-  summaryTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, textAlign: 'right', marginBottom: 14 },
-  summaryRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginVertical: 5 },
+  summaryTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, textAlign: 'left', marginBottom: 14 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 5 },
   summaryLabel: { fontSize: 14, color: COLORS.textSecondary },
   summaryVal: { fontSize: 14, fontWeight: '700', color: COLORS.text },
   totalLine: { height: 1, backgroundColor: COLORS.gray100, marginVertical: 10 },
   totalLabel: { fontSize: 16, fontWeight: '700', color: COLORS.text },
   totalVal: { fontSize: 20, fontWeight: '900', color: COLORS.error },
 
-  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLORS.gray100, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: -4 }, shadowRadius: 12, elevation: 8 },
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLORS.gray100, shadowColor: '#000', shadowOpacity: 0.1, shadowOffset: { width: 0, height: -4 }, shadowRadius: 12, elevation: 8 },
   bottomLeft: { alignItems: 'flex-end', marginRight: 10 },
   bottomLabel: { fontSize: 11, color: COLORS.textSecondary },
   bottomTotal: { fontSize: 18, fontWeight: '900', color: COLORS.error },
-  checkoutBtn: { flex: 1, height: 50, backgroundColor: COLORS.primary, borderRadius: 14, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 6, shadowColor: COLORS.primary, shadowOpacity: 0.15, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, elevation: 4 },
+  checkoutBtn: { flex: 1, height: 50, backgroundColor: COLORS.primary, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, shadowColor: COLORS.primary, shadowOpacity: 0.15, shadowOffset: { width: 0, height: 4 }, shadowRadius: 8, elevation: 4 },
   checkoutBtnDisabled: { opacity: 0.4 },
   checkoutBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   continueBtn: { width: 50, height: 50, borderRadius: 14, backgroundColor: COLORS.gray50, justifyContent: 'center', alignItems: 'center', marginRight: 8 },

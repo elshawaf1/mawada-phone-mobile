@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation, useTheme } from '../context/AppSettingsContext';
+import { useTranslation, useTheme, useAppSettings } from '../context/AppSettingsContext';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
 
@@ -14,8 +14,9 @@ const APP_VERSION = '1.0.0';
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { darkMode, toggleDarkMode } = useTheme();
+  const { toggleLocale } = useAppSettings();
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [ordersNotif, setOrdersNotif] = useState(true);
   const [offersNotif, setOffersNotif] = useState(true);
@@ -35,7 +36,7 @@ export default function SettingsScreen({ navigation }) {
 
   const Section = ({ title, children }) => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { textAlign: dir.textAlign }]}>{title}</Text>
       <View style={styles.sectionCard}>{children}</View>
     </View>
   );
@@ -95,6 +96,8 @@ export default function SettingsScreen({ navigation }) {
 
         <Section title={t('settings.appearance')}>
           <RowToggle icon="moon-outline" label={t('settings.darkMode')} value={darkMode} onValueChange={toggleDarkMode} />
+          <View style={styles.rowDivider} />
+          <RowLink icon="language-outline" label={t('settings.language')} value={locale === 'ar' ? t('settings.arabic') : t('settings.english')} onPress={toggleLocale} />
         </Section>
 
         <Section title={t('settings.account')}>
@@ -132,16 +135,16 @@ export default function SettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   headerContainer: { backgroundColor: COLORS.white, paddingBottom: 12, shadowColor: COLORS.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
-  headerContent: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, height: 44 },
+  headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, height: 44 },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.gray50, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   spacer: { width: 40 },
   scroll: { padding: 16, paddingBottom: 100 },
   section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#94A3B8', textAlign: 'right', marginBottom: 8, marginRight: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#94A3B8', textAlign: 'left', marginBottom: 8, marginRight: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
   sectionCard: { backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 1 },
-  row: { flexDirection: 'row-reverse', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, minHeight: 56 },
-  rowContent: { flex: 1, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, minHeight: 56 },
+  rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 12 },
   rowLabel: { fontSize: 15, fontWeight: '500', color: '#0F172A' },
   rowValue: { fontSize: 13, color: '#94A3B8', marginLeft: 8 },
   rowIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
