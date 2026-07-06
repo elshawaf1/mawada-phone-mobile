@@ -73,7 +73,7 @@ function HeroCarousel({ banners, navigation, t }) {
     if (!banners || banners.length <= 1) return;
     const timer = setInterval(() => {
       const next = (activeIndex + 1) % banners.length;
-      flatListRef.current?.scrollToOffset({ offset: next * BANNER_W, animated: true });
+      flatListRef.current?.scrollToOffset({ offset: next * (BANNER_W + 16), animated: true });
       setActiveIndex(next);
     }, 5000);
     return () => clearInterval(timer);
@@ -82,7 +82,7 @@ function HeroCarousel({ banners, navigation, t }) {
   if (!banners || banners.length === 0) return null;
 
   const handleScrollEnd = (e) => {
-    const index = Math.round(e.nativeEvent.contentOffset.x / BANNER_W);
+    const index = Math.round(e.nativeEvent.contentOffset.x / (BANNER_W + 16));
     setActiveIndex(index);
   };
 
@@ -92,10 +92,10 @@ function HeroCarousel({ banners, navigation, t }) {
         ref={flatListRef}
         data={banners}
         horizontal
-        pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScrollEnd}
         scrollEventThrottle={16}
+        snapToInterval={BANNER_W + 16}
         decelerationRate="fast"
         renderItem={({ item }) => (
           <TouchableOpacity
