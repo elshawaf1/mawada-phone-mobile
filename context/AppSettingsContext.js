@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { I18nManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
+import RNRestart from 'react-native-restart';
 import { translations } from '../constants/translations';
 
 const AppSettingsContext = createContext(null);
@@ -9,8 +10,11 @@ const AppSettingsContext = createContext(null);
 function getDeviceLanguage() {
   try {
     const locale = getLocales()[0];
-    const code = locale?.languageCode || locale?.lang || '';
-    return code.startsWith('ar') ? 'ar' : 'en';
+    if (locale?.textDirection === 'rtl') return 'ar';
+    if (locale?.languageTag?.startsWith('ar')) return 'ar';
+    if (locale?.languageCode?.startsWith('ar')) return 'ar';
+    if (locale?.languageScriptCode === 'Arab') return 'ar';
+    return 'en';
   } catch {
     return 'ar';
   }
@@ -49,8 +53,6 @@ function getNested(obj, path) {
 }
 
 const _deviceLang = getDeviceLanguage();
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(_deviceLang === 'ar');
 
 export function AppSettingsProvider({ children }) {
   const [locale, setLocale] = useState(_deviceLang);
@@ -58,20 +60,30 @@ export function AppSettingsProvider({ children }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    AsyncStorage.multiRemove(['locale']).catch(() => {});
     AsyncStorage.getItem('darkMode')
       .then((d) => {
         if (d !== null) setDarkMode(d === 'true');
       })
       .catch(() => {})
       .finally(() => setLoaded(true));
+
+    // I18nManager.forceRTL requires a restart to take effect on native side
+    // If native RTL state doesn't match what we need, restart immediately
+    const shouldBeRTL = _deviceLang === 'ar';
+    if (I18nManager.isRTL !== shouldBeRTL) {
+      I18nManager.allowRTL(true);
+      I18nManager.forceRTL(shouldBeRTL);
+      setTimeout(() => RNRestart.restart(), 100);
+    }
   }, []);
 
   const toggleLocale = useCallback(() => {
     const next = locale === 'ar' ? 'en' : 'ar';
-    setLocale(next);
     AsyncStorage.setItem('locale', next);
     I18nManager.allowRTL(true);
     I18nManager.forceRTL(next === 'ar');
+    setTimeout(() => RNRestart.restart(), 100);
   }, [locale]);
 
   const setLocaleAndPersist = useCallback((newLocale) => {

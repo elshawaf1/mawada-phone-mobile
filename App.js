@@ -1,5 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { BackHandler, I18nManager, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+
+// Force RTL/LTR at native level BEFORE any component renders
+// This must be at the top of the entry file
+try {
+  const { getLocales } = require('expo-localization');
+  const loc = getLocales()[0];
+  const isArabic = loc?.textDirection === 'rtl' || loc?.languageTag?.startsWith('ar') || loc?.languageCode?.startsWith('ar') || loc?.languageScriptCode === 'Arab';
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(!!isArabic);
+} catch {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
+
 import { AppProvider } from './context/AppContext';
 import { AppSettingsProvider } from './context/AppSettingsContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
