@@ -37,7 +37,7 @@ function getNested(obj, path) {
 }
 
 export function AppSettingsProvider({ children }) {
-  const locale = 'ar';
+  const [locale, setLocale] = useState('ar');
   const [darkMode, setDarkMode] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
