@@ -107,9 +107,9 @@ export default function SettingsScreen({ navigation }) {
         </Section>
 
         <Section title={t('settings.legal')}>
-          <RowLink icon="document-text-outline" label={t('settings.privacyPolicy')} onPress={() => Alert.alert(t('settings.privacyPolicy'), t('settings.comingSoon'))} />
+          <RowLink icon="document-text-outline" label={t('settings.privacyPolicy')} onPress={() => navigation.navigate('Legal', { type: 'privacy' })} />
           <View style={styles.rowDivider} />
-          <RowLink icon="shield-checkmark-outline" label={t('settings.terms')} onPress={() => Alert.alert(t('settings.terms'), t('settings.comingSoon'))} />
+          <RowLink icon="shield-checkmark-outline" label={t('settings.terms')} onPress={() => navigation.navigate('Legal', { type: 'terms' })} />
         </Section>
 
         <View style={styles.versionBlock}>

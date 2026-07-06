@@ -41,6 +41,7 @@ import OffersScreen from './screens/OffersScreen';
 import PaymentMethodsScreen from './screens/PaymentMethodsScreen';
 import SupportScreen from './screens/SupportScreen';
 import AllCategoriesScreen from './screens/AllCategoriesScreen';
+import LegalScreen from './screens/LegalScreen';
 
 const screenRegistry = {
   Splash: SplashScreen,
@@ -76,6 +77,7 @@ const screenRegistry = {
   PaymentMethods: PaymentMethodsScreen,
   Support: SupportScreen,
   AllCategories: AllCategoriesScreen,
+  Legal: LegalScreen,
 };
 
 function AppInner() {
