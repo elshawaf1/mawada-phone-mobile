@@ -173,16 +173,20 @@ export default function PaymentScreen({ navigation, route }) {
     return () => { mountedRef.current = false; };
   }, []);
 
-  const navigateToSuccess = useCallback(() => {
+  const navigateToSuccess = useCallback(async () => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
     const od = orderDataRef.current;
     if (!od) return;
+    try {
+      await db.clearCart(user.id);
+      clearAppCart();
+    } catch (e) {}
     navigation.reset({
       index: 0,
       routes: [{ name: 'OrderConfirm', params: { order: { ...od, paymentMethod: od.paymentMethod, paymentStatus: 'PAID' } } }],
     });
-  }, [navigation]);
+  }, [navigation, user]);
 
   const verifyWithServer = useCallback(async (orderId) => {
     try {
@@ -537,8 +541,6 @@ export default function PaymentScreen({ navigation, route }) {
       }
 
       if (isOnline) {
-        await db.clearCart(user.id);
-        clearAppCart();
         const orderData = {
           clientSecret: data.clientSecret,
           orderId: data.orderId,

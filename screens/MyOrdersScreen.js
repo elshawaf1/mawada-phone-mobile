@@ -82,10 +82,11 @@ export default function MyOrdersScreen({ navigation }) {
   }, [orders]);
 
   const filtered = useMemo(() => {
-    if (activeTab === 'all') return orders;
+    let result = orders.filter((o) => o.paymentStatus !== 'PENDING');
+    if (activeTab === 'all') return result;
     const tab = TABS.find((t) => t.key === activeTab);
-    if (!tab || !tab.statuses) return orders;
-    return orders.filter((o) => tab.statuses.includes(o.status));
+    if (!tab || !tab.statuses) return result;
+    return result.filter((o) => tab.statuses.includes(o.status));
   }, [orders, activeTab]);
 
   useEffect(() => {

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Paymob, { PaymentStatus } from 'paymob-reactnative';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useAuth } from '../context/AuthContext';
+import { useApp } from '../context/AppContext';
 import { db } from '../services/api';
 import { supabase, supabaseUrl } from '../services/supabase';
 import { COLORS } from '../constants';
@@ -37,6 +38,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { clearCart: clearAppCart } = useApp();
   const orderId = route?.params?.orderId;
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,16 +92,20 @@ export default function ResumePaymentScreen({ navigation, route }) {
     return () => sub?.remove?.();
   }, [handleAppStateChange]);
 
-  const navigateToSuccess = useCallback(() => {
+  const navigateToSuccess = useCallback(async () => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
     const od = orderDataRef.current;
     if (!od) return;
+    try {
+      await db.clearCart(user.id);
+      clearAppCart();
+    } catch (e) {}
     navigation.reset({
       index: 0,
       routes: [{ name: 'OrderConfirm', params: { order: { ...od, paymentStatus: 'PAID' } } }],
     });
-  }, [navigation]);
+  }, [navigation, user]);
 
   const verifyWithServer = useCallback(async (orderIdToVerify) => {
     try {
