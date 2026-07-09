@@ -288,8 +288,6 @@ export default function ResumePaymentScreen({ navigation, route }) {
         return;
       }
 
-      setProcessing(false);
-
       if (isOnline && data?.clientSecret) {
         const od = {
           clientSecret: data.clientSecret,

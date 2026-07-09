@@ -72,7 +72,6 @@ const screenRegistry = {
   ResetPassword: ResetPasswordScreen,
   Brands: BrandsScreen,
   RecentlyViewed: RecentlyViewedScreen,
-  Wishlist: WishlistScreen,
   Offers: OffersScreen,
   PaymentMethods: PaymentMethodsScreen,
   Support: SupportScreen,

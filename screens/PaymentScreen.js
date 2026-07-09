@@ -15,7 +15,6 @@ import {
   LayoutAnimation,
   UIManager,
   Image,
-  BackHandler,
 } from 'react-native';
 import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -35,6 +34,7 @@ import { db } from '../services/api';
 import { COLORS } from '../constants';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
 import { useDirection } from '../hooks/useDirection';
+import { fetchSettings } from '../services/settings';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 const POLL_INTERVAL = 3000;
@@ -118,6 +118,7 @@ export default function PaymentScreen({ navigation, route }) {
   const [instapayOrderData, setInstapayOrderData] = useState(null);
   const [uploadingProof, setUploadingProof] = useState(false);
   const [proofImageUri, setProofImageUri] = useState(null);
+  const [deliveryFee, setDeliveryFee] = useState(90);
 
   const sdkCallbackFired = useRef(false);
   const pollTimer = useRef(null);
@@ -131,19 +132,10 @@ export default function PaymentScreen({ navigation, route }) {
   useEffect(() => {
     fetchAddresses();
     fetchBranches();
+    fetchSettings().then((s) => {
+      if (s?.delivery_fee != null) setDeliveryFee(s.delivery_fee);
+    });
   }, [user?.id]);
-
-  useEffect(() => {
-    const onBackPress = () => {
-      if (processing) {
-        setProcessing(false);
-        return true;
-      }
-      return false;
-    };
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => sub.remove();
-  }, [processing]);
 
   const fetchAddresses = async () => {
     if (!user?.id) return;
@@ -401,7 +393,7 @@ export default function PaymentScreen({ navigation, route }) {
   const items = routeParams?.selectedItems || [];
   const orderNotes = routeParams?.notes || '';
   const subtotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (item.quantity || 1), 0);
-  const shippingCost = deliveryType === 'delivery' ? 90 : 0;
+  const shippingCost = deliveryType === 'delivery' ? deliveryFee : 0;
   const discount = coupon?.discount ? Math.round(subtotal * (coupon.discount / 100)) : 0;
   const total = subtotal - discount + shippingCost;
 
@@ -445,6 +437,41 @@ export default function PaymentScreen({ navigation, route }) {
 
     try {
       if (method.type === 'INSTAPAY') {
+        // Idempotency: check for existing pending InstaPay order
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id, orderNumber')
+          .eq('userId', user.id)
+          .eq('paymentMethod', 'INSTAPAY')
+          .eq('paymentStatus', 'PENDING')
+          .eq('status', 'PENDING')
+          .order('createdAt', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (existingOrder) {
+          // Reuse existing pending order
+          setProcessing(false);
+          setInstapayOrderId(existingOrder.id);
+          setInstapayOrderData({
+            id: existingOrder.id,
+            orderNumber: existingOrder.orderNumber,
+            paymentMethod: 'INSTAPAY',
+            paymentStatus: 'PENDING',
+            subtotal,
+            shippingCost,
+            discount,
+            total,
+            order_items: items.map((item) => ({
+              ...item,
+              nameAr: item.name || t('common.product'),
+              unitPrice: item.unitPrice,
+            })),
+          });
+          setShowInstapayGuide(true);
+          return;
+        }
+
         const orderId = `ord_${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
 
@@ -1062,7 +1089,18 @@ export default function PaymentScreen({ navigation, route }) {
 
             <TouchableOpacity
               style={styles.modalCancelBtn}
-              onPress={() => { setShowInstapayProof(false); setProcessing(false); setProofImageUri(null); }}
+              onPress={async () => {
+                if (instapayOrderId) {
+                  try {
+                    await supabase.from('orders').update({ status: 'CANCELLED' }).eq('id', instapayOrderId);
+                  } catch (e) {
+                    console.error('[InstaPay] Failed to cancel order:', e);
+                  }
+                }
+                setShowInstapayProof(false);
+                setProcessing(false);
+                setProofImageUri(null);
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.modalCancelText}>{t('payment.instapayCancel')}</Text>
@@ -1193,13 +1231,6 @@ const styles = StyleSheet.create({
   methodTextCol: { flex: 1, alignItems: 'flex-end' },
   methodName: { fontSize: 14, fontWeight: '700', color: '#94A3B8', textAlign: 'left' },
   methodDesc: { fontSize: 11, color: '#CBD5E1', textAlign: 'left', marginTop: 1 },
-  radioDot: {
-    width: 18, height: 18, borderRadius: 9,
-    borderWidth: 2, borderColor: '#E2E8F0',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  radioInner: { width: 8, height: 8, borderRadius: 4 },
-
   summaryCard: {
     backgroundColor: '#fff', borderRadius: 16, marginBottom: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,

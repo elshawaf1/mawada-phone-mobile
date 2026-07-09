@@ -101,8 +101,18 @@ export function AppProvider({ children }) {
     setSavedForLater((prev) => prev.filter((i) => i.id !== id));
   }, []);
 
-  const applyCoupon = useCallback((code) => {
-    setCoupon({ code: code.toUpperCase() });
+  const applyCoupon = useCallback(async (code) => {
+    if (!code || !code.trim()) return { success: false, error: 'Invalid coupon' };
+    const { data } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .eq('is_active', true)
+      .single();
+    if (!data) return { success: false, error: 'Invalid coupon' };
+    if (data.expires_at && new Date(data.expires_at) < new Date()) return { success: false, error: 'Coupon expired' };
+    if (data.max_uses && data.used_count >= data.max_uses) return { success: false, error: 'Coupon usage limit reached' };
+    setCoupon({ code: code.toUpperCase(), discount: data.discount_percent || 0 });
     return { success: true };
   }, []);
 

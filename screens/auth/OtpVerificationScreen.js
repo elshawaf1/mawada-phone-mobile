@@ -117,6 +117,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
 
       if (err.message === 'otpExpired') {
         setError(t('auth.otpExpired'));
+        setCooldown(0);
       } else if (err.message === 'otpInvalid') {
         setError(t('auth.otpInvalid'));
       } else {
@@ -166,7 +167,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
         </Text>
 
         <View style={styles.emailBox}>
-          <Text style={styles.emailText}>{email}</Text>
+          <Text style={styles.emailText}>{email ? email : ''}</Text>
         </View>
 
         <Animated.View style={[styles.codeRow, { transform: [{ translateX: shakeAnim }] }]}>

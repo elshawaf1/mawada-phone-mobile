@@ -202,11 +202,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    if (user?.id) {
-      await removePushTokenForUser(user.id);
+    try {
+      if (user?.id) {
+        await removePushTokenForUser(user.id);
+      }
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('[Auth] logout error:', e);
+    } finally {
+      setUser(null);
     }
-    await supabase.auth.signOut();
-    setUser(null);
   }, [user]);
 
   const updateUser = useCallback((userData) => {

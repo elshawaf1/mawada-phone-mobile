@@ -90,6 +90,7 @@ export default function LoginScreen({ navigation }) {
               placeholder={t('auth.emailOrPhone')}
               placeholderTextColor="#94A3B8"
               keyboardType="email-address"
+              autoCapitalize="none"
               textAlign={dir.textAlign}
               value={phoneOrEmail}
               onChangeText={setPhoneOrEmail}

@@ -194,6 +194,7 @@ export default function RegisterScreen({ navigation }) {
         <Button
           title={isLoading ? t('auth.creatingAccount') : t('auth.proceedToVerify')}
           loading={isLoading}
+          disabled={isLoading}
           onPress={handleRegister}
           fullWidth
         />
