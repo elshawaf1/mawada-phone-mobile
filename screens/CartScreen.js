@@ -140,12 +140,18 @@ export default function CartScreen({ navigation }) {
     ]).start();
   }, []);
 
-  const handleApplyCoupon = () => {
-    const result = applyCoupon(couponCode);
+  const handleApplyCoupon = async () => {
+    const result = await applyCoupon(couponCode);
     if (result.success) {
-      setCouponMsg(t('cart.couponApplied', { percent: result.discount }));
+      setCouponMsg(t('cart.couponApplied', { percent: coupon?.discount }));
     } else {
-      setCouponMsg(t('cart.couponInvalid'));
+      if (result.error === 'Coupon expired') {
+        setCouponMsg(t('cart.couponExpired'));
+      } else if (result.error === 'Coupon usage limit reached') {
+        setCouponMsg(t('cart.couponLimitReached'));
+      } else {
+        setCouponMsg(t('cart.invalidCoupon'));
+      }
     }
   };
 

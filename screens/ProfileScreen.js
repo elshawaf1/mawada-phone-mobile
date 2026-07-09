@@ -108,7 +108,7 @@ export default function ProfileScreen({ navigation }) {
         <Section title={t('settings.orders')}>
           <Row iconName="receipt-outline" label={t('profile.menuOrders')} onPress={() => navigation.navigate('MyOrders')} />
           <View style={styles.rowDivider} />
-          <Row iconName="heart-outline" label={t('wishlist.title')} onPress={() => navigation.navigate('Wishlist')} />
+          <Row iconName="heart-outline" label={t('wishlist.title')} onPress={() => navigation.navigate('Favorites')} />
           <View style={styles.rowDivider} />
           <Row iconName="time-outline" label={t('recentlyViewed.title')} onPress={() => navigation.navigate('RecentlyViewed')} />
           <View style={styles.rowDivider} />

@@ -274,7 +274,7 @@ function QuickActions({ navigation, t }) {
   }, []);
 
   const actions = [
-    { key: 'wishlist', label: t('wishlist.title') || 'المفضلة', screen: 'Wishlist', bg: '#FEF2F2', iconColor: '#DC2626' },
+    { key: 'wishlist', label: t('wishlist.title') || 'المفضلة', screen: 'Favorites', bg: '#FEF2F2', iconColor: '#DC2626' },
     { key: 'recent', label: t('recentlyViewed.title') || 'تم العرض مؤخراً', screen: 'RecentlyViewed', bg: '#EFF6FF', iconColor: '#2563EB' },
     { key: 'offers', label: t('offers.title') || 'العروض', screen: 'Offers', bg: '#FEF5D7', iconColor: '#D97706' },
   ];
