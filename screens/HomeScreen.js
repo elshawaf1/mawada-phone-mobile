@@ -32,6 +32,8 @@ import { setBadgeCountAsync } from '../services/push';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
+const localizedName = (item, locale) => locale === 'en' ? (item.name || item.nameAr) : (item.nameAr || item.name);
+
 const { width } = Dimensions.get('window');
 const BANNER_W = width - 32;
 
@@ -143,9 +145,9 @@ function HeroCarousel({ banners, navigation, t, locale }) {
   );
 }
 
-function BrandSegmentedControl({ brands, activeBrand, setActiveBrand, t }) {
+function BrandSegmentedControl({ brands, activeBrand, setActiveBrand, t, locale }) {
   const dir = useDirection();
-  const allBrands = [{ id: 'all', nameAr: t('home.all'), name: 'All' }, ...(brands || [])];
+  const allBrands = [{ id: 'all', nameAr: t('home.all'), name: t('home.all') }, ...(brands || [])];
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.brandScroll, dir.isRTL && { transform: [{ scaleX: -1 }] }]} contentContainerStyle={styles.brandContainer}>
@@ -159,7 +161,7 @@ function BrandSegmentedControl({ brands, activeBrand, setActiveBrand, t }) {
               activeOpacity={0.7}
             >
               <Text style={[styles.brandText, isActive && styles.brandTextActive]}>
-                {brand.nameAr || brand.name}
+                {localizedName(brand, locale)}
               </Text>
             </TouchableOpacity>
           </View>
@@ -169,7 +171,7 @@ function BrandSegmentedControl({ brands, activeBrand, setActiveBrand, t }) {
   );
 }
 
-function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress }) {
+function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress, locale }) {
   const lift = useRef(new Animated.Value(0)).current
   const zoom = useRef(new Animated.Value(1)).current
 
@@ -207,7 +209,7 @@ function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress }) {
             ) : null}
           </Animated.View>
           <View style={styles.catBadge}>
-            <Text style={styles.catBadgeText}>{cat.nameAr}</Text>
+            <Text style={styles.catBadgeText}>{localizedName(cat, locale)}</Text>
           </View>
         </View>
       </Animated.View>
@@ -215,7 +217,7 @@ function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress }) {
   )
 }
 
-function CategoryGrid({ categories, navigation, t }) {
+function CategoryGrid({ categories, navigation, t, locale }) {
   const dir = useDirection();
   if (!categories || categories.length < 2) return null
   const cats = categories.slice(0, 4)
@@ -236,15 +238,15 @@ function CategoryGrid({ categories, navigation, t }) {
       </View>
       <View style={[styles.catGrid, { flexDirection: dir.row }]}>
         <View style={styles.catCol}>
-          <AnimatedCatCard cat={cats[0]} cardW={CARD_W} isTall bgIdx={0} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[0].id, categoryName: cats[0].nameAr })} />
+          <AnimatedCatCard cat={cats[0]} cardW={CARD_W} isTall bgIdx={0} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[0].id, categoryName: localizedName(cats[0], locale) })} locale={locale} />
           <View style={{ height: GAP }} />
-          <AnimatedCatCard cat={cats[2]} cardW={CARD_W} isTall={false} bgIdx={2} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[2].id, categoryName: cats[2].nameAr })} />
+          <AnimatedCatCard cat={cats[2]} cardW={CARD_W} isTall={false} bgIdx={2} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[2].id, categoryName: localizedName(cats[2], locale) })} locale={locale} />
         </View>
         <View style={{ width: GAP }} />
         <View style={styles.catCol}>
-          <AnimatedCatCard cat={cats[1]} cardW={CARD_W} isTall={false} bgIdx={1} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[1].id, categoryName: cats[1].nameAr })} />
+          <AnimatedCatCard cat={cats[1]} cardW={CARD_W} isTall={false} bgIdx={1} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[1].id, categoryName: localizedName(cats[1], locale) })} locale={locale} />
           <View style={{ height: GAP }} />
-          <AnimatedCatCard cat={cats[3]} cardW={CARD_W} isTall bgIdx={3} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[3].id, categoryName: cats[3].nameAr })} />
+          <AnimatedCatCard cat={cats[3]} cardW={CARD_W} isTall bgIdx={3} onPress={() => navigation.navigate('CategoryProducts', { categoryId: cats[3].id, categoryName: localizedName(cats[3], locale) })} locale={locale} />
         </View>
       </View>
     </View>
@@ -539,7 +541,7 @@ export default function HomeScreen({ navigation }) {
       addToCart({
         id: product.id,
         productId: product.id,
-        title: product.nameAr,
+        title: localizedName(product, locale),
         price: product.usePriceRange ? (product.minPrice || product.basePrice) : (product.isOnSale && product.salePrice ? product.salePrice : product.basePrice),
         image: product.product_images?.find(img => img.isPrimary)?.url || product.product_images?.[0]?.url || null,
         variantId: null,
@@ -618,7 +620,7 @@ export default function HomeScreen({ navigation }) {
 
             <HeroCarousel banners={banners} navigation={navigation} t={t} locale={locale} />
 
-            <CategoryGrid categories={categories} navigation={navigation} t={t} />
+            <CategoryGrid categories={categories} navigation={navigation} t={t} locale={locale} />
 
             <QuickActions navigation={navigation} t={t} />
 
@@ -667,7 +669,7 @@ export default function HomeScreen({ navigation }) {
                 <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
                   <Text style={styles.sectionTitle}>{t('home.brands')}</Text>
                 </View>
-                <BrandSegmentedControl brands={brands} activeBrand={activeBrand} setActiveBrand={setActiveBrand} t={t} />
+                <BrandSegmentedControl brands={brands} activeBrand={activeBrand} setActiveBrand={setActiveBrand} t={t} locale={locale} />
               </>
             )}
 
