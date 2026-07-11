@@ -31,8 +31,7 @@ import { db } from '../services/api';
 import { setBadgeCountAsync } from '../services/push';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
-
-const localizedName = (item, locale) => locale === 'en' ? (item.name || item.nameAr) : (item.nameAr || item.name);
+import { localizedName, localizedDescription } from '../utils/helpers';
 
 const { width } = Dimensions.get('window');
 const BANNER_W = width - 32;
@@ -209,7 +208,7 @@ function AnimatedCatCard({ cat, cardW, isTall, bgIdx, onPress, locale }) {
             ) : null}
           </Animated.View>
           <View style={styles.catBadge}>
-            <Text style={styles.catBadgeText}>{localizedName(cat, locale)}</Text>
+            <Text style={[styles.catBadgeText, { textAlign: locale === 'ar' ? 'right' : 'left' }]}>{localizedName(cat, locale)}</Text>
           </View>
         </View>
       </Animated.View>

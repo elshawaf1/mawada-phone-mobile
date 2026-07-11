@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Image,
   TextInput,
-  Alert,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
@@ -29,6 +28,8 @@ import { supabase } from '../services/supabase';
 import { db } from '../services/api';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName, localizedDescription } from '../utils/helpers';
+import { useMessageBox } from '../context/MessageBoxContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 const { width } = Dimensions.get('window');
@@ -83,6 +84,7 @@ export default function ItemScreen({ navigation, route }) {
   const { addToCart, removeFromCart, isFavorite, toggleFavorite, isInCart } = useApp();
   const { user } = useAuth();
   const { t, locale } = useTranslation();
+  const { showMessageBox } = useMessageBox();
   const dir = useDirection();
   const productId = route?.params?.productId;
   const [product, setProduct] = useState(null);
@@ -226,7 +228,7 @@ export default function ItemScreen({ navigation, route }) {
     addToCart({
       id: product.id,
       productId: product.id,
-      title: product.nameAr,
+      title: localizedName(product, locale),
       price,
       image: images.find(img => img.isPrimary)?.url || images[0]?.url || null,
       variantId: selectedVariant?.id || null,
@@ -242,7 +244,7 @@ export default function ItemScreen({ navigation, route }) {
 
   const handleSubmitReview = async () => {
     if (!user) {
-      Alert.alert(t('auth.login'), t('item.mustLoginToReview'));
+      showMessageBox({ type: 'info', title: t('auth.login'), message: t('item.mustLoginToReview'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
       return;
     }
 
@@ -273,7 +275,7 @@ export default function ItemScreen({ navigation, route }) {
       setNewRating(5);
       setNewComment('');
     } catch (error) {
-      Alert.alert(t('common.error'), error.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: error.message, buttons: [{ text: t('common.ok'), style: 'primary' }] });
     } finally {
       setSubmitting(false);
     }
@@ -424,8 +426,8 @@ export default function ItemScreen({ navigation, route }) {
             <Text style={styles.reviewsText}>({t('item.reviewsCount', { count: reviews.length })})</Text>
           </View>
 
-          <Text style={styles.productTitle}>{product.nameAr}</Text>
-          {product.name && <Text style={styles.productNameEn}>{product.name}</Text>}
+          <Text style={[styles.productTitle, { textAlign: locale === 'ar' ? 'right' : 'left' }]}>{localizedName(product, locale)}</Text>
+          {locale === 'ar' && product.name && <Text style={[styles.productNameEn, { textAlign: 'left' }]}>{product.name}</Text>}
 
           {variants.length > 0 && (
             <>
@@ -467,10 +469,10 @@ export default function ItemScreen({ navigation, route }) {
             </>
           )}
 
-          {product.descriptionAr && (
+          {localizedDescription(product, locale) && (
             <>
-              <Text style={styles.descriptionTitle}>{t('item.description')}</Text>
-              <Text style={styles.descriptionText}>{product.descriptionAr}</Text>
+              <Text style={[styles.descriptionTitle, { textAlign: locale === 'ar' ? 'right' : 'left' }]}>{t('item.description')}</Text>
+              <Text style={[styles.descriptionText, { textAlign: locale === 'ar' ? 'right' : 'left' }]}>{localizedDescription(product, locale)}</Text>
             </>
           )}
 
@@ -516,7 +518,7 @@ export default function ItemScreen({ navigation, route }) {
                       addToCart({
                         id: addon.id,
                         productId: addon.id,
-                        title: addon.nameAr,
+                        title: localizedName(addon, locale),
                         price: addonPrice * (1 - (bundle.discount_percent || 0) / 100),
                         image: addon.product_images?.find(i => i.isPrimary)?.url || addon.product_images?.[0]?.url || null,
                         variantId: null,
@@ -539,7 +541,7 @@ export default function ItemScreen({ navigation, route }) {
                   addToCart({
                     id: item.id,
                     productId: item.id,
-                    title: item.nameAr,
+                    title: localizedName(item, locale),
                     price,
                     image: item.product_images?.find(i => i.isPrimary)?.url || item.product_images?.[0]?.url || null,
                     variantId: null,
@@ -565,7 +567,7 @@ export default function ItemScreen({ navigation, route }) {
                   style={styles.writeReviewBtn}
                   onPress={() => {
                     if (!user) {
-                      Alert.alert(t('auth.login'), t('item.mustLoginToReview'));
+                      showMessageBox({ type: 'info', title: t('auth.login'), message: t('item.mustLoginToReview'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
                       return;
                     }
                     setShowReviewForm(true);
