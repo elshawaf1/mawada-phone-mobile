@@ -307,9 +307,10 @@ function QuickActions({ navigation, t }) {
   );
 }
 
-function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMap, t }) {
+function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMap, t, locale }) {
   const dir = useDirection();
-  const featured = products.filter(p => p.isFeatured);
+  const featured = products.filter(p => p.isFeatured || (p.homeOrder != null && p.homeOrder > 0))
+    .sort((a, b) => (a.homeOrder || 999) - (b.homeOrder || 999));
   if (featured.length === 0) return null;
 
   return (
@@ -495,6 +496,7 @@ export default function HomeScreen({ navigation }) {
             brands(name, "nameAr")
           `)
           .eq('isActive', true)
+          .order('homeOrder', { ascending: true, nullsFirst: false })
           .order('createdAt', { ascending: false })
           .limit(50),
         supabase
@@ -630,6 +632,7 @@ export default function HomeScreen({ navigation }) {
               inCartMap={products.reduce((m, p) => ({ ...m, [p.id]: isInCart(p.id) }), {})}
               addedMap={addedMap}
               t={t}
+              locale={locale}
             />
 
             {bundles.length > 0 && (
