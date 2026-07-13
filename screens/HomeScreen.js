@@ -307,39 +307,63 @@ function QuickActions({ navigation, t }) {
   );
 }
 
-function FeaturedSection({ products, navigation, onAddToCart, inCartMap, addedMap, t, locale }) {
+function HomepageSections({ products, navigation, onAddToCart, inCartMap, addedMap, t, locale }) {
   const dir = useDirection();
-  const featured = products.filter(p => p.isFeatured || (p.homeOrder != null && p.homeOrder > 0))
-    .sort((a, b) => (a.homeOrder || 999) - (b.homeOrder || 999));
-  if (featured.length === 0) return null;
+  const [sections, setSections] = useState([]);
+
+  useEffect(() => {
+    const fetchSections = async () => {
+      const { data } = await supabase
+        .from('homepage_sections')
+        .select('*')
+        .eq('isActive', true)
+        .order('sortOrder', { ascending: true });
+      setSections(data || []);
+    };
+    fetchSections();
+  }, []);
+
+  if (sections.length === 0) return null;
 
   return (
-    <View style={styles.featuredSection}>
-      <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
-        <Text style={styles.sectionTitle}>{t('home.featured')}</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Search')}>
-          <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ height: 370 }}
-        contentContainerStyle={styles.featuredScroll}
-      >
-        {featured.map((item) => (
-          <View key={item.id}>
-            <ProductCard
-              item={item}
-              onPress={() => navigation.navigate('Item', { productId: item.id })}
-              onAddToCart={() => onAddToCart(item)}
-              inCart={inCartMap[item.id]}
-              justAdded={addedMap[item.id]}
-            />
+    <>
+      {sections.map((section) => {
+        const sectionProducts = products
+          .filter(p => p.homeSection === section.id)
+          .sort((a, b) => (a.homeOrder || 999) - (b.homeOrder || 999));
+        
+        if (sectionProducts.length === 0) return null;
+
+        return (
+          <View key={section.id} style={styles.featuredSection}>
+            <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
+              <Text style={styles.sectionTitle}>{locale === 'ar' ? section.nameAr : section.name}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Search')}>
+                <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ height: 370 }}
+              contentContainerStyle={styles.featuredScroll}
+            >
+              {sectionProducts.map((item) => (
+                <View key={item.id}>
+                  <ProductCard
+                    item={item}
+                    onPress={() => navigation.navigate('Item', { productId: item.id })}
+                    onAddToCart={() => onAddToCart(item)}
+                    inCart={inCartMap[item.id]}
+                    justAdded={addedMap[item.id]}
+                  />
+                </View>
+              ))}
+            </ScrollView>
           </View>
-        ))}
-      </ScrollView>
-    </View>
+        );
+      })}
+    </>
   );
 }
 
@@ -498,7 +522,7 @@ export default function HomeScreen({ navigation }) {
           .eq('isActive', true)
           .order('homeOrder', { ascending: true, nullsFirst: false })
           .order('createdAt', { ascending: false })
-          .limit(50),
+          .limit(100),
         supabase
           .from('reviews')
           .select('productId, rating')
@@ -553,6 +577,7 @@ export default function HomeScreen({ navigation }) {
   }, [addToCart, removeFromCart, isInCart]);
 
   const filteredProducts = products.filter(p => {
+    if (p.homeSection) return false;
     if (activeBrand !== 'all' && p.brandId !== activeBrand) return false;
     if (activeCondition === 'new' && p.condition && p.condition !== 'new') return false;
     if (activeCondition === 'used' && p.condition && p.condition !== 'used') return false;
@@ -625,7 +650,7 @@ export default function HomeScreen({ navigation }) {
 
             <QuickActions navigation={navigation} t={t} />
 
-            <FeaturedSection
+            <HomepageSections
               products={products}
               navigation={navigation}
               onAddToCart={handleAddToCart}
