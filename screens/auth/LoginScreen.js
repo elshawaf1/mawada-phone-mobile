@@ -43,8 +43,9 @@ export default function LoginScreen({ navigation }) {
       }
     } else {
       const digitsOnly = trimmed.replace(/\D/g, '');
-      const egyptPhoneRegex = /^(?:20)?(10|11|12|15)\d{8}$/;
-      if (!egyptPhoneRegex.test(digitsOnly)) {
+      const stripped = digitsOnly.replace(/^(0020|20)/, '');
+      const egyptPhoneRegex = /^01[0125][0-9]{8}$/;
+      if (!egyptPhoneRegex.test(stripped)) {
         setError(t('auth.phoneError'));
         return;
       }

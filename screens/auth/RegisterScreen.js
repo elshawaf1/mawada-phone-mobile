@@ -34,47 +34,69 @@ export default function RegisterScreen({ navigation }) {
   const handleRegister = async () => {
     setError('');
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
+    // --- Name validation ---
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       setError(t('auth.fillAllFields'));
       return;
     }
+    if (trimmedName.length < 3) {
+      setError(t('auth.nameShort') || 'الاسم يجب أن يكون 3 أحرف على الأقل');
+      return;
+    }
 
+    // --- Email validation ---
+    if (!email.trim()) {
+      setError(t('auth.fillAllFields'));
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError(t('auth.invalidEmail'));
+      return;
+    }
+
+    // --- Phone validation (Egyptian: 010/011/012/015, 11 digits) ---
+    if (!phone.trim()) {
+      setError(t('auth.fillAllFields'));
+      return;
+    }
+    const phoneDigits = phone.replace(/\D/g, '');
+    // Strip leading 20 or 0020 if user typed it
+    const stripped = phoneDigits.replace(/^(0020|20)/, '');
+    const egyptPhoneRegex = /^01[0125][0-9]{8}$/;
+    if (!egyptPhoneRegex.test(stripped)) {
+      setError(t('auth.phoneError'));
+      return;
+    }
+    // Store the normalized 11-digit number
+    const normalizedPhone = stripped;
+
+    // --- Password validation ---
+    if (!password) {
+      setError(t('auth.fillAllFields'));
+      return;
+    }
+    if (password.length < 8) {
+      setError(t('auth.passwordMin'));
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setError(t('auth.passwordUpper'));
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError(t('auth.passwordDigit'));
+      return;
+    }
     if (password !== confirmPassword) {
       setError(t('auth.passwordsNoMatch'));
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError(t('auth.invalidEmail'));
-      return;
-    }
-
-    const phoneDigits = phone.replace(/\D/g, '');
-    const phoneRegex = /^01[0-9]{9}$/;
-    if (!phoneRegex.test(phoneDigits)) {
-      setError(t('auth.phoneError'));
-      return;
-    }
-
-    if (password.length < 8) {
-      setError(t('auth.passwordMin'));
-      return;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      setError(t('auth.passwordUpper'));
-      return;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      setError(t('auth.passwordDigit'));
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const result = await register(name, email, phone, password);
+      const result = await register(trimmedName, email.trim(), normalizedPhone, password);
       if (result?.emailConfirmed === false) {
         navigation.navigate('Otp', { email, type: 'signup', name, phone });
       } else if (result) {
@@ -145,7 +167,7 @@ export default function RegisterScreen({ navigation }) {
             <Phone size={18} color="#94A3B8" />
             <TextInput
               style={styles.input}
-              placeholder="+20 000-000-0000"
+              placeholder="010-000-0000"
               placeholderTextColor="#94A3B8"
               textAlign={dir.textAlign}
               keyboardType="phone-pad"
