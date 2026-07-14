@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Mail, Lock, Eye, EyeOff, Phone, User } from 'lucide-react-native';
 import { useTranslation } from '../../context/AppSettingsContext';
@@ -87,7 +88,8 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} bounces={false} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView style={styles.container} bounces={false} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <ImageBackground
         source={require('../../assets/Vector 3-1.jpg')}
         style={styles.headerBackground}
@@ -199,11 +201,18 @@ export default function RegisterScreen({ navigation }) {
           fullWidth
         />
 
-        <TouchableOpacity style={styles.footerLink} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.linkHighlight}>{t('auth.login')}</Text>
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>{t('common.or')}</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity style={styles.outlineBtn} onPress={() => navigation.navigate('Login')} activeOpacity={0.7}>
+          <Text style={styles.outlineBtnText}>{t('auth.login')}</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -227,7 +236,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 42,
     borderTopRightRadius: 42,
     marginTop: -44,
-    paddingBottom: 40,
+    paddingBottom: 50,
   },
   title: {
     fontSize: 28,
@@ -294,12 +303,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  footerLink: {
-    marginTop: 24,
+  dividerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 28,
+    marginBottom: 20,
   },
-  linkHighlight: {
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    marginHorizontal: 14,
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  outlineBtn: {
+    height: 54,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginTop: 4,
+  },
+  outlineBtnText: {
     color: '#0F172A',
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
