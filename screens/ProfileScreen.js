@@ -16,6 +16,7 @@ import { setBadgeCountAsync } from '../services/push';
 import { COLORS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen({ navigation }) {
@@ -23,6 +24,7 @@ export default function ProfileScreen({ navigation }) {
   const dir = useDirection();
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { showMessageBox } = useMessageBox();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -57,6 +59,31 @@ export default function ProfileScreen({ navigation }) {
   const handleLogout = async () => {
     await logout();
     navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+  };
+
+  const handleDeleteAccount = async () => {
+    showMessageBox({
+      type: 'warning',
+      title: t('settings.deleteAccount'),
+      message: t('settings.deleteAccountConfirm') || t('auth.deleteAccount') || 'Are you sure? This cannot be undone.',
+      buttons: [
+        { text: t('common.cancel'), style: 'secondary' },
+        {
+          text: t('settings.deleteAccount') || t('auth.deleteAccount') || 'Delete',
+          style: 'primary',
+          onPress: async () => {
+            try {
+              const { error } = await supabase.rpc('delete_user_account');
+              if (error) throw error;
+              await logout();
+              navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+            } catch (err) {
+              showMessageBox({ type: 'error', title: t('common.error'), message: err.message });
+            }
+          },
+        },
+      ],
+    });
   };
 
   const Section = ({ title, children }) => (
@@ -135,6 +162,15 @@ export default function ProfileScreen({ navigation }) {
           >
             <LogOut size={18} color="#EF4444" />
             <Text style={styles.logoutText}>{t('auth.logout')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.deleteButton, { flexDirection: dir.row }]}
+            activeOpacity={0.6}
+            onPress={handleDeleteAccount}
+          >
+            <Ionicons name="trash-outline" size={18} color="#DC2626" />
+            <Text style={styles.deleteText}>{t('settings.deleteAccount') || t('auth.deleteAccount') || 'Delete Account'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -253,4 +289,17 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   logoutText: { fontSize: 15, fontWeight: '600', color: '#EF4444' },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 20,
+    paddingVertical: 16,
+    gap: 8,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  deleteText: { fontSize: 15, fontWeight: '600', color: '#DC2626' },
 });

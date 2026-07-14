@@ -183,7 +183,7 @@ export default function MessageBox({
                     <Pressable
                       key={index}
                       onPress={() => {
-                        dismiss();
+                        handleClose();
                         btn.onPress?.();
                       }}
                       style={[

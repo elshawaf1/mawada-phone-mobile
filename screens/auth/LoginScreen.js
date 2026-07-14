@@ -137,8 +137,6 @@ export default function LoginScreen({ navigation }) {
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{t('common.or')}</Text>
-          <View style={styles.dividerLine} />
         </View>
 
         <TouchableOpacity style={styles.outlineBtn} onPress={() => navigation.navigate('Register')} activeOpacity={0.7}>
@@ -227,12 +225,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E2E8F0',
   },
-  dividerText: {
-    marginHorizontal: 14,
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '500',
-  },
+
   outlineBtn: {
     height: 54,
     borderRadius: 24,
