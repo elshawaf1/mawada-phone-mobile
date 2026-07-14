@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native';
+import ScreenHeader from '../../components/ScreenHeader';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react-native';
 import { supabase } from '../../services/supabase';
 import { useTranslation } from '../../context/AppSettingsContext';
@@ -59,11 +59,10 @@ export default function ResetPasswordScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-        <SafeAreaView>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.backArrow}>{'←'}</Text>
-          </TouchableOpacity>
-        </SafeAreaView>
+        <ScreenHeader
+          title={t('auth.setNewPassword')}
+          onBack={() => navigation.goBack()}
+        />
 
         <View style={styles.content}>
           {success ? (
@@ -132,8 +131,6 @@ export default function ResetPasswordScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', margin: 16 },
-  backArrow: { fontSize: 20, color: '#0F172A', fontWeight: '700' },
   content: { paddingHorizontal: 26, paddingTop: 20 },
   title: { fontSize: 28, fontWeight: '800', color: '#0F172A', textAlign: 'left', marginBottom: 12 },
   desc: { fontSize: 14, color: '#64748B', textAlign: 'left', lineHeight: 22, marginBottom: 32 },

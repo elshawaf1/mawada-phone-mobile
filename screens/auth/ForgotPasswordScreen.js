@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native';
-import { Mail, ChevronRight } from 'lucide-react-native';
+import ScreenHeader from '../../components/ScreenHeader';
+import { Mail } from 'lucide-react-native';
 import { supabase } from '../../services/supabase';
 import { useTranslation } from '../../context/AppSettingsContext';
 import { useMessageBox } from '../../context/MessageBoxContext';
@@ -40,11 +40,10 @@ export default function ForgotPasswordScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-        <SafeAreaView>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <ChevronRight size={22} color="#0F172A" />
-          </TouchableOpacity>
-        </SafeAreaView>
+        <ScreenHeader
+          title={t('auth.resetPassword')}
+          onBack={() => navigation.goBack()}
+        />
 
         <View style={styles.content}>
           <Text style={[styles.title, { textAlign: dir.textAlign }]}>{t('auth.resetPassword')}</Text>
@@ -88,7 +87,6 @@ export default function ForgotPasswordScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', margin: 16 },
   content: { paddingHorizontal: 26, paddingTop: 20 },
   title: { fontSize: 28, fontWeight: '800', color: '#0F172A', textAlign: 'left', marginBottom: 12 },
   desc: { fontSize: 14, color: '#64748B', textAlign: 'left', lineHeight: 22, marginBottom: 32 },
