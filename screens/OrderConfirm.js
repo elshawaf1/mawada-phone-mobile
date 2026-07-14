@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   StyleSheet,
   Text,
@@ -60,6 +61,12 @@ export default function OrderConfirmScreen({ navigation, route }) {
   const [paymentProofStatus, setPaymentProofStatus] = useState(order?.paymentProofStatus || 'NONE');
   const [capturing, setCapturing] = useState(false);
   const paymentMethod = order?.paymentMethod || 'COD';
+
+  useEffect(() => {
+    if (order?.status === 'CONFIRMED' || order?.paymentStatus === 'PAID' || paymentStatus === 'PAID') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, []);
 
   // Animated checkmark
   const scaleAnim = useRef(new Animated.Value(0)).current;

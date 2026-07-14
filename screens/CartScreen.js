@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, StatusBar,
   Image, TextInput, Animated,
@@ -174,6 +175,7 @@ export default function CartScreen({ navigation }) {
       showMessageBox({ type: 'error', title: t('common.error'), message: t('cart.syncError') });
       return;
     }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     navigation.navigate('Payment', {
       selectedItems: selectedItems.map(i => ({
         productId: i.productId, variantId: i.variantId || null, quantity: i.quantity,

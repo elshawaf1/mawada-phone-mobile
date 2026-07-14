@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   StyleSheet, View, FlatList, RefreshControl, Text,
 } from 'react-native';
@@ -72,7 +73,7 @@ export default function WishlistScreen({ navigation }) {
             onAddToCart={() => handleAddToCart(item)}
             inCart={isInCart(item.id)}
             isFavorite={true}
-            onToggleFavorite={() => toggleFavorite(item, user?.id)}
+            onToggleFavorite={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggleFavorite(item, user?.id); }}
           />
         )}
       />

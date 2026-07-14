@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   StyleSheet,
   Text,
@@ -202,6 +203,7 @@ export default function NotificationScreen({ navigation }) {
   }, [fetchNotifications]);
 
   const markRead = useCallback(async (id) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setNotifications((prev) => {
       const updated = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
       setBadgeCountAsync(updated.filter((n) => !n.isRead).length);

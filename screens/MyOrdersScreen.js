@@ -10,7 +10,6 @@ import {
   StatusBar,
   Animated,
 } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +19,6 @@ import { COLORS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
-import { useMessageBox } from '../context/MessageBoxContext';
 
 const STATUS_COLORS = {
   PENDING: { bg: '#FEF3C7', text: '#92400E', accent: '#F59E0B' },
@@ -62,7 +60,6 @@ export default function MyOrdersScreen({ navigation }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { showMessageBox } = useMessageBox();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -161,29 +158,6 @@ export default function MyOrdersScreen({ navigation }) {
     fetchOrders();
   }, [fetchOrders, animValues]);
 
-  const handleDelete = useCallback((order) => {
-    showMessageBox({
-      type: 'warning',
-      title: t('common.delete'),
-      message: t('orders.deleteConfirm', { number: order.orderNumber }),
-      buttons: [
-        { text: t('common.cancel'), style: 'secondary' },
-        {
-          text: t('common.delete'),
-          style: 'primary',
-          onPress: async () => {
-            try {
-              await db.deleteOrder(order.id, user?.id);
-              setOrders((prev) => prev.filter((o) => o.id !== order.id));
-            } catch (error) {
-              console.error('Error deleting order:', error);
-              showMessageBox({ type: 'error', title: t('common.error'), message: t('orders.deleteFailed'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
-            }
-          },
-        },
-      ]
-    });
-  }, []);
 
   const handleTabPress = (key) => {
     setActiveTab(key);
@@ -196,16 +170,6 @@ export default function MyOrdersScreen({ navigation }) {
     }).start();
   };
 
-  const renderDeleteAction = (order) => (
-    <TouchableOpacity
-      style={styles.deleteAction}
-      activeOpacity={0.85}
-      onPress={() => handleDelete(order)}
-    >
-      <Ionicons name="trash-outline" size={22} color="#fff" />
-      <Text style={styles.deleteActionText}>{t('common.delete')}</Text>
-    </TouchableOpacity>
-  );
 
   const renderCard = (order) => {
     const statusColor = STATUS_COLORS[order.status] || { bg: '#F1F5F9', text: '#475569', accent: '#64748B' };
@@ -233,16 +197,6 @@ export default function MyOrdersScreen({ navigation }) {
           <View style={[styles.accentBar, { backgroundColor: statusColor.accent }]} />
           <View style={styles.cardBody}>
             <View style={[styles.cardHeader, { flexDirection: dir.row }]}>
-              {['PENDING', 'CANCELLED'].includes(order.status) && (
-                <TouchableOpacity
-                  style={styles.deleteIconBtn}
-                  activeOpacity={0.7}
-                  onPress={() => handleDelete(order)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="trash-outline" size={16} color="#CBD5E1" />
-                </TouchableOpacity>
-              )}
               <View style={[styles.cardHeaderText, { alignItems: dir.alignItems }]}>
                 <Text style={styles.orderNumber}>{order.orderNumber}</Text>
                 <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
@@ -297,18 +251,10 @@ export default function MyOrdersScreen({ navigation }) {
       </TouchableOpacity>
     );
 
-    return (
-      <Swipeable
-        key={order.id}
-        renderRightActions={() => renderDeleteAction(order)}
-        overshootRight={false}
-      >
-        {anim ? (
-          <Animated.View style={cardAnim}>{cardContent}</Animated.View>
-        ) : (
-          cardContent
-        )}
-      </Swipeable>
+    return anim ? (
+      <Animated.View key={order.id} style={cardAnim} collapsable={false}>{cardContent}</Animated.View>
+    ) : (
+      <View key={order.id} collapsable={false}>{cardContent}</View>
     );
   };
 
@@ -496,15 +442,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-end',
   },
-  deleteIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 6,
-  },
   orderNumber: {
     fontSize: 15,
     fontWeight: '800',
@@ -589,22 +526,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   trackButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-
-  deleteAction: {
-    backgroundColor: '#EF4444',
-    borderRadius: 24,
-    marginBottom: 14,
-    marginLeft: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 72,
-  },
-  deleteActionText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 4,
-  },
 
   emptyState: {
     alignItems: 'center',

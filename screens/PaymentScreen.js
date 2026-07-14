@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   StyleSheet,
   Text,
@@ -171,6 +172,7 @@ export default function PaymentScreen({ navigation, route }) {
   const navigateToSuccess = useCallback(async () => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const od = orderDataRef.current;
     if (!od) return;
     try {
@@ -582,6 +584,7 @@ export default function PaymentScreen({ navigation, route }) {
         await db.clearCart(user.id);
         clearAppCart();
         setProcessing(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         navigation.navigate('OrderConfirm', {
           order: {
             id: data.orderId,
@@ -691,6 +694,7 @@ export default function PaymentScreen({ navigation, route }) {
       await db.clearCart(user.id);
       clearAppCart();
       setShowInstapayProof(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigation.replace('OrderConfirm', {
         order: { ...instapayOrderData, paymentProofStatus: 'PENDING' },
       });
