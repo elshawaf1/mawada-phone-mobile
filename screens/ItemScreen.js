@@ -222,22 +222,16 @@ export default function ItemScreen({ navigation, route }) {
   const handleShare = async () => {
     if (!product) return;
     try {
-      const productName = localizedName(product, locale) || 'Product';
-      const productUrl = `https://mawada.app/product/${product.id}`;
-      const message = `${productName}\n${productUrl}`;
+      const productName = localizedName(product, locale) || product.nameAr || 'Product';
+      const price = product.isOnSale && product.salePrice ? product.salePrice : product.basePrice;
+      const message = `${productName}\n${price} EGP\n\nhttps://play.google.com/store/apps/details?id=com.elshawaf.mawada`;
 
-      if (Platform.OS === 'ios') {
-        const { Sharing } = require('expo-sharing');
-        await Sharing.shareAsync(productUrl);
-      } else {
-        await Share.share({
-          message,
-          url: productUrl,
-          title: productName,
-        });
-      }
+      await Share.share({
+        message,
+        title: productName,
+      });
     } catch (e) {
-      console.error('Share error:', e);
+      // User cancelled
     }
   };
 
