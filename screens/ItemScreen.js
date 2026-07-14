@@ -13,9 +13,10 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ShoppingCart, Star } from 'lucide-react-native';
+import { ShoppingCart, Star, Share2 } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import Button from '../components/Button';
 import BundleCard from '../components/BundleCard';
@@ -218,6 +219,28 @@ export default function ItemScreen({ navigation, route }) {
     }
   };
 
+  const handleShare = async () => {
+    if (!product) return;
+    try {
+      const productName = localizedName(product, locale) || 'Product';
+      const productUrl = `https://mawada.app/product/${product.id}`;
+      const message = `${productName}\n${productUrl}`;
+
+      if (Platform.OS === 'ios') {
+        const { Sharing } = require('expo-sharing');
+        await Sharing.shareAsync(productUrl);
+      } else {
+        await Share.share({
+          message,
+          url: productUrl,
+          title: productName,
+        });
+      }
+    } catch (e) {
+      console.error('Share error:', e);
+    }
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -354,6 +377,12 @@ export default function ItemScreen({ navigation, route }) {
                 size={22}
                 color={isFavorite(product?.id) ? COLORS.error : COLORS.text}
               />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleShare}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Share2 size={20} color={COLORS.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => navigation.navigate('Cart')}
