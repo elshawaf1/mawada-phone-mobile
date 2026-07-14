@@ -192,6 +192,7 @@ export default function MyOrdersScreen({ navigation }) {
         activeOpacity={0.92}
         onPress={() => navigation.navigate('OrderDetail', { orderId: order.id, order })}
         style={styles.cardTouchable}
+        delayPressIn={80}
       >
         <View style={[styles.cardInner, { flexDirection: dir.row }]}>
           <View style={[styles.accentBar, { backgroundColor: statusColor.accent }]} />
@@ -317,13 +318,9 @@ export default function MyOrdersScreen({ navigation }) {
       />
 
       <View style={styles.tabBarWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.tabsRow, { flexDirection: dir.row }]}
-        >
+        <View style={[styles.tabsRow, { flexDirection: dir.row }]}>
           {TABS.map(renderTab)}
-        </ScrollView>
+        </View>
       </View>
 
       <ScrollView
@@ -392,6 +389,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#F1F5F9',
     marginLeft: 8,
+    marginBottom: 0,
   },
   tabActive: {
     backgroundColor: '#0F172A',
