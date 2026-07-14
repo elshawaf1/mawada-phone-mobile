@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, StatusBar, Linking, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, StatusBar, Linking } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ChevronRight } from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation, useTheme, useAppSettings } from '../context/AppSettingsContext';
+import { useTranslation, useAppSettings } from '../context/AppSettingsContext';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 const APP_VERSION = '1.0.0';
 
@@ -15,21 +16,26 @@ export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { logout } = useAuth();
   const { t, locale } = useTranslation();
-  const { darkMode, toggleDarkMode } = useTheme();
   const { toggleLocale } = useAppSettings();
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [ordersNotif, setOrdersNotif] = useState(true);
   const [offersNotif, setOffersNotif] = useState(true);
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
 
   const handleLogout = async () => {
-    Alert.alert(t('auth.logoutTitle'), t('auth.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('auth.logout'), style: 'destructive', onPress: async () => {
-        await logout();
-        navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
-      }},
-    ]);
+    showMessageBox({
+      type: 'warning',
+      title: t('auth.logoutTitle'),
+      message: t('auth.logoutConfirm'),
+      buttons: [
+        { text: t('common.cancel'), style: 'secondary' },
+        { text: t('auth.logout'), style: 'primary', onPress: async () => {
+          await logout();
+          navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+        }},
+      ],
+    });
   };
 
   const openUrl = (url) => Linking.openURL(url).catch(() => {});
@@ -103,7 +109,7 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.rowDivider} />
           <RowLink iconType="Feather" icon="log-out" label={t('settings.logout')} onPress={handleLogout} />
           <View style={styles.rowDivider} />
-          <RowLink iconType="Feather" icon="trash-2" label={t('settings.deleteAccount')} onPress={() => Alert.alert(t('settings.deleteAccountTitle'), t('settings.deleteAccountNotAvailable'))} isDestructive />
+          <RowLink iconType="Feather" icon="trash-2" label={t('settings.deleteAccount')} onPress={() => showMessageBox({ type: 'info', title: t('settings.deleteAccountTitle'), message: t('settings.deleteAccountNotAvailable') })} isDestructive />
         </Section>
 
         <Section title={t('settings.legal')}>

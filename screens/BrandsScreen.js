@@ -9,9 +9,10 @@ import { supabase } from '../services/supabase';
 import { COLORS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName } from '../utils/helpers';
 
 export default function BrandsScreen({ navigation }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ export default function BrandsScreen({ navigation }) {
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('Search', { brandId: item.id, brandName: item.nameAr })}
+            onPress={() => navigation.navigate('Search', { brandId: item.id, brandName: localizedName(item, locale) })}
           >
             <View style={styles.cardRow}>
               <View style={styles.logoWrap}>
@@ -83,7 +84,7 @@ export default function BrandsScreen({ navigation }) {
                 )}
               </View>
               <Text style={[styles.brandName, { textAlign: dir.textAlign }]} numberOfLines={1}>
-                {item.nameAr || item.name}
+                {localizedName(item, locale)}
               </Text>
               <Ionicons name={dir.leftChevron} size={18} color="#CBD5E1" />
             </View>

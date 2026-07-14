@@ -6,6 +6,8 @@ import {
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useDirection } from '../hooks/useDirection';
+import { useTranslation } from '../context/AppSettingsContext';
+import { localizedName } from '../utils/helpers';
 
 const SORT_OPTIONS = ['latest', 'priceLow', 'priceHigh', 'name'];
 
@@ -14,6 +16,7 @@ export default function FilterSheet({
   selectedCondition, onConditionChange, t, onOpenPrice,
 }) {
   const dir = useDirection();
+  const { locale } = useTranslation();
   const activePrice = false;
 
   const sortLabel = (key) => {
@@ -26,7 +29,7 @@ export default function FilterSheet({
     return labels[key] || key;
   };
 
-  const brandName = (brand) => brand?.nameAr || brand?.name || '';
+  const brandName = (brand) => localizedName(brand, locale) || '';
 
   const SORT_ICONS = {
     latest: 'time-outline',

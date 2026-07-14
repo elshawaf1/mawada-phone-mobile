@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Image,
   StatusBar,
-  Alert,
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +19,8 @@ import { useTranslation } from '../context/AppSettingsContext';
 import { supabase } from '../services/supabase';
 import ScreenHeader from '../components/ScreenHeader';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
+import { localizedName } from '../utils/helpers';
 
 const RATING_COLORS = {
   5: '#22C55E',
@@ -70,8 +71,9 @@ const StarRating = ({ rating, size = 16, dir }) => {
 
 export default function MyReviewsScreen({ navigation }) {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -129,14 +131,15 @@ export default function MyReviewsScreen({ navigation }) {
   }, [fetchReviews, animValues]);
 
   const handleDelete = useCallback((review) => {
-    Alert.alert(
-      t('common.delete'),
-      t('common.confirmDelete') || 'هل تريد حذف هذا التقييم؟',
-      [
-        { text: t('common.cancel'), style: 'cancel' },
+    showMessageBox({
+      type: 'warning',
+      title: t('common.delete'),
+      message: t('common.confirmDelete') || 'هل تريد حذف هذا التقييم؟',
+      buttons: [
+        { text: t('common.cancel'), style: 'secondary' },
         {
           text: t('common.delete'),
-          style: 'destructive',
+          style: 'primary',
           onPress: async () => {
             try {
               const { error } = await supabase.from('reviews').delete().eq('id', review.id);
@@ -148,8 +151,8 @@ export default function MyReviewsScreen({ navigation }) {
             }
           },
         },
-      ]
-    );
+      ],
+    });
   }, [t, animValues]);
 
   const filtered = useMemo(() => {
@@ -207,7 +210,7 @@ export default function MyReviewsScreen({ navigation }) {
               </TouchableOpacity>
               <View style={[styles.cardInfo, { alignItems: dir.alignItems }]}>
                 <Text style={[styles.productName, { textAlign: dir.textAlign }]} numberOfLines={1}>
-                  {review.products?.nameAr || t('common.product')}
+                  {localizedName(review.products, locale) || t('common.product')}
                 </Text>
                 <StarRating rating={review.rating} size={15} dir={dir} />
               </View>

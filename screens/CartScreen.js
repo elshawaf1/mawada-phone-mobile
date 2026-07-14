@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, StatusBar,
-  Image, TextInput, Animated, Alert,
+  Image, TextInput, Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronLeft, Check, Plus, Minus, Trash2, ShoppingBag, Tag, Gift, Truck, ChevronDown, ChevronUp, Clock, FileText } from 'lucide-react-native';
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { fetchSettings } from '../services/settings';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 const { width } = Dimensions.get('window');
 
@@ -87,6 +88,7 @@ export default function CartScreen({ navigation }) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const {
     cart, cartCount, savedForLater, coupon,
     removeFromCart, updateCartQty, toggleCartSelect, toggleAllCartSelect,
@@ -169,7 +171,7 @@ export default function CartScreen({ navigation }) {
       }
     } catch (error) {
       console.error('Cart sync error:', error);
-      Alert.alert(t('common.error'), t('cart.syncError'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('cart.syncError') });
       return;
     }
     navigation.navigate('Payment', {

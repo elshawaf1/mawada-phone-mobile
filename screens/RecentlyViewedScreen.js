@@ -9,9 +9,10 @@ import ProductCard from '../components/ProductCard';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../context/AppSettingsContext';
 import { COLORS, SPACING } from '../constants';
+import { localizedName } from '../utils/helpers';
 
 export default function RecentlyViewedScreen({ navigation }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { addToCart, isInCart } = useApp();
   const [items, setItems] = useState([]);
 
@@ -27,6 +28,7 @@ export default function RecentlyViewedScreen({ navigation }) {
         parsed.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const mapped = parsed.map((p) => ({
           id: p.productId,
+          name: p.name,
           nameAr: p.nameAr,
           basePrice: Number(p.usePriceRange ? (p.minPrice || p.basePrice) : p.price),
           product_images: p.image ? [{ url: p.image, isPrimary: true }] : [],
@@ -53,7 +55,7 @@ export default function RecentlyViewedScreen({ navigation }) {
     addToCart({
       id: item.id,
       productId: item.id,
-      title: item.nameAr,
+      title: localizedName(item, locale),
       price,
       image,
       variantId: null,

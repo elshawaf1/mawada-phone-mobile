@@ -3,8 +3,10 @@ import { BackHandler, SafeAreaView, StatusBar, StyleSheet, View } from 'react-na
 import { AppProvider } from './context/AppContext';
 import { AppSettingsProvider } from './context/AppSettingsContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { MessageBoxProvider } from './context/MessageBoxContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ErrorBoundary from './components/ErrorBoundary';
 import SwipeBack from './components/SwipeBack';
 import ScreenTransition from './components/ScreenTransition';
 import NotificationHandler from './components/NotificationHandler';
@@ -42,6 +44,7 @@ import PaymentMethodsScreen from './screens/PaymentMethodsScreen';
 import SupportScreen from './screens/SupportScreen';
 import AllCategoriesScreen from './screens/AllCategoriesScreen';
 import LegalScreen from './screens/LegalScreen';
+import SectionProductsScreen from './screens/SectionProductsScreen';
 
 const screenRegistry = {
   Splash: SplashScreen,
@@ -77,6 +80,7 @@ const screenRegistry = {
   Support: SupportScreen,
   AllCategories: AllCategoriesScreen,
   Legal: LegalScreen,
+  SectionProducts: SectionProductsScreen,
 };
 
 function AppInner() {
@@ -210,7 +214,11 @@ export default function App() {
         <AppSettingsProvider>
           <AuthProvider>
             <AppProvider>
-              <AppInner />
+                <MessageBoxProvider>
+                <ErrorBoundary>
+                  <AppInner />
+                </ErrorBoundary>
+              </MessageBoxProvider>
             </AppProvider>
           </AuthProvider>
         </AppSettingsProvider>

@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { COLORS, RADIUS, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName } from '../utils/helpers';
 
 function formatPrice(n) {
   return Number(n || 0).toLocaleString();
@@ -17,9 +18,9 @@ function getEffectivePrice(item) {
   return p.isOnSale && p.salePrice ? p.salePrice : p.basePrice || 0;
 }
 
-function getDisplayName(item) {
+function getDisplayName(item, locale) {
   if (item.custom_name) return item.custom_name;
-  return item.product?.nameAr || item.product?.name || '';
+  return localizedName(item.product, locale) || '';
 }
 
 function getProductImage(item) {
@@ -30,7 +31,7 @@ function getProductImage(item) {
 }
 
 export default function BundleCard({ bundle, onAddBundle }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const btnScale = useRef(new Animated.Value(1)).current;
@@ -86,7 +87,7 @@ export default function BundleCard({ bundle, onAddBundle }) {
         <View style={styles.productsFrame}>
           {allItems.map((item, index) => {
             const img = getProductImage(item);
-            const name = getDisplayName(item);
+            const name = getDisplayName(item, locale);
             const price = getEffectivePrice(item);
             const origPrice = item.product?.isOnSale && item.product?.salePrice
               ? item.product.salePrice

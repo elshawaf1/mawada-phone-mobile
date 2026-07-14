@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react-native';
 import { supabase } from '../../services/supabase';
 import { useTranslation } from '../../context/AppSettingsContext';
+import { useMessageBox } from '../../context/MessageBoxContext';
 import { useDirection } from '../../hooks/useDirection';
 import Button from '../../components/Button';
 
 export default function ResetPasswordScreen({ navigation }) {
   const { t } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNew, setShowNew] = useState(false);
@@ -19,23 +21,23 @@ export default function ResetPasswordScreen({ navigation }) {
 
   const handleReset = async () => {
     if (!newPassword || !confirmPassword) {
-      Alert.alert(t('common.error'), t('auth.fillAllFields'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.fillAllFields') });
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert(t('common.error'), t('auth.passwordMin'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.passwordMin') });
       return;
     }
     if (!/[A-Z]/.test(newPassword)) {
-      Alert.alert(t('common.error'), t('auth.passwordUpper'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.passwordUpper') });
       return;
     }
     if (!/[0-9]/.test(newPassword)) {
-      Alert.alert(t('common.error'), t('auth.passwordDigit'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.passwordDigit') });
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert(t('common.error'), t('auth.passwordsNotMatch'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.passwordsNotMatch') });
       return;
     }
     setLoading(true);
@@ -48,7 +50,7 @@ export default function ResetPasswordScreen({ navigation }) {
         navigation.replace('Login');
       }, 2000);
     } catch (err) {
-      Alert.alert(t('common.error'), err.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: err.message });
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import { useDirection } from '../hooks/useDirection';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
+import { localizedName } from '../utils/helpers';
 
 const ITEM_WIDTH = (SCREEN.width - 48) / 2;
 const PAGE_SIZE = 20;
@@ -26,7 +27,7 @@ const MAX_RECENT = 10;
 const POPULAR_SEARCHES = ['iPhone', 'Samsung', 'شاومي', 'Oppo', 'Huawei', 'Realme'];
 
 export default function SearchScreen({ navigation, route }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const { addToCart, removeFromCart, isInCart, isFavorite, toggleFavorite } = useApp();
   const { user } = useAuth();
@@ -222,7 +223,7 @@ export default function SearchScreen({ navigation, route }) {
       removeFromCart(product.id);
     } else {
       addToCart({
-        id: product.id, productId: product.id, title: product.nameAr,
+        id: product.id, productId: product.id, title: localizedName(product, locale),
         price: product.usePriceRange ? (product.minPrice || product.basePrice) : (product.isOnSale && product.salePrice ? product.salePrice : product.basePrice),
         image: product.product_images?.find((img) => img.isPrimary)?.url || product.product_images?.[0]?.url || null, variantId: null,
       });
@@ -258,7 +259,7 @@ export default function SearchScreen({ navigation, route }) {
     inputRef.current?.focus();
   };
 
-  const brandName = (brand) => brand?.nameAr || brand?.name || '';
+  const brandName = (brand) => localizedName(brand, locale) || '';
   const sortLabel = (key) => t(`search.${key}`);
   const activePriceLabel = priceMin || priceMax
     ? `${priceMin || '0'} - ${priceMax || '∞'}`

@@ -10,11 +10,12 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/AppSettingsContext';
 import { supabase } from '../services/supabase';
+import { localizedName } from '../utils/helpers';
 
 export default function OffersScreen({ navigation }) {
   const { addToCart, removeFromCart, isInCart, isFavorite, toggleFavorite } = useApp();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,7 +53,7 @@ export default function OffersScreen({ navigation }) {
       removeFromCart(product.id);
     } else {
       addToCart({
-        id: product.id, productId: product.id, title: product.nameAr,
+        id: product.id, productId: product.id, title: localizedName(product, locale),
         price: product.usePriceRange ? (product.minPrice || product.basePrice) : (product.isOnSale && product.salePrice ? product.salePrice : product.basePrice),
         image: product.product_images?.find(img => img.isPrimary)?.url || product.product_images?.[0]?.url || null, variantId: null,
       });

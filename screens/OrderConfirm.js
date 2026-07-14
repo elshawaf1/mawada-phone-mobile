@@ -23,6 +23,7 @@ import Button from '../components/Button';
 import { supabase, supabaseUrl } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName } from '../utils/helpers';
 
 const formatPrice = (n) => Number(n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -34,7 +35,7 @@ function PaymentIcon({ method }) {
 }
 
 export default function OrderConfirmScreen({ navigation, route }) {
-  const { t, weekdays, months } = useTranslation();
+  const { t, locale, weekdays, months } = useTranslation();
   const dir = useDirection();
   const order = route?.params?.order;
   const captureRef2 = useRef(null);
@@ -110,7 +111,6 @@ export default function OrderConfirmScreen({ navigation, route }) {
           body: JSON.stringify({ orderId: order.id }),
         });
         const data = await res.json();
-        console.log('[OrderConfirm] verify result:', data?.status);
         if (data?.status === 'PAID') {
           setPaymentStatus('PAID');
         } else if (data?.status === 'FAILED') {
@@ -312,7 +312,7 @@ export default function OrderConfirmScreen({ navigation, route }) {
                   )}
                 </View>
                 <View style={styles.itemInfo}>
-                  <Text style={[styles.itemName, { textAlign: dir.textAlign }]} numberOfLines={1}>{item.nameAr || item.products?.nameAr || t('orderConfirm.itemFallback')}</Text>
+                  <Text style={[styles.itemName, { textAlign: dir.textAlign }]} numberOfLines={1}>{localizedName(item, locale) || localizedName(item.products, locale) || t('orderConfirm.itemFallback')}</Text>
                   <Text style={styles.itemMeta}>×{item.quantity}</Text>
                 </View>
                 <Text style={styles.itemPrice}>{formatPrice(item.unitPrice)} {t('common.egp')}</Text>

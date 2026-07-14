@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Image,
   StatusBar,
-  Alert,
   Share,
   Modal,
 } from 'react-native';
@@ -36,6 +35,8 @@ import { supabase } from '../services/supabase';
 import ScreenHeader from '../components/ScreenHeader';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
+import { localizedName } from '../utils/helpers';
 
 const STATUS_COLORS = {
   PENDING: { bg: '#FEF3C7', text: '#92400E' },
@@ -74,7 +75,8 @@ const stepState = (currentStatus, stepKey) => {
 export default function OrderDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { showMessageBox } = useMessageBox();
   const dir = useDirection();
   const orderId = route?.params?.orderId;
   const initialOrder = route?.params?.order || null;
@@ -149,26 +151,27 @@ export default function OrderDetailScreen({ navigation, route }) {
 
   const handleDelete = useCallback(() => {
     if (!order) return;
-    Alert.alert(
-      t('common.delete'),
-      t('orders.deleteConfirm', { number: order.orderNumber }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
+    showMessageBox({
+      type: 'warning',
+      title: t('common.delete'),
+      message: t('orders.deleteConfirm', { number: order.orderNumber }),
+      buttons: [
+        { text: t('common.cancel'), style: 'secondary' },
         {
           text: t('common.delete'),
-          style: 'destructive',
+          style: 'primary',
           onPress: async () => {
             try {
               await db.deleteOrder(order.id, user?.id);
               navigation.goBack();
             } catch (error) {
               console.error('Error deleting order:', error);
-              Alert.alert(t('common.error'), t('orders.deleteFailed'));
+              showMessageBox({ type: 'error', title: t('common.error'), message: t('orders.deleteFailed'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
             }
           },
         },
       ]
-    );
+    });
   }, [order, navigation, user?.id, t]);
 
   const handleShare = useCallback(() => {
@@ -178,7 +181,7 @@ export default function OrderDetailScreen({ navigation, route }) {
     const phone = addr?.phone ? `+20 ${addr.phone}` : '—';
     const location = addr ? `${addr.street || ''}${addr.region ? ` - ${addr.region}` : ''}${addr.city ? `, ${addr.city}` : ''}` : '—';
     const items = order.order_items || [];
-    const itemsText = items.map((i) => `• ${i.products?.nameAr || i.nameAr || t('common.product')} ×${i.quantity}`).join('\n');
+    const itemsText = items.map((i) => `• ${localizedName(i.products, locale) || localizedName(i, locale) || t('common.product')} ×${i.quantity}`).join('\n');
 
     const message = [
       `${t('orders.orderNumber')}: ${order.orderNumber}`,
@@ -361,7 +364,7 @@ export default function OrderDetailScreen({ navigation, route }) {
               </View>
               <View style={styles.itemInfo}>
                 <Text style={[styles.itemTitle, { textAlign: dir.textAlign }]} numberOfLines={2}>
-                  {product.nameAr || t('common.product')}
+                  {localizedName(product, locale) || t('common.product')}
                 </Text>
                 {attrs ? <Text style={[styles.itemVariant, { textAlign: dir.textAlign }]}>{attrs}</Text> : null}
                 <Text style={[styles.itemQty, { textAlign: dir.textAlign }]}>{t('orders.quantity', { count: item.quantity })}</Text>

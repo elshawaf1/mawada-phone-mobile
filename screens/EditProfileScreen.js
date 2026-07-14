@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, ScrollView, Alert, StatusBar } from 'react-native';
+import { StyleSheet, View, Text, TextInput, ScrollView, StatusBar } from 'react-native';
 import { User, Mail, Phone } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
@@ -7,10 +7,12 @@ import { useTranslation } from '../context/AppSettingsContext';
 import Button from '../components/Button';
 import ScreenHeader from '../components/ScreenHeader';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 export default function EditProfileScreen({ navigation }) {
   const { t } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const { user, profile } = useAuth();
   const [name, setName] = useState(profile?.name || user?.user_metadata?.name || '');
   const [email] = useState(user?.email || '');
@@ -19,7 +21,7 @@ export default function EditProfileScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!name.trim() || name.trim().length < 2) {
-      Alert.alert(t('common.error'), t('auth.fillAllFields'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.fillAllFields') });
       return;
     }
     setLoading(true);
@@ -28,10 +30,10 @@ export default function EditProfileScreen({ navigation }) {
         .from('profiles')
         .upsert({ id: user.id, name: name.trim(), phone: phone.trim(), updatedAt: new Date().toISOString() });
       if (error) throw error;
-      Alert.alert(t('common.done'), t('settings.editProfile'));
+      showMessageBox({ type: 'success', title: t('common.done'), message: t('settings.editProfile') });
       navigation.goBack();
     } catch (err) {
-      Alert.alert(t('common.error'), err.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: err.message });
     } finally {
       setLoading(false);
     }

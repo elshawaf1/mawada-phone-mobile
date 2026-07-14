@@ -8,7 +8,6 @@ import {
   TextInput,
   Modal,
   Switch,
-  Alert,
   Platform,
   KeyboardAvoidingView,
   StatusBar,
@@ -23,12 +22,14 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../services/api';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 export default function DeliveryLocationsScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { t } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -49,7 +50,7 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
       setAddresses(data || []);
     } catch (error) {
       console.error('Error fetching addresses:', error);
-      Alert.alert(t('common.error'), t('addresses.deleteFailed') + ': ' + error.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('addresses.deleteFailed') + ': ' + error.message });
     } finally {
       setLoading(false);
     }
@@ -76,17 +77,17 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
 
   const handleSave = async () => {
     if (!user?.id) {
-      Alert.alert(t('common.error'), t('addresses.loginRequired'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('addresses.loginRequired') });
       return;
     }
 
     if (!formData.city || !formData.street || !formData.phone) {
-      Alert.alert(t('common.error'), t('addresses.fillRequired'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('addresses.fillRequired') });
       return;
     }
 
     if (formData.phone.length < 10) {
-      Alert.alert(t('common.error'), t('addresses.phoneInvalid'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('addresses.phoneInvalid') });
       return;
     }
 
@@ -111,28 +112,33 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
       setModalVisible(false);
       fetchAddresses();
     } catch (error) {
-      Alert.alert('خطأ', error.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: error.message });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    Alert.alert(t('common.delete'), t('addresses.deleteConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await db.deleteAddress(id, user?.id);
-            fetchAddresses();
-          } catch (error) {
-      Alert.alert(t('common.error'), error.message);
-          }
+    showMessageBox({
+      type: 'warning',
+      title: t('common.delete'),
+      message: t('addresses.deleteConfirm'),
+      buttons: [
+        { text: t('common.cancel'), style: 'secondary' },
+        {
+          text: t('common.delete'),
+          style: 'primary',
+          onPress: async () => {
+            try {
+              await db.deleteAddress(id, user?.id);
+              fetchAddresses();
+            } catch (error) {
+              showMessageBox({ type: 'error', title: t('common.error'), message: error.message });
+            }
+          },
         },
-      },
-    ]);
+      ],
+    });
   };
 
   const handleSelect = (address) => {
@@ -147,7 +153,7 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
       await db.updateAddress(id, { isDefault: true, userId: user?.id });
       fetchAddresses();
     } catch (error) {
-      Alert.alert(t('common.error'), error.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: error.message });
     }
   };
 

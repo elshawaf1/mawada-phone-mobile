@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
@@ -17,7 +16,6 @@ import {
   Image,
 } from 'react-native';
 import { ChevronLeft, MapPin, CreditCard, Wallet, Banknote, Check, ChevronDown, Zap, Edit3 } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 
 import { Linking } from 'react-native';
@@ -35,6 +33,8 @@ import { COLORS } from '../constants';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../services/supabase';
 import { useDirection } from '../hooks/useDirection';
 import { fetchSettings } from '../services/settings';
+import { useMessageBox } from '../context/MessageBoxContext';
+import { localizedName } from '../utils/helpers';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 const POLL_INTERVAL = 3000;
@@ -97,11 +97,12 @@ const StepIndicator = ({ step, total, dir }) => (
 );
 
 export default function PaymentScreen({ navigation, route }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { clearCart: clearAppCart, coupon } = useApp();
+  const { showMessageBox } = useMessageBox();
   const [deliveryType, setDeliveryType] = useState('delivery');
   const [selectedMethod, setSelectedMethod] = useState('cod');
   const [deliveryAddress, setDeliveryAddress] = useState(null);
@@ -132,9 +133,11 @@ export default function PaymentScreen({ navigation, route }) {
   useEffect(() => {
     fetchAddresses();
     fetchBranches();
-    fetchSettings().then((s) => {
-      if (s?.delivery_fee != null) setDeliveryFee(s.delivery_fee);
-    });
+    fetchSettings()
+      .then((s) => {
+        if (s?.delivery_fee != null) setDeliveryFee(s.delivery_fee);
+      })
+      .catch(() => {});
   }, [user?.id]);
 
   const fetchAddresses = async () => {
@@ -193,7 +196,6 @@ export default function PaymentScreen({ navigation, route }) {
         body: JSON.stringify({ orderId }),
       });
       const data = await res.json();
-      console.log('[Paymob] verifyWithServer result:', JSON.stringify(data));
       return data?.status || null;
     } catch (err) {
       console.error('[Paymob] verifyWithServer error:', err);
@@ -217,7 +219,7 @@ export default function PaymentScreen({ navigation, route }) {
       }
       if (data?.paymentStatus === 'FAILED') {
         setProcessing(false);
-        Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+        showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment') });
         return true;
       }
       return false;
@@ -247,7 +249,7 @@ export default function PaymentScreen({ navigation, route }) {
         }
         if (serverStatus === 'FAILED') {
           setProcessing(false);
-          Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+          showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment') });
           return;
         }
       }
@@ -268,7 +270,6 @@ export default function PaymentScreen({ navigation, route }) {
       const now = Date.now();
       if (now - lastForegroundVerifyRef.current < 3000) return;
       lastForegroundVerifyRef.current = now;
-      console.log('[Paymob] App returned to foreground — verifying payment');
       const od = orderDataRef.current;
       if (!navigatedRef.current && od?.orderId) {
         const serverStatus = await verifyWithServer(od.orderId);
@@ -298,12 +299,11 @@ export default function PaymentScreen({ navigation, route }) {
         { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${watchOrderId}` },
         (payload) => {
           const newStatus = payload.new?.paymentStatus;
-          console.log('[Paymob] Realtime order update:', newStatus);
           if (newStatus === 'PAID' && !navigatedRef.current) {
             navigateToSuccess();
           } else if (newStatus === 'FAILED' && !navigatedRef.current) {
             setProcessing(false);
-            Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+            showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment') });
           }
         },
       )
@@ -334,19 +334,15 @@ export default function PaymentScreen({ navigation, route }) {
     Paymob.setShowTransactionResult(false);
 
     Paymob.setSdkListener(async (response) => {
-      console.log('[Paymob] SDK callback:', JSON.stringify(response));
       sdkCallbackFired.current = true;
       const status = response?.status || response;
-      console.log('[Paymob] Status:', status);
 
       if (status === PaymentStatus.SUCCESS) {
-        console.log('[Paymob] SDK SUCCESS — verifying with Paymob API');
         const serverStatus = await verifyWithServer(orderData.orderId);
         if (serverStatus === 'PAID') {
           navigateToSuccess();
         } else {
           // DB not updated yet, start polling
-          console.log('[Paymob] After SUCCESS verify, status:', serverStatus, '— polling');
           if (!pollingStarted.current) {
             pollingStarted.current = true;
             startPolling();
@@ -354,14 +350,13 @@ export default function PaymentScreen({ navigation, route }) {
         }
       } else {
         // SDK returned Fail/Cancel/etc — verify with Paymob API directly
-        console.log('[Paymob] SDK not SUCCESS — verifying via server');
         const serverStatus = await verifyWithServer(orderData.orderId);
         if (serverStatus === 'PAID') {
           navigateToSuccess();
         } else {
           setProcessing(false);
           if (serverStatus === 'FAILED') {
-            Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+            showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment') });
           }
           if (serverStatus === 'PENDING' && !pollingStarted.current) {
             pollingStarted.current = true;
@@ -375,7 +370,6 @@ export default function PaymentScreen({ navigation, route }) {
       Paymob.presentPayVC(clientSecret, PAYMOB_PUBLIC_KEY);
       if (!pollingStarted.current) {
         pollingStarted.current = true;
-        console.log('[Paymob] Starting immediate polling fallback');
         pollTimer.current = setTimeout(() => {
           if (mountedRef.current && !navigatedRef.current) {
             startPolling();
@@ -385,7 +379,7 @@ export default function PaymentScreen({ navigation, route }) {
     } catch (err) {
       console.error('[Paymob] presentPayVC error:', err);
       setProcessing(false);
-      Alert.alert(t('common.error'), t('payment.paymentInitFailed'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.paymentInitFailed') });
     }
   }, [navigateToSuccess, startPolling, verifyWithServer, t]);
 
@@ -399,28 +393,28 @@ export default function PaymentScreen({ navigation, route }) {
 
   const handleCheckout = async () => {
     if (!user?.id) {
-      Alert.alert(t('auth.login'), t('auth.mustLogin'));
+      showMessageBox({ type: 'info', title: t('auth.login'), message: t('auth.mustLogin') });
       return;
     }
 
     if (!items || items.length === 0) {
-      Alert.alert(t('payment.cartEmpty'), t('payment.addProductsFirst'));
+      showMessageBox({ type: 'warning', title: t('payment.cartEmpty'), message: t('payment.addProductsFirst') });
       return;
     }
 
     if (deliveryType === 'delivery' && !deliveryAddress) {
-      Alert.alert(t('common.error'), t('payment.addAddress'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.addAddress') });
       return;
     }
 
     if (deliveryType === 'branch' && !selectedBranch) {
-      Alert.alert(t('common.error'), t('payment.changeBranch'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.changeBranch') });
       return;
     }
 
     const method = PAYMENT_METHODS.find(m => m.id === selectedMethod);
     if (!method) {
-      Alert.alert(t('common.error'), t('payment.choosePayment'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.choosePayment') });
       return;
     }
 
@@ -428,7 +422,7 @@ export default function PaymentScreen({ navigation, route }) {
     if (isOnline) {
       const integrationId = method.id === 'card' ? CARD_INTEGRATION_ID : WALLET_INTEGRATION_ID;
       if (!integrationId) {
-        Alert.alert(t('common.error'), t('payment.methodUnavailable'));
+        showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.methodUnavailable') });
         return;
       }
     }
@@ -464,7 +458,7 @@ export default function PaymentScreen({ navigation, route }) {
             total,
             order_items: items.map((item) => ({
               ...item,
-              nameAr: item.name || t('common.product'),
+              name: item.name || t('common.product'),
               unitPrice: item.unitPrice,
             })),
           });
@@ -519,7 +513,7 @@ export default function PaymentScreen({ navigation, route }) {
           total,
           order_items: items.map((item) => ({
             ...item,
-            nameAr: item.name || t('common.product'),
+            name: item.name || t('common.product'),
             unitPrice: item.unitPrice,
           })),
         });
@@ -563,7 +557,7 @@ export default function PaymentScreen({ navigation, route }) {
 
       if (!res.ok || data?.error) {
         setProcessing(false);
-        Alert.alert(t('common.error'), data?.error || t('payment.serverError', { code: res.status }));
+        showMessageBox({ type: 'error', title: t('common.error'), message: data?.error || t('payment.serverError', { code: res.status }) });
         return;
       }
 
@@ -579,7 +573,7 @@ export default function PaymentScreen({ navigation, route }) {
           total,
           order_items: items.map((item) => ({
             ...item,
-            nameAr: item.name || t('common.product'),
+            name: item.name || t('common.product'),
             unitPrice: item.unitPrice,
           })),
         };
@@ -600,7 +594,7 @@ export default function PaymentScreen({ navigation, route }) {
             total,
             order_items: items.map((item) => ({
               ...item,
-              nameAr: item.name || t('common.product'),
+              name: item.name || t('common.product'),
               unitPrice: item.unitPrice,
             })),
           },
@@ -609,7 +603,7 @@ export default function PaymentScreen({ navigation, route }) {
     } catch (error) {
       setProcessing(false);
       console.error('Checkout error:', error);
-      Alert.alert(t('common.error'), t('payment.orderError'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.orderError') });
     }
   };
 
@@ -621,14 +615,14 @@ export default function PaymentScreen({ navigation, route }) {
     try {
       await Linking.openURL(INSTAPAY_LINK);
     } catch {
-      Alert.alert(t('common.error'), t('payment.instapayNotInstalled'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.instapayNotInstalled') });
     }
   };
 
   const handlePickProof = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('common.error'), 'يجب منح صلاحية الوصول للصور');
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('camera.permissionRequired') });
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -643,7 +637,7 @@ export default function PaymentScreen({ navigation, route }) {
   const handleTakeProof = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(t('common.error'), 'يجب منح صلاحية الوصول للكاميرا');
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('camera.permissionRequired') });
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -702,7 +696,7 @@ export default function PaymentScreen({ navigation, route }) {
       });
     } catch (err) {
       console.error('Upload proof error:', err);
-      Alert.alert(t('common.error'), t('payment.proofUploadFailed'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.proofUploadFailed') });
     } finally {
       setUploadingProof(false);
     }
@@ -808,7 +802,7 @@ export default function PaymentScreen({ navigation, route }) {
                 />
               </View>
               <View style={styles.locTextWrap}>
-                <Text style={[styles.locLabel, { textAlign: dir.textAlign }]}>{selectedBranch?.nameAr || selectedBranch?.name || 'الفرع'}</Text>
+                <Text style={[styles.locLabel, { textAlign: dir.textAlign }]}>{localizedName(selectedBranch, locale) || 'الفرع'}</Text>
                 <Text style={[styles.locDetail, { textAlign: dir.textAlign }]}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
               </View>
               <TouchableOpacity style={styles.locEditBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>

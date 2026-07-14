@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Linking, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
 import { MessageCircle, Phone } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 const WHATSAPP_NUMBER = '201093338390';
 const PHONE_DISPLAY = '+20 109 333 8390';
@@ -43,6 +44,7 @@ export default function SupportScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const PREFILLED_MESSAGE = t('support.whatsappMessage');
 
   async function openWhatsApp() {
@@ -54,14 +56,14 @@ export default function SupportScreen({ navigation }) {
       try {
         await Linking.openURL(intentUrl);
       } catch (err2) {
-        Alert.alert(t('support.whatsappError'), t('support.whatsappErrorSub', { phone: PHONE_DISPLAY }));
+        showMessageBox({ type: 'error', title: t('support.whatsappError'), message: t('support.whatsappErrorSub', { phone: PHONE_DISPLAY }) });
       }
     }
   }
 
   function openPhone() {
     Linking.openURL(`tel:${PHONE_TEL}`).catch(() =>
-      Alert.alert(t('support.phoneError'), t('support.phoneErrorSub', { phone: PHONE_DISPLAY }))
+      showMessageBox({ type: 'error', title: t('support.phoneError'), message: t('support.phoneErrorSub', { phone: PHONE_DISPLAY }) })
     );
   }
 

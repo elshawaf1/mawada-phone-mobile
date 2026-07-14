@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StatusBar,
   AppState,
 } from 'react-native';
@@ -20,6 +19,7 @@ import { db } from '../services/api';
 import { supabase, supabaseUrl } from '../services/supabase';
 import { COLORS } from '../constants';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 const PAYMOB_PUBLIC_KEY = process.env.EXPO_PUBLIC_PAYMOB_PUBLIC_KEY || 'egy_pk_test_HSbekPvBcPJ9igAPXm0xJp0cVRvPa0pT';
 const POLL_INTERVAL = 3000;
@@ -43,6 +43,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const { showMessageBox } = useMessageBox();
   const dir = useDirection();
   const sdkCallbackFired = useRef(false);
   const pollTimer = useRef(null);
@@ -120,7 +121,6 @@ export default function ResumePaymentScreen({ navigation, route }) {
         body: JSON.stringify({ orderId: orderIdToVerify }),
       });
       const data = await res.json();
-      console.log('[Paymob] Resume verifyWithServer result:', JSON.stringify(data));
       return data?.status || null;
     } catch (err) {
       console.error('[Paymob] Resume verifyWithServer error:', err);
@@ -143,7 +143,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
         return true;
       }
       if (data?.paymentStatus === 'FAILED') {
-        Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+        showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
         return true;
       }
       return false;
@@ -170,7 +170,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
           return;
         }
         if (serverStatus === 'FAILED') {
-          Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+          showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
           return;
         }
       }
@@ -206,7 +206,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
       setOrder(data);
     } catch (error) {
       console.error('Error fetching order:', error);
-      Alert.alert(t('common.error'), t('resumePayment.fetchFailed'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('resumePayment.fetchFailed'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
     } finally {
       setLoading(false);
     }
@@ -239,11 +239,11 @@ export default function ResumePaymentScreen({ navigation, route }) {
 
   const handlePay = async () => {
     if (!order) {
-      Alert.alert(t('common.error'), t('resumePayment.noOrder'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('resumePayment.noOrder'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
       return;
     }
     if (!user?.id) {
-      Alert.alert(t('auth.login'), t('auth.mustLogin'));
+      showMessageBox({ type: 'info', title: t('auth.login'), message: t('auth.mustLogin'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
       return;
     }
 
@@ -284,7 +284,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
       const data = await res.json();
       if (!res.ok || data?.error) {
         setProcessing(false);
-        Alert.alert(t('common.error'), data?.error || data?.message || t('resumePayment.codConfirmFailed'));
+        showMessageBox({ type: 'error', title: t('common.error'), message: data?.error || data?.message || t('resumePayment.codConfirmFailed'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
         return;
       }
 
@@ -314,30 +314,25 @@ export default function ResumePaymentScreen({ navigation, route }) {
         Paymob.setShowTransactionResult(false);
 
         Paymob.setSdkListener(async (response) => {
-          console.log('[Paymob] Resume SDK callback:', JSON.stringify(response));
           sdkCallbackFired.current = true;
           const status = response?.status || response;
-          console.log('[Paymob] Resume status:', status);
 
           if (status === PaymentStatus.SUCCESS) {
-            console.log('[Paymob] Resume SDK SUCCESS — verifying with Paymob API');
             const serverStatus = await verifyWithServer(order.id);
             if (serverStatus === 'PAID') {
               navigateToSuccess();
             } else {
-              console.log('[Paymob] After Resume SUCCESS verify, status:', serverStatus, '— polling');
               if (!pollingStarted.current) {
                 pollingStarted.current = true;
                 startPolling();
               }
             }
           } else {
-            console.log('[Paymob] Resume SDK not SUCCESS — verifying via server');
             const serverStatus = await verifyWithServer(order.id);
             if (serverStatus === 'PAID') {
               navigateToSuccess();
             } else if (serverStatus === 'FAILED') {
-              Alert.alert(t('payment.paymentFailed'), t('payment.retryPayment'));
+              showMessageBox({ type: 'error', title: t('payment.paymentFailed'), message: t('payment.retryPayment'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
             } else {
               if (!pollingStarted.current) {
                 pollingStarted.current = true;
@@ -351,7 +346,6 @@ export default function ResumePaymentScreen({ navigation, route }) {
           Paymob.presentPayVC(data.clientSecret, PAYMOB_PUBLIC_KEY);
           if (!pollingStarted.current) {
             pollingStarted.current = true;
-            console.log('[Paymob] Resume: starting immediate polling fallback');
             pollTimer.current = setTimeout(() => {
               if (mountedRef.current && !navigatedRef.current) {
                 startPolling();
@@ -361,7 +355,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
         } catch (err) {
           console.error('[Paymob] Resume presentPayVC error:', err);
           setProcessing(false);
-          Alert.alert(t('common.error'), t('payment.paymentInitFailed'));
+          showMessageBox({ type: 'error', title: t('common.error'), message: t('payment.paymentInitFailed'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
         }
       } else {
         const refetched = await db.getOrder(orderId).catch(() => null);
@@ -378,7 +372,7 @@ export default function ResumePaymentScreen({ navigation, route }) {
     } catch (error) {
       setProcessing(false);
       console.error('Resume payment error:', error);
-      Alert.alert(t('common.error'), t('resumePayment.codConfirmError'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('resumePayment.codConfirmError'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
     }
   };
 

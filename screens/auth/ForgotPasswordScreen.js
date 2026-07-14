@@ -1,26 +1,28 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native';
 import { Mail, ChevronRight } from 'lucide-react-native';
 import { supabase } from '../../services/supabase';
 import { useTranslation } from '../../context/AppSettingsContext';
+import { useMessageBox } from '../../context/MessageBoxContext';
 import { useDirection } from '../../hooks/useDirection';
 import Button from '../../components/Button';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const { t } = useTranslation();
   const dir = useDirection();
+  const { showMessageBox } = useMessageBox();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleReset = async () => {
     if (!email) {
-      Alert.alert(t('common.error'), t('auth.enterEmail'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.enterEmail') });
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert(t('common.error'), t('auth.invalidEmail'));
+      showMessageBox({ type: 'error', title: t('common.error'), message: t('auth.invalidEmail') });
       return;
     }
     setLoading(true);
@@ -29,7 +31,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       if (error) throw error;
       navigation.navigate('Otp', { email, type: 'recovery' });
     } catch (err) {
-      Alert.alert(t('common.error'), err.message);
+      showMessageBox({ type: 'error', title: t('common.error'), message: err.message });
     } finally {
       setLoading(false);
     }

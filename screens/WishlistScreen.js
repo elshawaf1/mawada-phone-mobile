@@ -9,11 +9,12 @@ import { COLORS } from '../constants';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/AppSettingsContext';
+import { localizedName } from '../utils/helpers';
 
 export default function WishlistScreen({ navigation }) {
   const { addToCart, removeFromCart, isInCart, favorites, fetchFavorites, toggleFavorite } = useApp();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function WishlistScreen({ navigation }) {
       removeFromCart(product.id);
     } else {
       addToCart({
-        id: product.id, productId: product.id, title: product.nameAr,
+        id: product.id, productId: product.id, title: localizedName(product, locale),
         price: product.usePriceRange ? (product.minPrice || product.basePrice) : (product.isOnSale && product.salePrice ? product.salePrice : product.basePrice),
         image: product.product_images?.find(img => img.isPrimary)?.url || product.product_images?.[0]?.url || null, variantId: null,
       });

@@ -276,7 +276,6 @@ function QuickActions({ navigation, t }) {
 
   const actions = [
     { key: 'wishlist', label: t('wishlist.title') || 'المفضلة', screen: 'Favorites', bg: '#FEF2F2', iconColor: '#DC2626' },
-    { key: 'recent', label: t('recentlyViewed.title') || 'تم العرض مؤخراً', screen: 'RecentlyViewed', bg: '#EFF6FF', iconColor: '#2563EB' },
     { key: 'offers', label: t('offers.title') || 'العروض', screen: 'Offers', bg: '#FEF5D7', iconColor: '#D97706' },
   ];
 
@@ -338,7 +337,7 @@ function HomepageSections({ products, navigation, onAddToCart, inCartMap, addedM
           <View key={section.id} style={styles.featuredSection}>
             <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
               <Text style={styles.sectionTitle}>{locale === 'ar' ? section.nameAr : section.name}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Search')}>
+              <TouchableOpacity onPress={() => navigation.navigate('SectionProducts', { sectionId: section.id, sectionName: locale === 'ar' ? section.nameAr : section.name })}>
                 <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
               </TouchableOpacity>
             </View>

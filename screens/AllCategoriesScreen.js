@@ -9,11 +9,12 @@ import { supabase } from '../services/supabase';
 import { COLORS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName, localizedDescription } from '../utils/helpers';
 
 const BGS = ['#0F172A', '#1E293B', '#3B82F6', '#334155', '#1a1a2e', '#16213e'];
 
 export default function AllCategoriesScreen({ navigation }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +73,7 @@ export default function AllCategoriesScreen({ navigation }) {
           <TouchableOpacity
             style={styles.card}
             activeOpacity={0.85}
-            onPress={() => navigation.navigate('CategoryProducts', { categoryId: item.id, categoryName: item.nameAr })}
+            onPress={() => navigation.navigate('CategoryProducts', { categoryId: item.id, categoryName: localizedName(item, locale) })}
           >
             <View style={[styles.cardRow, { flexDirection: dir.row }]}>
               <View style={styles.imageWrap}>
@@ -87,11 +88,11 @@ export default function AllCategoriesScreen({ navigation }) {
 
               <View style={styles.cardInfo}>
                 <Text style={[styles.catName, { textAlign: dir.textAlign }]} numberOfLines={1}>
-                  {item.nameAr || item.name}
+                  {localizedName(item, locale)}
                 </Text>
-                {item.descriptionAr ? (
+                {localizedDescription(item, locale) ? (
                   <Text style={[styles.catDesc, { textAlign: dir.textAlign }]} numberOfLines={1}>
-                    {item.descriptionAr}
+                    {localizedDescription(item, locale)}
                   </Text>
                 ) : null}
               </View>

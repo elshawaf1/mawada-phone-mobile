@@ -13,13 +13,14 @@ import { useApp } from '../context/AppContext';
 import { supabase } from '../services/supabase';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName } from '../utils/helpers';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
 export default function CategoryProductsScreen({ navigation, route }) {
   const { categoryId, categoryName } = route?.params || {};
   const { addToCart, removeFromCart, isInCart } = useApp();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -82,7 +83,7 @@ export default function CategoryProductsScreen({ navigation, route }) {
       removeFromCart(product.id);
     } else {
       addToCart({
-        id: product.id, productId: product.id, title: product.nameAr,
+        id: product.id, productId: product.id, title: localizedName(product, locale),
         price: product.usePriceRange ? (product.minPrice || product.basePrice) : (product.isOnSale && product.salePrice ? product.salePrice : product.basePrice),
         image: product.product_images?.find(img => img.isPrimary)?.url || product.product_images?.[0]?.url || null, variantId: null,
       });
@@ -198,7 +199,7 @@ export default function CategoryProductsScreen({ navigation, route }) {
                       <View style={[styles.radio, active && styles.radioActive]}>
                         {active && <View style={styles.radioDot} />}
                       </View>
-                      <Text style={styles.sortOptionText}>{brand.nameAr || brand.name}</Text>
+                      <Text style={styles.sortOptionText}>{localizedName(brand, locale)}</Text>
                     </TouchableOpacity>
                   );
                 })}

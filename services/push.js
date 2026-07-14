@@ -42,11 +42,9 @@ function isExpoGoSimulator() {
 export async function registerForPushNotificationsAsync() {
   try {
     if (!Device.isDevice) {
-      console.log('Push notifications require a physical device.');
       return null;
     }
     if (isExpoGoSimulator()) {
-      console.log('Push notifications unavailable in iOS simulator.');
       return null;
     }
 
@@ -59,7 +57,6 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Notification permission not granted.');
       return null;
     }
 

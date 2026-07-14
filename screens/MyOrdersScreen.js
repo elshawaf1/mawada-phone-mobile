@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   StatusBar,
-  Alert,
   Animated,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -21,6 +20,7 @@ import { COLORS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { useMessageBox } from '../context/MessageBoxContext';
 
 const STATUS_COLORS = {
   PENDING: { bg: '#FEF3C7', text: '#92400E', accent: '#F59E0B' },
@@ -62,6 +62,7 @@ export default function MyOrdersScreen({ navigation }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { showMessageBox } = useMessageBox();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -161,26 +162,27 @@ export default function MyOrdersScreen({ navigation }) {
   }, [fetchOrders, animValues]);
 
   const handleDelete = useCallback((order) => {
-    Alert.alert(
-      t('common.delete'),
-      t('orders.deleteConfirm', { number: order.orderNumber }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
+    showMessageBox({
+      type: 'warning',
+      title: t('common.delete'),
+      message: t('orders.deleteConfirm', { number: order.orderNumber }),
+      buttons: [
+        { text: t('common.cancel'), style: 'secondary' },
         {
           text: t('common.delete'),
-          style: 'destructive',
+          style: 'primary',
           onPress: async () => {
             try {
               await db.deleteOrder(order.id, user?.id);
               setOrders((prev) => prev.filter((o) => o.id !== order.id));
             } catch (error) {
               console.error('Error deleting order:', error);
-              Alert.alert(t('common.error'), t('orders.deleteFailed'));
+              showMessageBox({ type: 'error', title: t('common.error'), message: t('orders.deleteFailed'), buttons: [{ text: t('common.ok'), style: 'primary' }] });
             }
           },
         },
       ]
-    );
+    });
   }, []);
 
   const handleTabPress = (key) => {

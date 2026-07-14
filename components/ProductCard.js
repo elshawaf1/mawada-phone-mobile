@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { COLORS, RADIUS, FONT_SIZES, FONT_WEIGHTS, SCREEN, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName } from '../utils/helpers';
 
 const CARD_W = (SCREEN.width - 24) / 2;
 
@@ -22,7 +23,7 @@ export default function ProductCard({
   isFavorite,
   onToggleFavorite,
 }) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const dir = useDirection();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -35,7 +36,7 @@ export default function ProductCard({
   const price = isPriceRange ? null : (item.isOnSale && item.salePrice ? item.salePrice : item.basePrice);
   const oldPrice = !isPriceRange && item.isOnSale && item.salePrice ? item.basePrice : null;
   const hasRating = item.rating != null && item.rating > 0;
-  const brandName = item.brands?.nameAr || item.brands?.name || null;
+  const brandName = localizedName(item.brands, locale) || null;
   const hasSoldCount = item.soldCount != null && item.soldCount > 0;
   const discountPercent = oldPrice ? Math.round((1 - price / oldPrice) * 100) : 0;
   const lowStock = item.totalStock != null && item.totalStock > 0 && item.totalStock <= 3;
@@ -124,7 +125,7 @@ export default function ProductCard({
             <Text style={[styles.brandName, { textAlign: dir.textAlign }]} numberOfLines={1} ellipsizeMode="tail">{brandName}</Text>
           )}
 
-          <Text style={[styles.title, { textAlign: dir.textAlign }]} numberOfLines={5} ellipsizeMode="tail">{item.nameAr}</Text>
+          <Text style={[styles.title, { textAlign: dir.textAlign }]} numberOfLines={5} ellipsizeMode="tail">{localizedName(item, locale)}</Text>
 
           <View style={[styles.metaRow, { flexDirection: dir.row }]}>
             {hasRating && (

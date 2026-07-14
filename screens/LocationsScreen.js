@@ -17,10 +17,11 @@ import { db } from '../services/api';
 import { COLORS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
+import { localizedName } from '../utils/helpers';
 
 export default function LocationsScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { t, weekdays } = useTranslation();
+  const { t, locale, weekdays } = useTranslation();
   const dir = useDirection();
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,7 @@ export default function LocationsScreen({ navigation, route }) {
                     </Text>
                   </View>
                   <View style={[styles.branchNameBlock, { alignItems: dir.alignItems }]}>
-                    <Text style={[styles.branchName, { textAlign: dir.textAlign }]}>{branch.nameAr || branch.name}</Text>
+                    <Text style={[styles.branchName, { textAlign: dir.textAlign }]}>{localizedName(branch, locale)}</Text>
                     {branch.addressAr && <Text style={styles.branchArea}>{branch.addressAr}</Text>}
                   </View>
                 </View>
