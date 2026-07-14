@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  ScrollView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../services/supabase';
@@ -160,7 +161,7 @@ export default function OtpVerificationScreen({ navigation, route }) {
         onBack={() => navigation.goBack()}
       />
 
-      <View style={styles.inner}>
+      <ScrollView style={styles.inner} keyboardShouldPersistTaps="handled">
 
         <Text style={[styles.infoText, { textAlign: dir.textAlign }]}>
           {isSignup ? t('auth.otpSubtitle') : t('auth.resetPasswordDesc')}
@@ -226,14 +227,14 @@ export default function OtpVerificationScreen({ navigation, route }) {
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  inner: { flex: 1, paddingHorizontal: 24, justifyContent: 'flex-start' },
+  inner: { flex: 1, paddingHorizontal: 24 },
   infoText: {
     color: '#64748B',
     fontSize: 15,
