@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
-  StyleSheet, View, FlatList, RefreshControl, Text,
+  StyleSheet, View, FlatList, RefreshControl,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../components/ScreenHeader';
+import EmptyState from '../components/EmptyState';
 import ProductCard from '../components/ProductCard';
 import { COLORS } from '../constants';
 import { useApp } from '../context/AppContext';
@@ -44,11 +44,11 @@ export default function WishlistScreen({ navigation }) {
     return (
       <View style={styles.root}>
         <ScreenHeader title={t('wishlist.title')} onBack={() => navigation.goBack()} />
-        <View style={styles.emptyContainer}>
-          <Ionicons name="heart-outline" size={64} color={COLORS.gray200} />
-          <Text style={styles.emptyTitle}>{t('wishlist.empty')}</Text>
-          <Text style={styles.emptySubtitle}>{t('wishlist.emptySub')}</Text>
-        </View>
+        <EmptyState
+          icon="heart-outline"
+          title={t('wishlist.empty') || 'No favorites yet'}
+          subtitle={t('wishlist.emptySub') || 'Tap the heart icon on any product to save it here'}
+        />
       </View>
     );
   }
@@ -85,7 +85,4 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.white },
   listContent: { padding: 16, paddingBottom: 100 },
   columnWrapper: { gap: 10, marginBottom: 12 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
-  emptySubtitle: { fontSize: 14, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 20 },
 });

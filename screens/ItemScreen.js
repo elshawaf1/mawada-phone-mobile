@@ -32,6 +32,7 @@ import { useDirection } from '../hooks/useDirection';
 import { localizedName, localizedDescription } from '../utils/helpers';
 import { useMessageBox } from '../context/MessageBoxContext';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { hapticTap, hapticSuccess } from '../utils/haptics';
 
 const { width } = Dimensions.get('window');
 
@@ -110,6 +111,7 @@ export default function ItemScreen({ navigation, route }) {
       Gesture.Tap()
         .numberOfTaps(2)
         .onEnd(() => {
+          hapticTap();
           toggleFavorite(product, user?.id);
         }),
     [product, user?.id]
@@ -242,6 +244,7 @@ export default function ItemScreen({ navigation, route }) {
       ? Number(selectedVariant.price) || Number(product.basePrice)
       : isPriceRange ? Number(product.minPrice) : Number(product.basePrice);
 
+    hapticSuccess();
     addToCart({
       id: product.id,
       productId: product.id,
@@ -267,12 +270,36 @@ export default function ItemScreen({ navigation, route }) {
 
     setSubmitting(true);
     try {
+      // Check if user has purchased this product
+      let isVerified = false;
+      try {
+        const { data: orderItems } = await supabase
+          .from('order_items')
+          .select('id')
+          .eq('productId', productId)
+          .limit(1);
+        
+        if (orderItems && orderItems.length > 0) {
+          // Check if any of those order items belong to a completed order by this user
+          const { data: userOrders } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('userId', user.id)
+            .in('status', ['delivered', 'completed', 'paid'])
+            .limit(1);
+          isVerified = userOrders && userOrders.length > 0;
+        }
+      } catch (e) {
+        // Silent fail — default to not verified
+      }
+
       const { error } = await supabase.from('reviews').insert({
         userId: user.id,
         productId,
         rating: newRating,
         comment: newComment.trim() || null,
         isVisible: true,
+        isVerifiedPurchase: isVerified,
       });
 
       if (error) throw error;
@@ -284,6 +311,7 @@ export default function ItemScreen({ navigation, route }) {
         rating: newRating,
         comment: newComment.trim() || null,
         isVisible: true,
+        isVerifiedPurchase: isVerified,
         createdAt: new Date().toISOString(),
         profiles: { name: user.name || '' },
       };
@@ -363,7 +391,10 @@ export default function ItemScreen({ navigation, route }) {
         rightAction={
           <View style={{ flexDirection: dir.row, gap: 6, alignItems: 'center' }}>
             <TouchableOpacity
-              onPress={() => toggleFavorite(product, user?.id)}
+              onPress={() => {
+                hapticTap();
+                toggleFavorite(product, user?.id);
+              }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons
@@ -687,7 +718,15 @@ export default function ItemScreen({ navigation, route }) {
                           </Text>
                         </View>
                         <View>
-                          <Text style={styles.reviewUserName}>{review.profiles?.name || t('item.user')}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={styles.reviewUserName}>{review.profiles?.name || t('item.user')}</Text>
+                            {review.isVerifiedPurchase && (
+                              <View style={styles.verifiedBadge}>
+                                <Ionicons name="checkmark-circle" size={10} color="#22C55E" />
+                                <Text style={styles.verifiedText}>{t('item.verifiedPurchase') || 'Verified'}</Text>
+                              </View>
+                            )}
+                          </View>
                           <StarRating rating={review.rating} size={11} spacing={1} />
                         </View>
                       </View>
@@ -893,6 +932,20 @@ const styles = StyleSheet.create({
   reviewUserName: { fontSize: 13, fontWeight: '700', color: COLORS.black, textAlign: 'right', marginBottom: 2 },
   reviewTime: { fontSize: 11, color: COLORS.gray400 },
   reviewComment: { fontSize: 13, color: COLORS.gray500, textAlign: 'right', lineHeight: 20 },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  verifiedText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#22C55E',
+  },
 
   stickyBottom: {
     position: 'absolute', bottom: 0, left: 0, right: 0,

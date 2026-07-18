@@ -17,6 +17,7 @@ import { db } from '../services/api';
 import { supabase } from '../services/supabase';
 import { COLORS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
+import EmptyState from '../components/EmptyState';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 
@@ -336,20 +337,13 @@ export default function MyOrdersScreen({ navigation }) {
         }
       >
         {orders.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconWrap}>
-              <Ionicons name="receipt-outline" size={48} color="#CBD5E1" />
-            </View>
-            <Text style={styles.emptyTitle}>{t('orders.empty')}</Text>
-            <Text style={styles.emptySubtitle}>{t('orders.emptySub')}</Text>
-            <TouchableOpacity
-              style={styles.shopButton}
-              activeOpacity={0.85}
-              onPress={() => navigation.navigate('Home')}
-            >
-              <Text style={styles.shopButtonText}>{t('orders.shopNow')}</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState
+            icon="receipt-outline"
+            title={t('orders.empty') || 'No orders yet'}
+            subtitle={t('orders.emptySub') || 'Your order history will appear here'}
+            actionLabel={t('orders.startShopping') || 'Start Shopping'}
+            onAction={() => navigation.navigate('Home')}
+          />
         ) : filtered.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconWrap}>

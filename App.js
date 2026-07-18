@@ -194,7 +194,7 @@ function AppInner() {
           disabled={noSwipeBackScreens.includes(currentScreen)}
           isNavigatingRef={isNavigatingRef}
         >
-          <ScreenTransition key={currentScreen} type={navDirection}>
+          <ScreenTransition type={navDirection}>
             <ActiveScreen
               navigation={navigation}
               route={{ params: routeParams }}

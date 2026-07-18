@@ -18,6 +18,7 @@ import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { localizedName } from '../utils/helpers';
+import { hapticTap, hapticSuccess } from '../utils/haptics';
 
 const ITEM_WIDTH = (SCREEN.width - 48) / 2;
 const PAGE_SIZE = 20;
@@ -220,8 +221,10 @@ export default function SearchScreen({ navigation, route }) {
 
   const handleAddToCart = (product) => {
     if (isInCart(product.id)) {
+      hapticTap();
       removeFromCart(product.id);
     } else {
+      hapticSuccess();
       addToCart({
         id: product.id, productId: product.id, title: localizedName(product, locale),
         price: product.usePriceRange ? (product.minPrice || product.basePrice) : (product.isOnSale && product.salePrice ? product.salePrice : product.basePrice),
@@ -274,7 +277,7 @@ export default function SearchScreen({ navigation, route }) {
         inCart={isInCart(item.id)}
         justAdded={addedMap[item.id]}
         isFavorite={isFavorite(item.id)}
-        onToggleFavorite={() => toggleFavorite(item, user?.id)}
+        onToggleFavorite={() => { hapticTap(); toggleFavorite(item, user?.id); }}
       />
     </View>
   ), [addedMap, isInCart, isFavorite, user]);

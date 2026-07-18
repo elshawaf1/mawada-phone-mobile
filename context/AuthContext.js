@@ -93,25 +93,41 @@ export function AuthProvider({ children }) {
         throw new Error(msg);
       }
 
-      let profile = await fetchProfileWithRetry(data.user.id);
+      // Set user immediately from auth metadata — no blocking
+      const authUser = data.user;
+      const immediateProfile = {
+        id: authUser.id,
+        name: authUser.user_metadata?.name || '',
+        email: authUser.email || '',
+        phone: authUser.user_metadata?.phone || '',
+        role: 'CUSTOMER',
+      };
+      lastFetchedUserId.current = authUser.id;
+      setUser(immediateProfile);
+      savePushTokenForUser(authUser.id);
 
-      if (!profile) {
-        profile = await createProfile(
-          data.user.id,
-          data.user.user_metadata?.name,
-          data.user.email,
-          data.user.user_metadata?.phone
-        );
-      }
+      // Fetch real profile in background (non-blocking)
+      (async () => {
+        try {
+          let profile = await fetchProfileWithRetry(authUser.id);
+          if (!profile) {
+            profile = await createProfile(
+              authUser.id,
+              authUser.user_metadata?.name,
+              authUser.email,
+              authUser.user_metadata?.phone
+            );
+          }
+          if (profile) {
+            lastFetchedUserId.current = profile.id;
+            setUser(profile);
+          }
+        } catch (e) {
+          console.warn('[Auth] Background profile fetch failed:', e.message);
+        }
+      })();
 
-      if (!profile) {
-        throw new Error('فشل في تحميل بيانات حسابك. حاول مرة أخرى');
-      }
-
-      lastFetchedUserId.current = profile.id;
-      setUser(profile);
-      savePushTokenForUser(profile.id);
-      return profile;
+      return immediateProfile;
     } finally {
       authInProgress.current = false;
     }
@@ -239,20 +255,51 @@ export function AuthProvider({ children }) {
         }
 
         if (session?.user) {
-          const profile = await fetchProfileWithRetry(session.user.id);
+          const authUser = session.user;
+          // Set user immediately from auth metadata
+          const immediateProfile = {
+            id: authUser.id,
+            name: authUser.user_metadata?.name || '',
+            email: authUser.email || '',
+            phone: authUser.user_metadata?.phone || '',
+            role: 'CUSTOMER',
+          };
           if (!cancelled) {
-            if (profile) {
-              setUser(profile);
-              lastFetchedUserId.current = profile.id;
-              savePushTokenForUser(profile.id);
-              const { count } = await supabase
-                .from('notifications')
-                .select('id', { count: 'exact', head: true })
-                .eq('userId', profile.id)
-                .eq('isRead', false);
-              setBadgeCountAsync(count || 0);
-            }
+            setUser(immediateProfile);
+            lastFetchedUserId.current = authUser.id;
+            savePushTokenForUser(authUser.id);
           }
+
+          // Fetch real profile in background
+          (async () => {
+            try {
+              const profile = await fetchProfileWithRetry(authUser.id);
+              if (!cancelled && profile) {
+                lastFetchedUserId.current = profile.id;
+                setUser(profile);
+                const { count } = await supabase
+                  .from('notifications')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('userId', profile.id)
+                  .eq('isRead', false);
+                setBadgeCountAsync(count || 0);
+              } else if (!cancelled && !profile) {
+                // Profile doesn't exist yet — create it
+                const newProfile = await createProfile(
+                  authUser.id,
+                  authUser.user_metadata?.name,
+                  authUser.email,
+                  authUser.user_metadata?.phone
+                );
+                if (!cancelled && newProfile) {
+                  lastFetchedUserId.current = newProfile.id;
+                  setUser(newProfile);
+                }
+              }
+            } catch (e) {
+              console.warn('[Auth] Background profile fetch failed:', e.message);
+            }
+          })();
         }
       } catch (e) {
         console.warn('[Auth] Session check failed:', e.message);

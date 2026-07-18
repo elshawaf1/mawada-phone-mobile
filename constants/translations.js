@@ -119,6 +119,9 @@ const ar = {
     sold: 'مَبِيع',
     remainingStock: 'مُتَبَقِّي {count}',
     soldCount: '{count} مُبَاع',
+    bestseller: 'الأكثر مبيعا',
+    trending: 'رائج',
+    verifiedPurchase: 'مشتري موثوق',
   },
   cart: {
     title: 'السَّلَّة', empty: 'السَّلَّة فَارِغَة', emptySub: 'أَضِف مُنْتَجَات مِن الْمَتْجَر لِتَظْهَر هُنَا',
@@ -488,6 +491,9 @@ const en = {
     sold: 'Sold',
     remainingStock: '{count} left',
     soldCount: '{count} sold',
+    bestseller: 'Bestseller',
+    trending: 'Trending',
+    verifiedPurchase: 'Verified',
   },
   cart: {
     title: 'Cart', empty: 'Cart is empty', emptySub: 'Add products from the store to see them here',

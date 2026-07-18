@@ -40,6 +40,8 @@ export default function ProductCard({
   const hasSoldCount = item.soldCount != null && item.soldCount > 0;
   const discountPercent = oldPrice ? Math.round((1 - price / oldPrice) * 100) : 0;
   const lowStock = item.totalStock != null && item.totalStock > 0 && item.totalStock <= 3;
+  const isBestseller = item.soldCount != null && item.soldCount >= 50;
+  const isTrending = hasRating && item.rating >= 4.5 && item.reviewCount != null && item.reviewCount >= 5;
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true, friction: 8, tension: 200 }).start();
@@ -99,6 +101,19 @@ export default function ProductCard({
             </View>
           )}
 
+          {isBestseller && (
+            <View style={styles.bestsellerBadge}>
+              <Ionicons name="flame" size={9} color="#FFF" />
+              <Text style={styles.badgeText}>{t('item.bestseller') || 'Bestseller'}</Text>
+            </View>
+          )}
+
+          {isTrending && (
+            <View style={[styles.trendingBadge, isBestseller && { bottom: 32 }]}>
+              <Ionicons name="trending-up" size={9} color="#FFF" />
+              <Text style={styles.badgeText}>{t('item.trending') || 'Trending'}</Text>
+            </View>
+          )}
 
           {lowStock && (
             <View style={styles.stockBadge}>
@@ -224,6 +239,36 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 9,
     fontWeight: '600',
+  },
+
+  bestsellerBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F97316',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  trendingBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeText: {
+    color: COLORS.white,
+    fontSize: 9,
+    fontWeight: '700',
   },
 
   cartBtnWrap: {

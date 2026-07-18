@@ -32,11 +32,24 @@ import { setBadgeCountAsync } from '../services/push';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { localizedName, localizedDescription } from '../utils/helpers';
+import { hapticTap, hapticSuccess } from '../utils/haptics';
 
 const { width } = Dimensions.get('window');
 const BANNER_W = width - 32;
 
 const searchAnim = require('../assets/wired-outline-19-magnifier-zoom-search-hover-spin.json');
+
+// Module-level cache — persists across remounts, shows data instantly
+let _cachedProducts = null;
+let _cachedBanners = null;
+let _cachedBrands = null;
+let _cachedCategories = null;
+let _cachedBundles = null;
+let _lastFetchTime = 0;
+const CACHE_TTL = 30000; // 30 seconds
+
+// Module-level scroll position — restored after remount
+let _homeScrollY = 0;
 
 function SearchBar({ onPress, t }) {
   const lottieRef = useRef(null);
@@ -449,12 +462,13 @@ export default function HomeScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [activeBrand, setActiveBrand] = useState('all');
   const [activeCondition, setActiveCondition] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!_cachedProducts);
   const [error, setError] = useState(null);
   const [addedMap, setAddedMap] = useState({});
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [bundles, setBundles] = useState([]);
+  const flatListRef = useRef(null);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -492,7 +506,22 @@ export default function HomeScreen({ navigation }) {
 
   const fetchData = async (isRefresh = false) => {
     try {
-      if (!isRefresh) setLoading(true);
+      const now = Date.now();
+      const cacheValid = _cachedProducts && (now - _lastFetchTime) < CACHE_TTL;
+
+      // Show cached data instantly (no skeleton flash)
+      if (_cachedProducts) {
+        setBanners(_cachedBanners || []);
+        setBrands(_cachedBrands || []);
+        setCategories(_cachedCategories || []);
+        setProducts(_cachedProducts);
+        setBundles(_cachedBundles || []);
+        setLoading(false);
+        // If cache is still fresh, skip the network call
+        if (cacheValid && !isRefresh) return;
+      } else if (!isRefresh) {
+        setLoading(true);
+      }
       setError(null);
 
       const [bannersRes, brandsRes, categoriesRes, productsRes, reviewsRes] = await Promise.all([
@@ -544,12 +573,23 @@ export default function HomeScreen({ navigation }) {
         };
       });
 
-      setBanners(bannersRes.data || []);
-      setBrands(brandsRes.data || []);
-      setCategories(categoriesRes.data || []);
-      setProducts(productsWithRatings);
-
+      const newBanners = bannersRes.data || [];
+      const newBrands = brandsRes.data || [];
+      const newCategories = categoriesRes.data || [];
       const bundlesData = await db.getActiveBundles().catch(() => []);
+
+      // Update cache
+      _cachedProducts = productsWithRatings;
+      _cachedBanners = newBanners;
+      _cachedBrands = newBrands;
+      _cachedCategories = newCategories;
+      _cachedBundles = bundlesData;
+      _lastFetchTime = Date.now();
+
+      setBanners(newBanners);
+      setBrands(newBrands);
+      setCategories(newCategories);
+      setProducts(productsWithRatings);
       setBundles(bundlesData);
     } catch (err) {
       setError(err.message);
@@ -560,8 +600,10 @@ export default function HomeScreen({ navigation }) {
 
   const handleAddToCart = useCallback((product) => {
     if (isInCart(product.id)) {
+      hapticTap();
       removeFromCart(product.id);
     } else {
+      hapticSuccess();
       addToCart({
         id: product.id,
         productId: product.id,
@@ -574,6 +616,16 @@ export default function HomeScreen({ navigation }) {
       setTimeout(() => setAddedMap((prev) => ({ ...prev, [product.id]: false })), 1200);
     }
   }, [addToCart, removeFromCart, isInCart]);
+
+  const restoreScrollPosition = useCallback(() => {
+    if (_homeScrollY > 0 && flatListRef.current) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          flatListRef.current?.scrollToOffset({ offset: _homeScrollY, animated: false });
+        });
+      });
+    }
+  }, []);
 
   const filteredProducts = products.filter(p => {
     if (p.homeSection) return false;
@@ -617,6 +669,14 @@ export default function HomeScreen({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
 
       <FlatList
+        ref={flatListRef}
+        onScroll={(e) => { _homeScrollY = e.nativeEvent.contentOffset.y; }}
+        scrollEventThrottle={16}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={8}
+        windowSize={11}
+        initialNumToRender={8}
+        onContentSizeChange={() => restoreScrollPosition()}
         data={filteredProducts}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
