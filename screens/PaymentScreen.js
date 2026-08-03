@@ -733,7 +733,7 @@ export default function PaymentScreen({ navigation, route }) {
             onPress={() => setDeliveryType('delivery')}
             activeOpacity={0.7}
           >
-            <MapPin size={16} color={deliveryType === 'delivery' ? '#fff' : '#64748B'} />
+            <MapPin size={16} color={deliveryType === 'delivery' ? '#fff' : '#6B7280'} />
             <Text style={[styles.segmentText, deliveryType === 'delivery' && styles.segmentTextActive]}>
               {t('payment.delivery')}
             </Text>
@@ -743,7 +743,7 @@ export default function PaymentScreen({ navigation, route }) {
             onPress={() => setDeliveryType('branch')}
             activeOpacity={0.7}
           >
-            <MapPin size={16} color={deliveryType === 'branch' ? '#fff' : '#64748B'} />
+            <MapPin size={16} color={deliveryType === 'branch' ? '#fff' : '#6B7280'} />
             <Text style={[styles.segmentText, deliveryType === 'branch' && styles.segmentTextActive]}>
               {t('payment.pickup')}
             </Text>
@@ -755,7 +755,7 @@ export default function PaymentScreen({ navigation, route }) {
           <View style={styles.locModule}>
             {loading ? (
               <View style={styles.cardLoading}>
-                <ActivityIndicator size="small" color="#94A3B8" />
+                <ActivityIndicator size="small" color="#6B7280" />
               </View>
             ) : deliveryAddress ? (
               <View style={[styles.locLayer, { flexDirection: dir.row }]}>
@@ -777,7 +777,7 @@ export default function PaymentScreen({ navigation, route }) {
                   onPress={() => navigation.navigate('DeliveryLocations', { onReturn: setDeliveryAddress })}
                   activeOpacity={0.7}
                 >
-                  <Edit3 size={15} color="#3B82F6" strokeWidth={2.2} />
+                  <Edit3 size={15} color="#0F172A" strokeWidth={2.2} />
                 </TouchableOpacity>
               </View>
             ) : (
@@ -810,7 +810,7 @@ export default function PaymentScreen({ navigation, route }) {
                 <Text style={[styles.locDetail, { textAlign: dir.textAlign }]}>{selectedBranch?.address || selectedBranch?.addressAr || ''}</Text>
               </View>
               <TouchableOpacity style={styles.locEditBtn} onPress={() => navigation.navigate('Locations', { onReturn: setSelectedBranch })} activeOpacity={0.7}>
-                <Edit3 size={15} color="#3B82F6" strokeWidth={2.2} />
+                <Edit3 size={15} color="#0F172A" strokeWidth={2.2} />
               </TouchableOpacity>
             </View>
           </View>
@@ -833,7 +833,7 @@ export default function PaymentScreen({ navigation, route }) {
                 style={[
                   styles.methodItem,
                   { flexDirection: dir.row },
-                  isSelected && { borderColor: '#16A34A', backgroundColor: '#F0FDF4' },
+                  isSelected && { borderColor: '#0F172A', backgroundColor: 'rgba(15,23,42,0.03)' },
                 ]}
                 onPress={() => {
                   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -841,16 +841,16 @@ export default function PaymentScreen({ navigation, route }) {
                 }}
                 activeOpacity={0.7}
               >
-                <View style={[styles.methodIconCircle, { backgroundColor: isSelected ? '#16A34A' : '#F1F5F9' }]}>
+                <View style={[styles.methodIconCircle, { backgroundColor: isSelected ? '#0F172A' : 'rgba(0,0,0,0.04)' }]}>
                   {iconImage ? (
                     <Image source={iconImage} style={[styles.methodIconImage, !isSelected && { opacity: 0.35 }]} resizeMode="contain" />
                   ) : (
-                    <Icon size={20} color={isSelected ? '#fff' : '#94A3B8'} />
+                    <Icon size={20} color={isSelected ? '#fff' : '#6B7280'} />
                   )}
                 </View>
                 <View style={styles.methodTextCol}>
-                  <Text style={[styles.methodName, { textAlign: dir.textAlign }, isSelected && { color: '#16A34A' }]}>{label}</Text>
-                  <Text style={[styles.methodDesc, { textAlign: dir.textAlign }, !isSelected && { color: '#CBD5E1' }]}>{hint}</Text>
+                  <Text style={[styles.methodName, { textAlign: dir.textAlign }, isSelected && { color: '#0F172A' }]}>{label}</Text>
+                  <Text style={[styles.methodDesc, { textAlign: dir.textAlign }, !isSelected && { color: '#6B7280' }]}>{hint}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -872,7 +872,7 @@ export default function PaymentScreen({ navigation, route }) {
               <Text style={[styles.summaryTotalInline, { textAlign: dir.textAlign }]}>{items.length} {t('common.product')}</Text>
             </View>
             <Animated.View style={{ transform: [{ rotate: productsExpanded ? '180deg' : '0deg' }] }}>
-              <ChevronDown size={18} color="#94A3B8" />
+              <ChevronDown size={18} color="#6B7280" />
             </Animated.View>
           </TouchableOpacity>
 
@@ -884,7 +884,7 @@ export default function PaymentScreen({ navigation, route }) {
                   {item.image ? (
                     <Image source={{ uri: item.image }} style={styles.productItemImage} />
                   ) : (
-                    <View style={[styles.productItemImage, { backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }]}>
+                    <View style={[styles.productItemImage, { backgroundColor: 'rgba(0,0,0,0.04)', alignItems: 'center', justifyContent: 'center' }]}>
                       <Text style={{ fontSize: 16, color: '#CBD5E1' }}>📦</Text>
                     </View>
                   )}
@@ -914,7 +914,7 @@ export default function PaymentScreen({ navigation, route }) {
               <Text style={[styles.summaryTotalInline, { textAlign: dir.textAlign }]}>{formatPrice(total)} {t('common.egp')}</Text>
             </View>
             <Animated.View style={{ transform: [{ rotate: summaryExpanded ? '180deg' : '0deg' }] }}>
-              <ChevronDown size={18} color="#94A3B8" />
+              <ChevronDown size={18} color="#6B7280" />
             </Animated.View>
           </TouchableOpacity>
 
@@ -1112,15 +1112,12 @@ export default function PaymentScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#F8F9FC' },
   headerContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     paddingBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   headerContent: {
     flexDirection: 'row',
@@ -1130,10 +1127,11 @@ const styles = StyleSheet.create({
     height: 44,
   },
   backButton: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center',
+    width: 38, height: 38, borderRadius: 10,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: '#F8F9FC', alignItems: 'center', justifyContent: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', textAlign: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: '600', color: '#1A1D26', textAlign: 'center', letterSpacing: -0.3 },
   spacer: { width: 38 },
 
   stepRow: {
@@ -1145,14 +1143,14 @@ const styles = StyleSheet.create({
   },
   stepDot: {
     width: 24, height: 24, borderRadius: 12,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: 'rgba(0,0,0,0.06)',
     alignItems: 'center', justifyContent: 'center',
   },
   stepDotActive: { backgroundColor: '#0F172A' },
   stepDotCurrent: { backgroundColor: '#0F172A', shadowColor: '#0F172A', shadowOpacity: 0.3, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 3 },
-  stepNum: { fontSize: 11, fontWeight: '700', color: '#94A3B8' },
+  stepNum: { fontSize: 11, fontWeight: '700', color: '#6B7280' },
   stepNumActive: { color: '#fff' },
-  stepLine: { width: 40, height: 1.5, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
+  stepLine: { width: 40, height: 1.5, backgroundColor: 'rgba(0,0,0,0.06)', marginHorizontal: 4 },
   stepLineActive: { backgroundColor: '#0F172A' },
 
   scrollContent: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 40 },
@@ -1162,8 +1160,8 @@ const styles = StyleSheet.create({
 
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
-    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    borderRadius: 10,
     padding: 3,
     marginBottom: 16,
   },
@@ -1171,12 +1169,12 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 10,
     flexDirection: 'row',
     justifyContent: 'center', alignItems: 'center',
-    borderRadius: 11, gap: 6,
+    borderRadius: 10, gap: 6,
   },
   segmentTabActive: {
     backgroundColor: '#0F172A',
   },
-  segmentText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  segmentText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
   segmentTextActive: { color: '#fff' },
 
   card: {
@@ -1187,37 +1185,38 @@ const styles = StyleSheet.create({
 
   /* ── Location Module — Borderless Layered ── */
   locModule: {
-    backgroundColor: '#F8FAFC', borderRadius: 16,
+    backgroundColor: '#FFFFFF', borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
     marginBottom: 16, padding: 2,
   },
   locLayer: {
     flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
   },
   locIconWrap: {
-    width: 44, height: 44, borderRadius: 14,
-    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: 12,
+    backgroundColor: 'rgba(15,23,42,0.05)', alignItems: 'center', justifyContent: 'center',
   },
   locTextWrap: { flex: 1, alignItems: 'flex-end' },
-  locLabel: { fontSize: 15, fontWeight: '700', color: '#0F172A', textAlign: 'left', marginBottom: 3 },
-  locDetail: { fontSize: 12, color: '#64748B', textAlign: 'left', lineHeight: 17 },
-  locPhone: { fontSize: 12, color: '#94A3B8', textAlign: 'left', marginTop: 3, fontWeight: '500' },
+  locLabel: { fontSize: 15, fontWeight: '700', color: '#1A1D26', textAlign: 'left', marginBottom: 3 },
+  locDetail: { fontSize: 12, color: '#6B7280', textAlign: 'left', lineHeight: 17 },
+  locPhone: { fontSize: 12, color: 'rgba(0,0,0,0.45)', textAlign: 'left', marginTop: 3, fontWeight: '500' },
   locEditBtn: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(15,23,42,0.05)', alignItems: 'center', justifyContent: 'center',
   },
   locEmpty: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     padding: 22, gap: 10,
   },
-  locEmptyText: { color: '#3B82F6', fontSize: 14, fontWeight: '600' },
+  locEmptyText: { color: '#0F172A', fontSize: 14, fontWeight: '600' },
 
   /* ── Payment Methods — Border Only On Selection ── */
   methodsWrap: { gap: 8, marginBottom: 20 },
   methodItem: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8FAFC', borderRadius: 14,
+    backgroundColor: '#FFFFFF', borderRadius: 12,
     padding: 12, gap: 12,
-    borderWidth: 1.5, borderColor: 'transparent',
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
   },
   methodIconCircle: {
     width: 40, height: 40, borderRadius: 12,
@@ -1227,11 +1226,12 @@ const styles = StyleSheet.create({
     width: 30, height: 30, borderRadius: 6,
   },
   methodTextCol: { flex: 1, alignItems: 'flex-end' },
-  methodName: { fontSize: 14, fontWeight: '700', color: '#94A3B8', textAlign: 'left' },
-  methodDesc: { fontSize: 11, color: '#CBD5E1', textAlign: 'left', marginTop: 1 },
+  methodName: { fontSize: 14, fontWeight: '700', color: '#1A1D26', textAlign: 'left' },
+  methodDesc: { fontSize: 11, color: '#6B7280', textAlign: 'left', marginTop: 1 },
   summaryCard: {
-    backgroundColor: '#fff', borderRadius: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+    backgroundColor: '#FFFFFF', borderRadius: 16, marginBottom: 12,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
     overflow: 'hidden',
   },
   summaryHeader: {
@@ -1239,18 +1239,18 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   summaryHeaderRight: { flex: 1, alignItems: 'flex-end' },
-  summaryTitle: { fontSize: 13, fontWeight: '600', color: '#94A3B8', textAlign: 'left', marginBottom: 2 },
-  summaryTotalInline: { fontSize: 18, fontWeight: '800', color: '#0F172A', textAlign: 'left', letterSpacing: -0.3 },
+  summaryTitle: { fontSize: 13, fontWeight: '600', color: '#6B7280', textAlign: 'left', marginBottom: 2 },
+  summaryTotalInline: { fontSize: 18, fontWeight: '800', color: '#1A1D26', textAlign: 'left', letterSpacing: -0.3 },
   summaryDetails: { padding: 0, paddingHorizontal: 16, paddingBottom: 16 },
   summaryRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 6,
   },
-  summaryLabel: { fontSize: 13, color: '#64748B' },
-  summaryValue: { fontSize: 13, fontWeight: '600', color: '#0F172A' },
-  summaryDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 8 },
-  totalLabel: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  totalValue: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  summaryLabel: { fontSize: 13, color: '#6B7280' },
+  summaryValue: { fontSize: 13, fontWeight: '600', color: '#1A1D26' },
+  summaryDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.06)', marginVertical: 8 },
+  totalLabel: { fontSize: 14, fontWeight: '700', color: '#1A1D26' },
+  totalValue: { fontSize: 18, fontWeight: '800', color: '#1A1D26' },
 
   productItemRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -1258,38 +1258,38 @@ const styles = StyleSheet.create({
   },
   productItemImage: {
     width: 48, height: 48, borderRadius: 10,
-    marginLeft: 10, backgroundColor: '#F8FAFC',
+    marginLeft: 10, backgroundColor: '#F8F9FC',
   },
   productItemInfo: { flex: 1 },
   productItemName: {
-    fontSize: 13, fontWeight: '600', color: '#0F172A',
+    fontSize: 13, fontWeight: '600', color: '#1A1D26',
     textAlign: 'left', lineHeight: 18,
   },
   productItemQty: {
-    fontSize: 12, color: '#94A3B8', textAlign: 'left', marginTop: 2,
+    fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2,
   },
   productItemPrice: {
-    fontSize: 13, fontWeight: '700', color: '#0F172A',
+    fontSize: 13, fontWeight: '700', color: '#1A1726',
     textAlign: 'left', marginLeft: 8,
   },
 
   returnPolicySection: {
-    backgroundColor: '#F8FAFC', borderRadius: 12,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF', borderRadius: 12,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
     padding: 12, marginBottom: 16,
   },
   returnPolicyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  returnPolicyTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'left' },
-  returnPolicyItem: { fontSize: 14, fontWeight: '700', color: '#334155', textAlign: 'left', lineHeight: 22, marginBottom: 6, writingDirection: 'rtl' },
+  returnPolicyTitle: { fontSize: 14, fontWeight: '700', color: '#1A1D26', textAlign: 'left' },
+  returnPolicyItem: { fontSize: 14, fontWeight: '700', color: '#1A1D26', textAlign: 'left', lineHeight: 22, marginBottom: 6, writingDirection: 'rtl' },
 
   checkoutFloat: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#0F172A', borderRadius: 50, paddingVertical: 16, marginBottom: 20,
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 8,
+    backgroundColor: '#0F172A', borderRadius: 12, paddingVertical: 16, marginBottom: 20,
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8,
   },
   checkoutFloatText: { color: '#FFF', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
   processingOverlay: { alignItems: 'center', paddingVertical: 16, gap: 8 },
-  processingText: { fontSize: 14, color: '#64748B', fontWeight: '600' },
+  processingText: { fontSize: 14, color: '#6B7280', fontWeight: '600' },
 
   /* InstaPay Modals */
   modalOverlay: {
@@ -1298,21 +1298,21 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15,23,42,0.6)',
+    backgroundColor: 'rgba(15,23,42,0.4)',
   },
   modalCard: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
     paddingHorizontal: 24, paddingBottom: 40,
     maxHeight: '85%',
   },
   modalHandleRow: { alignItems: 'center', paddingVertical: 12 },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1' },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.12)' },
   modalTitle: {
-    fontSize: 22, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginBottom: 4,
+    fontSize: 22, fontWeight: '800', color: '#1A1D26', textAlign: 'center', marginBottom: 4,
   },
   modalSubtitle: {
-    fontSize: 13, fontWeight: '500', color: '#94A3B8', textAlign: 'center', marginBottom: 20,
+    fontSize: 13, fontWeight: '500', color: '#6B7280', textAlign: 'center', marginBottom: 20,
   },
 
   /* Guide Steps */
@@ -1329,14 +1329,14 @@ const styles = StyleSheet.create({
   },
   guideStepNumText: { fontSize: 13, fontWeight: '700', color: '#fff' },
   guideStepLine: {
-    width: 2, height: 28, backgroundColor: '#E2E8F0', marginTop: 4,
+    width: 2, height: 28, backgroundColor: 'rgba(0,0,0,0.06)', marginTop: 4,
   },
   guideStepContent: { flex: 1, paddingVertical: 2 },
-  guideStepTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', textAlign: 'left' },
-  guideStepSub: { fontSize: 12, color: '#94A3B8', textAlign: 'left', marginTop: 2, lineHeight: 18 },
+  guideStepTitle: { fontSize: 14, fontWeight: '700', color: '#1A1D26', textAlign: 'left' },
+  guideStepSub: { fontSize: 12, color: '#6B7280', textAlign: 'left', marginTop: 2, lineHeight: 18 },
 
   modalBtn: {
-    backgroundColor: '#0F172A', borderRadius: 16,
+    backgroundColor: '#0F172A', borderRadius: 12,
     paddingVertical: 16, alignItems: 'center', marginTop: 24,
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
@@ -1345,8 +1345,8 @@ const styles = StyleSheet.create({
 
   /* Proof Upload */
   linkCard: {
-    backgroundColor: '#F8FAFC', borderRadius: 20,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#F8F9FC', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
     padding: 20, marginBottom: 16,
   },
   openAppLink: {
@@ -1357,7 +1357,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline', textDecorationColor: '#0F172A',
   },
   usernameSeparator: {
-    height: 1, backgroundColor: '#E2E8F0', marginVertical: 16,
+    height: 1, backgroundColor: 'rgba(0,0,0,0.06)', marginVertical: 16,
   },
   usernameLabel: {
     fontSize: 22, fontWeight: '900', color: '#0F172A',
@@ -1368,14 +1368,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row', gap: 10, marginBottom: 12,
   },
   uploadBtnPrimary: {
-    flex: 1, backgroundColor: '#0F172A', borderRadius: 14,
+    flex: 1, backgroundColor: '#0F172A', borderRadius: 12,
     paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
     shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25, shadowRadius: 10, elevation: 6,
   },
   uploadBtnPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
   uploadBtnSecondary: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 14,
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 12,
     paddingVertical: 16, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1.5, borderColor: '#0F172A',
   },
@@ -1383,21 +1383,21 @@ const styles = StyleSheet.create({
 
   proofPreviewWrap: {
     marginBottom: 16, borderRadius: 16, overflow: 'hidden',
-    backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#F8F9FC', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
   },
   proofPreviewImage: {
     width: '100%', height: 200, borderRadius: 16,
   },
   proofRetakeBtn: {
     alignItems: 'center', paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: '#E2E8F0',
+    borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)',
   },
   proofRetakeText: {
     fontSize: 14, fontWeight: '700', color: '#0F172A',
   },
 
   approvalNote: {
-    fontSize: 12, fontWeight: '500', color: '#94A3B8',
+    fontSize: 12, fontWeight: '500', color: '#6B7280',
     textAlign: 'center', marginBottom: 4, lineHeight: 18,
   },
 
@@ -1405,6 +1405,6 @@ const styles = StyleSheet.create({
     alignItems: 'center', paddingVertical: 12,
   },
   modalCancelText: {
-    fontSize: 14, fontWeight: '600', color: '#94A3B8',
+    fontSize: 14, fontWeight: '600', color: '#6B7280',
   },
 });
