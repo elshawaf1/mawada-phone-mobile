@@ -304,7 +304,7 @@ export default function DeliveryLocationsScreen({ navigation, route }) {
               </View>
 
               <Button title={editingAddress ? t('addresses.saveEdit') : t('addresses.saveAdd')} onPress={handleSave} fullWidth style={{ marginTop: 16, borderRadius: 10, backgroundColor: '#0F172A', borderWidth: 0, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 }} loading={saving} disabled={saving} textStyle={{ color: '#FFFFFF', fontWeight: '600' }} />
-              <Button title={t('common.cancel')} onPress={() => setModalVisible(false)} variant="ghost" fullWidth style={{ marginTop: 8, borderRadius: 10 }} textStyle={{ color: '#6B7280', fontWeight: '500' }} />
+              <Button title={t('common.cancel')} onPress={() => setModalVisible(false)} variant="ghost" fullWidth style={{ marginTop: 8, borderRadius: 10, elevation: 0, shadowOpacity: 0, shadowColor: "transparent" }} textStyle={{ color: '#6B7280', fontWeight: '500' }} />
             </KeyboardAvoidingView>
           </TouchableOpacity>
         </TouchableOpacity>
