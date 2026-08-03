@@ -2,7 +2,7 @@
   "expo": {
     "name": "Mawada Phone",
     "slug": "mobile",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "scheme": "mawada",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

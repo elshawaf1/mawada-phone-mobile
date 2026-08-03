@@ -50,6 +50,7 @@ const CACHE_TTL = 30000; // 30 seconds
 
 // Module-level scroll position — restored after remount
 let _homeScrollY = 0;
+let _needsScrollRestore = false;
 
 function SearchBar({ onPress, t }) {
   const lottieRef = useRef(null);
@@ -450,6 +451,116 @@ function AnimatedBadge({ count }) {
   );
 }
 
+
+const HomeHeader = React.memo(function HomeHeader({
+  navigation, banners, categories, brands, products, bundles,
+  activeBrand, setActiveBrand, activeCondition, setActiveCondition,
+  handleAddToCart, addedMap, isInCart, t, locale, dir, user, unreadCount, insets
+}) {
+  return (
+    <View style={styles.headerSection}>
+      <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) + 8, flexDirection: dir.row }]}>
+        <View style={styles.headerRight}>
+          <Text style={styles.greetingText}>{user ? t('home.greetingUser', { name: user.name }) : t('home.greeting')}</Text>
+        </View>
+        <View style={[styles.headerLeft, { flexDirection: dir.row }]}>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Notifications')}>
+            <Ionicons name="notifications-outline" size={22} color={COLORS.text} />
+            {unreadCount > 0 && (
+              <AnimatedBadge count={unreadCount} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <AnimatedFloatingIcons />
+
+      <SearchBar onPress={() => navigation.navigate('Search')} t={t} />
+
+      <HeroCarousel banners={banners} navigation={navigation} t={t} locale={locale} />
+
+      <CategoryGrid categories={categories} navigation={navigation} t={t} locale={locale} />
+
+      <QuickActions navigation={navigation} t={t} />
+
+      <HomepageSections
+        products={products}
+        navigation={navigation}
+        onAddToCart={handleAddToCart}
+        inCartMap={products.reduce((m, p) => ({ ...m, [p.id]: isInCart(p.id) }), {})}
+        addedMap={addedMap}
+        t={t}
+        locale={locale}
+      />
+
+      {bundles.length > 0 && (
+        <View style={styles.bundleSectionWrap}>
+          <View style={styles.bundleSection}>
+            <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
+              <Text style={[styles.sectionTitleLight, { textAlign: dir.textAlign }]}>{t('home.offerMawda')}</Text>
+            </View>
+            {bundles.slice(0, 2).map((bundle) => (
+            <BundleCard
+              key={bundle.id}
+              bundle={bundle}
+              onAddBundle={() => {
+                const bundleItems = bundle.bundle_items || [];
+                bundleItems.forEach((item) => {
+                  if (!item.product) return;
+                  const price = item.custom_price != null
+                    ? item.custom_price
+                    : item.product.isOnSale && item.product.salePrice
+                      ? item.product.salePrice
+                      : item.product.basePrice;
+                  handleAddToCart({
+                    ...item.product,
+                    basePrice: price,
+                  });
+                });
+              }}
+            />
+          ))}
+          </View>
+        </View>
+      )}
+
+      {brands.length > 0 && (
+        <>
+          <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
+            <Text style={styles.sectionTitle}>{t('home.brands')}</Text>
+          </View>
+          <BrandSegmentedControl brands={brands} activeBrand={activeBrand} setActiveBrand={setActiveBrand} t={t} locale={locale} />
+        </>
+      )}
+
+      <View style={[styles.sectionHeader, { marginTop: 8, flexDirection: dir.row }]}>
+        <Text style={styles.sectionTitle}>{t('home.products')}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Search')}>
+          <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={[styles.conditionFilter, { flexDirection: dir.row }]}>
+        {[{ key: 'all', label: t('home.all') }, { key: 'new', label: t('home.newProducts') }, { key: 'used', label: t('home.usedProducts') }].map((opt) => {
+          const isActive = activeCondition === opt.key;
+          return (
+            <TouchableOpacity
+              key={opt.key}
+              style={[styles.conditionChip, isActive && styles.conditionChipActive]}
+              onPress={() => setActiveCondition(opt.key)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.conditionChipText, isActive && styles.conditionChipTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+});
+
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -469,6 +580,11 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [bundles, setBundles] = useState([]);
   const flatListRef = useRef(null);
+
+  // Signal that we need to restore scroll when data loads (only if remounting with previous scroll position)
+  if (_homeScrollY > 0) {
+    _needsScrollRestore = true;
+  }
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -618,13 +734,19 @@ export default function HomeScreen({ navigation }) {
   }, [addToCart, removeFromCart, isInCart]);
 
   const restoreScrollPosition = useCallback(() => {
-    if (_homeScrollY > 0 && flatListRef.current) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          flatListRef.current?.scrollToOffset({ offset: _homeScrollY, animated: false });
-        });
-      });
+    if (!_needsScrollRestore || _homeScrollY <= 0 || !flatListRef.current) {
+      _needsScrollRestore = false;
+      return;
     }
+    // Multiple retry attempts to ensure layout is complete
+    [50, 150, 350].forEach((delay) => {
+      setTimeout(() => {
+        if (flatListRef.current && _needsScrollRestore) {
+          flatListRef.current.scrollToOffset({ offset: _homeScrollY, animated: false });
+        }
+      }, delay);
+    });
+    setTimeout(() => { _needsScrollRestore = false; }, 400);
   }, []);
 
   const filteredProducts = products.filter(p => {
@@ -672,10 +794,11 @@ export default function HomeScreen({ navigation }) {
         ref={flatListRef}
         onScroll={(e) => { _homeScrollY = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={16}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={8}
-        windowSize={11}
-        initialNumToRender={8}
+        removeClippedSubviews={false}
+        maxToRenderPerBatch={16}
+        windowSize={16}
+        initialNumToRender={12}
+        updateCellsBatchingLimit={16}
         onContentSizeChange={() => restoreScrollPosition()}
         data={filteredProducts}
         numColumns={2}
@@ -684,106 +807,27 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={[styles.listContent, { paddingBottom: 100 + insets.bottom }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#0F172A']} tintColor="#0F172A" />}
         ListHeaderComponent={
-          <View style={styles.headerSection}>
-            <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) + 8, flexDirection: dir.row }]}>
-              <View style={styles.headerRight}>
-                <Text style={styles.greetingText}>{user ? t('home.greetingUser', { name: user.name }) : t('home.greeting')}</Text>
-              </View>
-              <View style={[styles.headerLeft, { flexDirection: dir.row }]}>
-                <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Notifications')}>
-                  <Ionicons name="notifications-outline" size={22} color={COLORS.text} />
-                  {unreadCount > 0 && (
-                    <AnimatedBadge count={unreadCount} />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <AnimatedFloatingIcons />
-
-            <SearchBar onPress={() => navigation.navigate('Search')} t={t} />
-
-            <HeroCarousel banners={banners} navigation={navigation} t={t} locale={locale} />
-
-            <CategoryGrid categories={categories} navigation={navigation} t={t} locale={locale} />
-
-            <QuickActions navigation={navigation} t={t} />
-
-            <HomepageSections
-              products={products}
-              navigation={navigation}
-              onAddToCart={handleAddToCart}
-              inCartMap={products.reduce((m, p) => ({ ...m, [p.id]: isInCart(p.id) }), {})}
-              addedMap={addedMap}
-              t={t}
-              locale={locale}
-            />
-
-            {bundles.length > 0 && (
-              <View style={styles.bundleSectionWrap}>
-                <View style={styles.bundleSection}>
-                  <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
-                    <Text style={[styles.sectionTitleLight, { textAlign: dir.textAlign }]}>{t('home.offerMawda')}</Text>
-                  </View>
-                  {bundles.slice(0, 2).map((bundle) => (
-                  <BundleCard
-                    key={bundle.id}
-                    bundle={bundle}
-                    onAddBundle={() => {
-                      const bundleItems = bundle.bundle_items || [];
-                      bundleItems.forEach((item) => {
-                        if (!item.product) return;
-                        const price = item.custom_price != null
-                          ? item.custom_price
-                          : item.product.isOnSale && item.product.salePrice
-                            ? item.product.salePrice
-                            : item.product.basePrice;
-                        handleAddToCart({
-                          ...item.product,
-                          basePrice: price,
-                        });
-                      });
-                    }}
-                  />
-                ))}
-                </View>
-              </View>
-            )}
-
-            {brands.length > 0 && (
-              <>
-                <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
-                  <Text style={styles.sectionTitle}>{t('home.brands')}</Text>
-                </View>
-                <BrandSegmentedControl brands={brands} activeBrand={activeBrand} setActiveBrand={setActiveBrand} t={t} locale={locale} />
-              </>
-            )}
-
-            <View style={[styles.sectionHeader, { marginTop: 8, flexDirection: dir.row }]}>
-              <Text style={styles.sectionTitle}>{t('home.products')}</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Search')}>
-                <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={[styles.conditionFilter, { flexDirection: dir.row }]}>
-              {[{ key: 'all', label: t('home.all') }, { key: 'new', label: t('home.newProducts') }, { key: 'used', label: t('home.usedProducts') }].map((opt) => {
-                const isActive = activeCondition === opt.key;
-                return (
-                  <TouchableOpacity
-                    key={opt.key}
-                    style={[styles.conditionChip, isActive && styles.conditionChipActive]}
-                    onPress={() => setActiveCondition(opt.key)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.conditionChipText, isActive && styles.conditionChipTextActive]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
+          <HomeHeader
+            navigation={navigation}
+            banners={banners}
+            categories={categories}
+            brands={brands}
+            products={products}
+            bundles={bundles}
+            activeBrand={activeBrand}
+            setActiveBrand={setActiveBrand}
+            activeCondition={activeCondition}
+            setActiveCondition={setActiveCondition}
+            handleAddToCart={handleAddToCart}
+            addedMap={addedMap}
+            isInCart={isInCart}
+            t={t}
+            locale={locale}
+            dir={dir}
+            user={user}
+            unreadCount={unreadCount}
+            insets={insets}
+          />
         }
         renderItem={({ item }) => (
           <ProductCard
