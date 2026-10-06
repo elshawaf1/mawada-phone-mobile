@@ -1,47 +1,42 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Linking } from 'react-native';
-import { MessageCircle, Phone } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS } from '../constants';
+import { MessageCircle, Phone, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { COLORS, FONT_SIZES, FONT_WEIGHTS, RADIUS, SHADOWS } from '../constants';
 import ScreenHeader from '../components/ScreenHeader';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { useMessageBox } from '../context/MessageBoxContext';
+import { hapticTap } from '../utils/haptics';
 
 const WHATSAPP_NUMBER = '201093338390';
 const PHONE_DISPLAY = '+20 109 333 8390';
 const PHONE_TEL = '+201093338390';
 const WHATSAPP_BRAND = '#25D366';
 
-function ActionCard({ icon: Icon, accent, title, number, hint, onPress, a11yHint }) {
+function ChannelRow({ icon: Icon, tint, title, value, onPress }) {
   const dir = useDirection();
+  const Chevron = dir.isRTL ? ChevronLeft : ChevronRight;
   return (
     <TouchableOpacity
-      style={[styles.card, { alignItems: dir.alignItems }]}
-      onPress={onPress}
+      style={[styles.row, { flexDirection: dir.row }]}
+      onPress={() => { hapticTap(); onPress(); }}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={`${title} ${number}`}
-      accessibilityHint={a11yHint}
+      accessibilityLabel={`${title} ${value}`}
     >
-      <View style={styles.iconTile}>
-        <Icon size={20} color={accent} strokeWidth={2.25} />
+      <View style={[styles.tile, { backgroundColor: tint }]}>
+        <Icon size={22} color={tint === WHATSAPP_BRAND ? COLORS.white : COLORS.primary} />
       </View>
-      <Text style={[styles.cardTitle, { textAlign: dir.textAlign }]}>{title}</Text>
-      <Text
-        style={[styles.cardLink, { color: accent, textAlign: dir.textAlign }]}
-        onPress={onPress}
-        accessibilityRole="link"
-      >
-        {number}
-      </Text>
-      <Text style={[styles.cardHint, { textAlign: dir.textAlign }]}>{hint}</Text>
+      <View style={styles.texts}>
+        <Text style={[styles.rowTitle, { textAlign: dir.textAlign }]}>{title}</Text>
+        <Text style={[styles.rowValue, { textAlign: dir.textAlign }]}>{value}</Text>
+      </View>
+      <Chevron size={20} color={COLORS.textTertiary} />
     </TouchableOpacity>
   );
 }
 
 export default function SupportScreen({ navigation }) {
-  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const dir = useDirection();
   const { showMessageBox } = useMessageBox();
@@ -71,35 +66,24 @@ export default function SupportScreen({ navigation }) {
     <View style={styles.container}>
       <ScreenHeader title={t('support.title')} onBack={() => navigation.goBack()} />
 
-      <View style={[styles.body, { paddingBottom: insets.bottom + 24 }]}>
-        <View style={styles.heroCard}>
-          <View style={styles.heroIcon}>
-            <MessageCircle size={28} color="#FFFFFF" />
-          </View>
-          <Text style={styles.heroTitle}>{t('support.hero')}</Text>
-          <Text style={styles.heroSubtitle}>{t('support.heroSub')}</Text>
-        </View>
+      <View style={styles.body}>
+        <Text style={[styles.heading, { textAlign: dir.textAlign }]}>{t('support.hero')}</Text>
+        <Text style={[styles.subheading, { textAlign: dir.textAlign }]}>{t('support.heroSub')}</Text>
 
-        <View style={[styles.bentoRow, { flexDirection: dir.row }]}>
-          <ActionCard
-            icon={MessageCircle}
-            accent={WHATSAPP_BRAND}
-            title={t('support.whatsapp')}
-            number={PHONE_DISPLAY}
-            hint={t('support.whatsappHint')}
-            onPress={openWhatsApp}
-            a11yHint="يفتح محادثة واتساب"
-          />
-          <ActionCard
-            icon={Phone}
-            accent={COLORS.primary}
-            title={t('support.callUs')}
-            number={PHONE_DISPLAY}
-            hint={t('support.callHint')}
-            onPress={openPhone}
-            a11yHint="يفتح تطبيق الهاتف"
-          />
-        </View>
+        <ChannelRow
+          icon={MessageCircle}
+          tint={WHATSAPP_BRAND}
+          title={t('support.whatsapp')}
+          value={PHONE_DISPLAY}
+          onPress={openWhatsApp}
+        />
+        <ChannelRow
+          icon={Phone}
+          tint={COLORS.gray100}
+          title={t('support.callUs')}
+          value={PHONE_DISPLAY}
+          onPress={openPhone}
+        />
 
         <Text style={styles.footnote}>{t('support.footer')}</Text>
       </View>
@@ -110,89 +94,51 @@ export default function SupportScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
   body: { flex: 1, padding: 16 },
-
-  heroCard: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 20,
-    ...SHADOWS.md,
-  },
-  heroIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  heroTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.white,
-    textAlign: 'center',
-    marginBottom: 6,
-    letterSpacing: -0.2,
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.72)',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-
-  bentoRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    alignItems: 'flex-start',
-    minHeight: 148,
-    ...SHADOWS.sm,
-  },
-  iconTile: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: COLORS.gray100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+  heading: {
+    fontSize: FONT_SIZES.xxxl,
+    fontWeight: FONT_WEIGHTS.extrabold,
     color: COLORS.text,
-    textAlign: 'left',
     marginBottom: 4,
   },
-  cardLink: {
-    fontSize: 12,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-    textAlign: 'left',
-    letterSpacing: 0.1,
+  subheading: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.regular,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+    marginBottom: 20,
   },
-  cardHint: {
-    fontSize: 11,
-    color: COLORS.textTertiary,
-    textAlign: 'left',
-    marginTop: 6,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 12,
+    marginBottom: 10,
+    ...SHADOWS.sm,
   },
-
+  tile: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  texts: { flex: 1 },
+  rowTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.text },
+  rowValue: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
   footnote: {
-    fontSize: 12,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textTertiary,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 16,
   },
 });
