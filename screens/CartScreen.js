@@ -17,6 +17,8 @@ import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { fetchSettings } from '../services/settings';
 import { useMessageBox } from '../context/MessageBoxContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ORDER_NOTES_MAX, orderNotesDraftKey } from '../utils/orderNotes';
 
 const { width } = Dimensions.get('window');
 
@@ -100,6 +102,44 @@ export default function CartScreen({ navigation }) {
   const [couponMsg, setCouponMsg] = useState('');
   const [showCoupon, setShowCoupon] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const [notesFocused, setNotesFocused] = useState(false);
+
+  // Restore saved draft (survives restarts; cleared on order success).
+  useEffect(() => {
+    const key = orderNotesDraftKey(user?.id);
+    if (!key) return;
+    AsyncStorage.getItem(key)
+      .then((v) => {
+        if (v) {
+          setOrderNotes(v);
+          setNotesExpanded(true);
+        }
+      })
+      .catch(() => {});
+  }, [user?.id]);
+
+  // Debounced draft save; empty draft removes the key.
+  useEffect(() => {
+    const key = orderNotesDraftKey(user?.id);
+    if (!key) return;
+    const timer = setTimeout(() => {
+      if (orderNotes.trim()) AsyncStorage.setItem(key, orderNotes).catch(() => {});
+      else AsyncStorage.removeItem(key).catch(() => {});
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [orderNotes, user?.id]);
+
+  const toggleNotes = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setNotesExpanded((v) => !v);
+  };
+
+  const clearNotes = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setOrderNotes('');
+    setNotesExpanded(false);
+  };
   const [deliveryFee, setDeliveryFee] = useState(90);
   const [freeShipThreshold, setFreeShipThreshold] = useState(50000);
   const [estimatedDays, setEstimatedDays] = useState(3);
@@ -312,21 +352,57 @@ export default function CartScreen({ navigation }) {
                   <Text style={[styles.deliveryEstimateText, { textAlign: dir.textAlign }]}>{t('cart.deliveryEstimate', { days: estimatedDays })}</Text>
                 </View>
 
-                <View style={styles.orderNotesCard}>
-                  <View style={[styles.orderNotesHeader, { flexDirection: dir.row }]}>
+                <View style={[styles.orderNotesCard, notesFocused && styles.orderNotesCardFocused]}>
+                  <TouchableOpacity
+                    style={[styles.orderNotesHeader, { flexDirection: dir.row }]}
+                    onPress={toggleNotes}
+                    activeOpacity={0.7}
+                  >
                     <FileText size={16} color={COLORS.textSecondary} />
                     <Text style={styles.orderNotesTitle}>{t('cart.orderNotes')}</Text>
-                  </View>
-                  <TextInput
-                    style={styles.orderNotesInput}
-                    placeholder={t('cart.orderNotesPlaceholder')}
-                    placeholderTextColor={COLORS.gray400}
-                    value={orderNotes}
-                    onChangeText={setOrderNotes}
-                    multiline
-                    textAlignVertical="top"
-                    textAlign={dir.textAlign}
-                  />
+                    {orderNotes.trim() ? (
+                      <Text style={styles.orderNotesCount}>
+                        {orderNotes.length}/{ORDER_NOTES_MAX}
+                      </Text>
+                    ) : null}
+                    {orderNotes.trim() ? (
+                      <TouchableOpacity
+                        style={styles.orderNotesClear}
+                        onPress={clearNotes}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.orderNotesClearText}>✕</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    {notesExpanded
+                      ? <ChevronUp size={16} color={COLORS.gray400} />
+                      : <ChevronDown size={16} color={COLORS.gray400} />}
+                  </TouchableOpacity>
+                  {notesExpanded ? (
+                    <TextInput
+                      style={styles.orderNotesInput}
+                      placeholder={t('cart.orderNotesPlaceholder')}
+                      placeholderTextColor={COLORS.gray400}
+                      value={orderNotes}
+                      onChangeText={(v) => setOrderNotes(v.slice(0, ORDER_NOTES_MAX))}
+                      onFocus={() => setNotesFocused(true)}
+                      onBlur={() => {
+                        setNotesFocused(false);
+                        setOrderNotes((v) => v.trim());
+                      }}
+                      multiline
+                      maxLength={ORDER_NOTES_MAX}
+                      textAlignVertical="top"
+                      textAlign={dir.textAlign}
+                    />
+                  ) : orderNotes.trim() ? (
+                    <Text
+                      style={[styles.orderNotesPreview, { textAlign: dir.textAlign }]}
+                      numberOfLines={1}
+                    >
+                      {orderNotes.trim()}
+                    </Text>
+                  ) : null}
                 </View>
               </>
             )}
@@ -454,9 +530,14 @@ const styles = StyleSheet.create({
   deliveryEstimateCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#EFF6FF', borderRadius: 14, padding: 14, marginBottom: 10 },
   deliveryEstimateText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#1D4ED8', textAlign: 'left' },
 
-  orderNotesCard: { backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
-  orderNotesHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  orderNotesTitle: { fontSize: 13, fontWeight: '700', color: COLORS.text },
+  orderNotesCard: { backgroundColor: COLORS.white, borderRadius: 16, padding: 14, marginBottom: 10, shadowColor: COLORS.black, shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3, borderWidth: 1, borderColor: 'transparent' },
+  orderNotesCardFocused: { borderColor: COLORS.primary },
+  orderNotesHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  orderNotesTitle: { flex: 1, fontSize: 13, fontWeight: '700', color: COLORS.text },
+  orderNotesCount: { fontSize: 11, fontWeight: '600', color: COLORS.textTertiary },
+  orderNotesClear: { width: 24, height: 24, borderRadius: 12, backgroundColor: COLORS.gray100, alignItems: 'center', justifyContent: 'center' },
+  orderNotesClearText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '700' },
+  orderNotesPreview: { fontSize: 13, color: COLORS.textSecondary, marginTop: 6 },
   orderNotesInput: { backgroundColor: COLORS.gray50, borderRadius: 12, padding: 14, fontSize: 14, color: COLORS.text, minHeight: 80, borderWidth: 1, borderColor: COLORS.gray200, textAlign: 'left' },
 
   summaryCard: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
