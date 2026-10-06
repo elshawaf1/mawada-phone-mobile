@@ -7,17 +7,21 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ChevronRight, LogOut } from 'lucide-react-native';
+import {
+  Receipt, Heart, History, Tag, Bell, Settings, MapPin,
+  MessageCircle, LogOut, Trash2, Pencil,
+  ChevronLeft, ChevronRight,
+} from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { setBadgeCountAsync } from '../services/push';
-import { COLORS } from '../constants';
+import { COLORS, FONT_SIZES, FONT_WEIGHTS, RADIUS, SHADOWS } from '../constants';
 import { useTranslation } from '../context/AppSettingsContext';
 import { useDirection } from '../hooks/useDirection';
 import { useMessageBox } from '../context/MessageBoxContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { hapticTap } from '../utils/haptics';
 
 export default function ProfileScreen({ navigation }) {
   const { t } = useTranslation();
@@ -26,6 +30,9 @@ export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
   const { showMessageBox } = useMessageBox();
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const ForwardIcon = dir.isRTL ? ChevronLeft : ChevronRight;
+  const initial = ((user?.name || user?.email || '?').trim().charAt(0) || '?').toUpperCase();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -57,6 +64,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const handleLogout = async () => {
+    hapticTap();
     await logout();
     navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
   };
@@ -93,18 +101,14 @@ export default function ProfileScreen({ navigation }) {
     </View>
   );
 
-  const Row = ({ iconName, label, onPress, badge, isDestructive = false }) => (
+  const Row = ({ icon: Icon, label, onPress, badge, isDestructive = false }) => (
     <TouchableOpacity
       style={[styles.row, { flexDirection: dir.row }]}
       activeOpacity={0.6}
-      onPress={onPress}
+      onPress={() => { hapticTap(); onPress(); }}
     >
       <View style={[styles.rowIcon, isDestructive ? styles.rowIconDestructive : styles.rowIconNormal]}>
-        {isDestructive ? (
-          <LogOut size={18} color="#EF4444" />
-        ) : (
-          <Ionicons name={iconName} size={18} color="#64748B" />
-        )}
+        <Icon size={18} color={isDestructive ? COLORS.error : COLORS.textSecondary} />
       </View>
       <View style={[styles.rowContent, { flexDirection: dir.row }]}>
         <Text style={[styles.rowLabel, isDestructive && styles.rowLabelDestructive]}>{label}</Text>
@@ -115,63 +119,87 @@ export default function ProfileScreen({ navigation }) {
         )}
       </View>
       <View style={styles.rowChevron}>
-        <ChevronRight size={16} color="#CBD5E1" />
+        <ForwardIcon size={16} color={COLORS.gray300} />
       </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <View style={[styles.hero, { paddingTop: insets.top + 20 }]}>
+          <View style={[styles.heroRow, { flexDirection: dir.row }]}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initial}</Text>
+            </View>
+            <View style={styles.heroTexts}>
+              <Text style={[styles.userName, { textAlign: dir.textAlign }]} numberOfLines={1}>
+                {user?.name || '—'}
+              </Text>
+              {user?.email ? (
+                <Text style={[styles.userContact, { textAlign: dir.textAlign }]} numberOfLines={1}>
+                  {user.email}
+                </Text>
+              ) : null}
+              {user?.phone ? (
+                <Text style={[styles.userContact, { textAlign: dir.textAlign }]} numberOfLines={1}>
+                  {user.phone}
+                </Text>
+              ) : null}
+            </View>
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => { hapticTap(); navigation.navigate('EditProfile'); }}
+              activeOpacity={0.7}
+            >
+              <Pencil size={15} color={COLORS.white} />
+              <Text style={styles.editText}>{t('profile.menuEditProfile')}</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <Text style={styles.userName}>{user?.name || '—'}</Text>
-          {user?.email ? <Text style={styles.userEmail}>{user.email}</Text> : null}
-          {user?.phone ? <Text style={styles.userPhone}>{user.phone}</Text> : null}
         </View>
 
-        <Section title={t('settings.orders')}>
-          <Row iconName="receipt-outline" label={t('profile.menuOrders')} onPress={() => navigation.navigate('MyOrders')} />
-          <View style={styles.rowDivider} />
-          <Row iconName="heart-outline" label={t('wishlist.title')} onPress={() => navigation.navigate('Favorites')} />
-          <View style={styles.rowDivider} />
-          <Row iconName="time-outline" label={t('recentlyViewed.title')} onPress={() => navigation.navigate('RecentlyViewed')} />
-          <View style={styles.rowDivider} />
-          <Row iconName="pricetag-outline" label={t('offers.title')} onPress={() => navigation.navigate('Offers')} />
-        </Section>
+        <View style={styles.sections}>
+          <Section title={t('settings.orders')}>
+            <Row icon={Receipt} label={t('profile.menuOrders')} onPress={() => navigation.navigate('MyOrders')} />
+            <View style={styles.rowDivider} />
+            <Row icon={Heart} label={t('wishlist.title')} onPress={() => navigation.navigate('Favorites')} />
+            <View style={styles.rowDivider} />
+            <Row icon={History} label={t('recentlyViewed.title')} onPress={() => navigation.navigate('RecentlyViewed')} />
+            <View style={styles.rowDivider} />
+            <Row icon={Tag} label={t('offers.title')} onPress={() => navigation.navigate('Offers')} />
+          </Section>
 
-        <Section title={t('profile.notifications')}>
-          <Row iconName="notifications-outline" label={t('profile.notifications')} onPress={() => navigation.navigate('Notifications')} badge={unreadCount} />
-        </Section>
+          <Section title={t('profile.notifications')}>
+            <Row icon={Bell} label={t('profile.notifications')} onPress={() => navigation.navigate('Notifications')} badge={unreadCount} />
+          </Section>
 
-        <Section title={t('profile.support')}>
-          <Row iconName="settings-outline" label={t('settings.title')} onPress={() => navigation.navigate('Settings')} />
-          <View style={styles.rowDivider} />
-          <Row iconName="location-outline" label={t('profile.menuBranches')} onPress={() => navigation.navigate('Locations')} />
-          <View style={styles.rowDivider} />
-          <Row iconName="chatbubble-ellipses-outline" label={t('profile.support')} onPress={() => navigation.navigate('Support')} />
-        </Section>
+          <Section title={t('profile.support')}>
+            <Row icon={Settings} label={t('settings.title')} onPress={() => navigation.navigate('Settings')} />
+            <View style={styles.rowDivider} />
+            <Row icon={MapPin} label={t('profile.menuBranches')} onPress={() => navigation.navigate('Locations')} />
+            <View style={styles.rowDivider} />
+            <Row icon={MessageCircle} label={t('profile.support')} onPress={() => navigation.navigate('Support')} />
+          </Section>
 
-        <View style={styles.logoutSection}>
-          <TouchableOpacity
-            style={[styles.logoutButton, { flexDirection: dir.row }]}
-            activeOpacity={0.6}
-            onPress={handleLogout}
-          >
-            <LogOut size={18} color="#EF4444" />
-            <Text style={styles.logoutText}>{t('auth.logout')}</Text>
-          </TouchableOpacity>
+          <View style={styles.logoutSection}>
+            <TouchableOpacity
+              style={[styles.logoutButton, { flexDirection: dir.row }]}
+              activeOpacity={0.6}
+              onPress={handleLogout}
+            >
+              <LogOut size={18} color={COLORS.error} />
+              <Text style={styles.logoutText}>{t('auth.logout')}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.deleteButton, { flexDirection: dir.row }]}
-            activeOpacity={0.6}
-            onPress={handleDeleteAccount}
-          >
-            <Ionicons name="trash-outline" size={18} color="#DC2626" />
-            <Text style={styles.deleteText}>{t('settings.deleteAccount') || t('auth.deleteAccount') || 'Delete Account'}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handleDeleteAccount} activeOpacity={0.6} style={styles.deleteQuiet}>
+              <Text style={styles.deleteQuietText}>
+                {t('settings.deleteAccount') || t('auth.deleteAccount') || 'Delete Account'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
       </ScrollView>
@@ -182,124 +210,87 @@ export default function ProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.gray50 },
-  scroll: { paddingTop: 10, paddingBottom: 100 },
+  scroll: { paddingBottom: 100 },
 
-  header: {
-    alignItems: 'center',
+  hero: {
+    backgroundColor: COLORS.primary,
+    borderBottomLeftRadius: RADIUS.xxl + 8,
+    borderBottomRightRadius: RADIUS.xxl + 8,
     paddingHorizontal: 20,
-    paddingBottom: 24,
-    paddingTop: 24,
-    backgroundColor: COLORS.white,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    paddingBottom: 20,
+    ...SHADOWS.md,
   },
-  userName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text,
+  heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  userEmail: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 6,
+  avatarText: { fontSize: 28, fontWeight: FONT_WEIGHTS.extrabold, color: COLORS.white },
+  heroTexts: { flex: 1 },
+  userName: { fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHTS.extrabold, color: COLORS.white },
+  userContact: { fontSize: FONT_SIZES.sm, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  userPhone: {
-    fontSize: 14,
-    color: COLORS.textTertiary,
-    marginTop: 4,
-  },
+  editText: { fontSize: FONT_SIZES.xs, fontWeight: FONT_WEIGHTS.bold, color: COLORS.white },
 
+  sections: { paddingBottom: 8 },
   section: { marginTop: 20, paddingHorizontal: 16 },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textTertiary,
     marginBottom: 8,
-    marginRight: 4,
+    marginHorizontal: 4,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   sectionCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
+    borderRadius: RADIUS.xxl,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 1,
+    ...SHADOWS.sm,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    minHeight: 54,
-  },
-  rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, minHeight: 54 },
+  rowIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   rowIconNormal: { backgroundColor: COLORS.gray100 },
   rowIconDestructive: { backgroundColor: COLORS.redLight },
-  rowContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 12,
-  },
-  rowLabel: { fontSize: 15, fontWeight: '500', color: COLORS.text },
-  rowLabelDestructive: { color: '#EF4444' },
+  rowContent: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', paddingHorizontal: 12 },
+  rowLabel: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.medium, color: COLORS.text },
+  rowLabelDestructive: { color: COLORS.error },
   rowChevron: { justifyContent: 'center', alignItems: 'center' },
   rowDivider: { height: 1, backgroundColor: COLORS.gray100, marginHorizontal: 16 },
   badge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.error,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    marginHorizontal: 8,
+    minWidth: 20, height: 20, borderRadius: 10,
+    backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: 6, marginHorizontal: 8,
   },
-  badgeText: { color: COLORS.white, fontSize: 10, fontWeight: '700' },
+  badgeText: { color: COLORS.white, fontSize: FONT_SIZES.xs, fontWeight: FONT_WEIGHTS.bold },
 
   logoutSection: { marginTop: 24, paddingHorizontal: 16 },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    paddingVertical: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, paddingVertical: 16, gap: 8,
+    ...SHADOWS.sm,
   },
-  logoutText: { fontSize: 15, fontWeight: '600', color: '#EF4444' },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEF2F2',
-    borderRadius: 20,
-    paddingVertical: 16,
-    gap: 8,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#FECACA',
+  logoutText: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.error },
+  deleteQuiet: { alignItems: 'center', paddingVertical: 14 },
+  deleteQuietText: {
+    fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.medium,
+    color: COLORS.textTertiary, textDecorationLine: 'underline',
   },
-  deleteText: { fontSize: 15, fontWeight: '600', color: '#DC2626' },
 });
