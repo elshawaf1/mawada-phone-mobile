@@ -77,16 +77,16 @@ export default function NotificationPopup({ notif, onOpen, onDismiss }) {
         {/* Rounded clipping lives on the wrapper — BlurView itself must NOT
             have overflow:hidden/borderRadius or Android drops the blur. */}
         <View style={styles.clip}>
-          <BlurView intensity={95} tint="light" style={styles.blur}>
+          <BlurView intensity={100} tint="light" style={styles.blur}>
             <View style={styles.tint} />
             <TouchableOpacity
               style={[styles.row, { flexDirection: dir.row }]}
               onPress={() => { hapticTap(); dismiss(); onOpen(); }}
               activeOpacity={0.9}
             >
-              <View style={[styles.tile, { backgroundColor: conf.bg }]}>
-                <Icon size={22} color={conf.color} />
-              </View>
+            <View style={[styles.tile, { backgroundColor: conf.bg }]}>
+              <Icon size={19} color={conf.color} />
+            </View>
               <View style={styles.texts}>
                 <View style={[styles.topRow, { flexDirection: dir.row }]}>
                   <Text style={[styles.title, { textAlign: dir.textAlign }]}>
@@ -117,47 +117,47 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   clip: {
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    ...SHADOWS.xl,
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.9)',
+    ...SHADOWS.lg,
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
   blur: { flex: 1 },
-  // Extra milky layer so text stays readable over busy backdrops.
+  // Light milky layer so text stays readable over busy backdrops.
   tint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    gap: 8,
   },
   tile: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
   texts: { flex: 1 },
-  topRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  topRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   title: {
     flex: 1,
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.text,
   },
-  time: { fontSize: 12, fontWeight: FONT_WEIGHTS.regular, color: COLORS.textTertiary },
+  time: { fontSize: 11, fontWeight: FONT_WEIGHTS.regular, color: COLORS.textTertiary },
   body: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: 12,
     fontWeight: FONT_WEIGHTS.regular,
     color: COLORS.textSecondary,
-    lineHeight: 19,
+    lineHeight: 17,
     marginTop: 1,
   },
 });
