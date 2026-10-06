@@ -94,6 +94,7 @@ export default function NotificationHandler({ navigation }) {
           type: data.type || 'info',
           orderId: data.orderId,
           notifId: data.notifId,
+          createdAt: data.createdAt || new Date().toISOString(),
         });
       });
     } catch (e) {
@@ -119,6 +120,7 @@ export default function NotificationHandler({ navigation }) {
             type: n.type || 'info',
             orderId: n.orderId,
             notifId: n.id,
+            createdAt: n.createdAt || new Date().toISOString(),
           });
         })
         .subscribe();

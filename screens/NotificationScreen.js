@@ -6,7 +6,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
   Animated,
   RefreshControl,
   LayoutAnimation,
@@ -18,8 +17,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 import { Ionicons } from '@expo/vector-icons';
-import { Bell, Package, Tag, Info, ChevronRight, CheckCheck } from 'lucide-react-native';
+import { Bell, Package, Tag, Info, CheckCheck } from 'lucide-react-native';
 import BottomNav from '../components/BottomNav';
+import ScreenHeader from '../components/ScreenHeader';
 import { ListSkeleton } from '../components/Skeleton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants';
@@ -30,13 +30,13 @@ import { supabase } from '../services/supabase';
 import { setBadgeCountAsync } from '../services/push';
 
 const notifConfig = {
-  order: { icon: Package, bg: '#EFF6FF', color: COLORS.blue },
-  promo: { icon: Tag, bg: '#F0FDF4', color: '#22C55E' },
-  info: { icon: Info, bg: '#FFFBEB', color: '#F59E0B' },
-  system: { icon: Bell, bg: '#F3F4F6', color: COLORS.gray500 },
-  payment: { icon: Package, bg: '#ECFEFF', color: '#06B6D4' },
-  payment_success: { icon: Package, bg: '#ECFEFF', color: '#06B6D4' },
-  payment_failed: { icon: Package, bg: '#FEF2F2', color: '#EF4444' },
+  order: { icon: Package, bg: COLORS.blueLight, color: COLORS.blue },
+  promo: { icon: Tag, bg: COLORS.greenLight, color: COLORS.green },
+  info: { icon: Info, bg: COLORS.amberLight, color: COLORS.amber },
+  system: { icon: Bell, bg: COLORS.gray100, color: COLORS.gray500 },
+  payment: { icon: Package, bg: COLORS.blueLight, color: COLORS.blue },
+  payment_success: { icon: Package, bg: COLORS.greenLight, color: COLORS.green },
+  payment_failed: { icon: Package, bg: COLORS.redLight, color: COLORS.error },
 };
 
 function NotifCard({ notif, onMarkRead, t, locale }) {
@@ -127,17 +127,15 @@ function groupLabel(key, t) {
 
 function formatTime(dateStr, t) {
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
   const now = new Date();
-  const diffMs = now - date;
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHr = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHr / 24);
-
-  if (diffMin < 1) return t('time.justNow');
-  if (diffMin < 60) return t('time.minutesAgo', { n: diffMin });
-  if (diffHr < 24) return t('time.hoursAgo', { n: diffHr });
-  if (diffDay < 7) return t('time.daysAgo', { n: diffDay });
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const sameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+  const clock = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (sameDay) return clock;
+  return `${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${clock}`;
 }
 
 export default function NotificationScreen({ navigation }) {
@@ -226,23 +224,17 @@ export default function NotificationScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
-        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-        <View style={[styles.headerContent, { flexDirection: dir.row }]}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <ChevronRight color={COLORS.text} size={24} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
-          {unreadCount > 0 ? (
-            <TouchableOpacity onPress={markAllRead} style={[styles.markAllBtn, { flexDirection: dir.row }]}>
+      <ScreenHeader
+        title={t('notifications.title')}
+        onBack={() => navigation.goBack()}
+        rightAction={
+          unreadCount > 0 ? (
+            <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn} activeOpacity={0.7}>
               <CheckCheck size={16} color={COLORS.blue} />
-              <Text style={styles.markAllText}>{t('notifications.markAllRead')}</Text>
             </TouchableOpacity>
-          ) : (
-            <View style={styles.spacer} />
-          )}
-        </View>
-      </View>
+          ) : null
+        }
+      />
 
       {unreadCount > 0 && (
         <View style={[styles.unreadBanner, { flexDirection: dir.row }]}>
@@ -294,39 +286,20 @@ export default function NotificationScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.gray50 },
-  headerContainer: {
-    backgroundColor: COLORS.white,
-    paddingBottom: 12,
-    ...SHADOWS.sm,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 44,
-  },
-  backButton: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: COLORS.gray50, alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   markAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  markAllText: { fontSize: 13, fontWeight: '600', color: COLORS.blue },
-  spacer: { width: 60 },
   unreadBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: COLORS.blueLight,
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
   },
-  unreadText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: '#1D4ED8' },
+  unreadText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.blue },
   loadingContainer: { flex: 1, paddingTop: 16 },
   scroll: { padding: 16, paddingBottom: 100 },
   sectionHeader: {
