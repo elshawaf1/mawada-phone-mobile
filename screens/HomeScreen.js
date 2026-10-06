@@ -457,11 +457,15 @@ const HomeHeader = React.memo(function HomeHeader({
   activeBrand, setActiveBrand, activeCondition, setActiveCondition,
   handleAddToCart, addedMap, isInCart, t, locale, dir, user, unreadCount, insets
 }) {
+  const hour = new Date().getHours();
+  const part = hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 18 ? 'afternoon' : 'evening';
+  const greetKey = user ? `home.${part}User` : `home.${part}`;
+
   return (
     <View style={styles.headerSection}>
       <View style={[styles.headerRow, { paddingTop: Math.max(insets.top, 8) + 8, flexDirection: dir.row }]}>
         <View style={styles.headerRight}>
-          <Text style={styles.greetingText}>{user ? t('home.greetingUser', { name: user.name }) : t('home.greeting')}</Text>
+          <Text style={styles.greetingText}>{t(greetKey, { name: user?.name })}</Text>
         </View>
         <View style={[styles.headerLeft, { flexDirection: dir.row }]}>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.navigate('Notifications')}>

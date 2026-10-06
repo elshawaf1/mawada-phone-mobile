@@ -70,6 +70,9 @@ const ar = {
   },
   home: {
     greeting: 'أَهْلًا بِكَ', greetingUser: 'أَهْلًا بِكَ، {name}',
+    morning: 'صَبَاح الْخَيْر', morningUser: 'صَبَاح الْخَيْر، {name}',
+    afternoon: 'نَهَارَك سَعِيد', afternoonUser: 'نَهَارَك سَعِيد، {name}',
+    evening: 'مَسَاء الْخَيْر', eveningUser: 'مَسَاء الْخَيْر، {name}',
     searchPlaceholder: '... ابْحَث عَنْ هَاتِفِكَ الْجَدِيد',
     categories: 'التَّصْنِيفَات', brands: 'الْمَارَكَات', featured: 'مُمَيَّز',
     products: 'الْمُنْتَجَات', all: 'الْكُل', newProducts: 'جَدِيد', usedProducts: 'مُسْتَعْمَل', seeAll: 'عَرْض الْكُل', seeAllCategories: 'عَرْض الْكُل', shopNow: 'تَسَوَّق الْآن',
@@ -453,6 +456,9 @@ const en = {
   },
   home: {
     greeting: 'Welcome', greetingUser: 'Welcome, {name}',
+    morning: 'Good morning', morningUser: 'Good morning, {name}',
+    afternoon: 'Good afternoon', afternoonUser: 'Good afternoon, {name}',
+    evening: 'Good evening', eveningUser: 'Good evening, {name}',
     searchPlaceholder: 'Search for your new phone...',
     categories: 'Categories', brands: 'Brands', featured: 'Featured',
     products: 'Products', all: 'All', newProducts: 'New', usedProducts: 'Used', seeAll: 'See All', seeAllCategories: 'See All', shopNow: 'Shop Now',
