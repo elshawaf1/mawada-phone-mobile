@@ -368,6 +368,13 @@ const ar = {
     viewAll: 'عَرْض الْكُل',
   },
   nav: { home: 'الرَّئِيسِيَّة', search: 'بَحْث', cart: 'السَّلَّة', profile: 'حِسَابِي' },
+  alerts: {
+    offlineTitle: 'لَا يُوجَد اِتِّصَال', offlineBody: 'تَحَقَّق مِنَ الْإِنْتَرْنِت — سَتُعَاد الْمُحَاوَلَة تِلْقَائِيًّا عِنْد عَوْدَتِه.',
+    payFailedTitle: 'فَشِلَ الدَّفْع', payFailedBody: 'لَمْ يَتِمّ خَصْم أَيِّ مَبْلَغ. يُمْكِنُكَ إِعَادَة الْمُحَاوَلَة بِأَمَان.',
+    retry: 'إِعَادَة الْمُحَاوَلَة', viewOrder: 'عَرْض الْطَّلَب', dismiss: 'إِغْلَاق',
+    shippedTitle: 'طَلَبُكَ فِي الطَّرِيق', shippedBody: 'تَمَّ شَحْن الطَّلَب — تَابِعْ حَالَتَهُ أَوَّلًا بِأَوَّل.',
+    deliveredTitle: 'تَمَّ تَوْصِيل طَلَبِك', deliveredBody: 'وَصَلَ طَلَبُكَ بِنَجَاح. نَتَمَنَّى لَكَ تَجْرِبَة سَعِيدَة.',
+  },
 };
 const en = {
   common: {
@@ -743,5 +750,12 @@ const en = {
     viewAll: 'View All',
   },
   nav: { home: 'Home', search: 'Search', cart: 'Cart', profile: 'Profile' },
+  alerts: {
+    offlineTitle: 'No connection', offlineBody: 'Check your internet — actions will retry when back.',
+    payFailedTitle: 'Payment failed', payFailedBody: 'Nothing was charged. You can safely retry.',
+    retry: 'Retry', viewOrder: 'View order', dismiss: 'Dismiss',
+    shippedTitle: 'Your order is on its way', shippedBody: 'Your order shipped — track it live.',
+    deliveredTitle: 'Your order was delivered', deliveredBody: 'Delivered successfully. Enjoy!',
+  },
 };
 export const translations = { ar, en };

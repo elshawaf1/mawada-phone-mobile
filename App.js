@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext';
 import { AppSettingsProvider } from './context/AppSettingsContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MessageBoxProvider } from './context/MessageBoxContext';
+import { AlertProvider } from './context/AlertContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -216,7 +217,9 @@ export default function App() {
             <AppProvider>
                 <MessageBoxProvider>
                 <ErrorBoundary>
-                  <AppInner />
+                  <AlertProvider>
+                    <AppInner />
+                  </AlertProvider>
                 </ErrorBoundary>
               </MessageBoxProvider>
             </AppProvider>
