@@ -2,10 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, StatusBar,
-  Image, TextInput, Animated,
+  Image, TextInput, Animated, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ChevronLeft, Check, Plus, Minus, Trash2, ShoppingBag, Tag, Gift, Truck, ChevronDown, ChevronUp, Clock, FileText } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Check, Plus, Minus, Trash2, ShoppingBag, Tag, Gift, Truck, ChevronDown, ChevronUp, Clock, FileText } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import LottieView from 'lottie-react-native';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS } from '../constants';
@@ -211,6 +211,10 @@ export default function CartScreen({ navigation }) {
         }
       />
 
+      <KeyboardAvoidingView
+        style={styles.keyboardWrap}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       {isEmpty ? (
         <View style={styles.emptyContent}>
           <LottieView
@@ -364,7 +368,9 @@ export default function CartScreen({ navigation }) {
             </View>
             <TouchableOpacity style={[styles.checkoutBtn, { flexDirection: dir.row }, selected.length === 0 && styles.checkoutBtnDisabled]} onPress={handleCheckout} disabled={selected.length === 0} activeOpacity={0.85}>
               <Text style={styles.checkoutBtnText}>{t('cart.checkout', { count: selected.length })}</Text>
-              <ChevronLeft size={18} color="#fff" />
+              {dir.isRTL
+                ? <ChevronLeft size={18} color={COLORS.white} />
+                : <ChevronRight size={18} color={COLORS.white} />}
             </TouchableOpacity>
             <TouchableOpacity style={styles.continueBtn} onPress={() => navigation.navigate('Home')}>
               <Ionicons name="storefront-outline" size={20} color={COLORS.text} />
@@ -372,12 +378,14 @@ export default function CartScreen({ navigation }) {
           </Animated.View>
         </>
       )}
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.white },
+  keyboardWrap: { flex: 1 },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitleText: { fontSize: 18, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
   headerCountBadge: { backgroundColor: COLORS.error, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },

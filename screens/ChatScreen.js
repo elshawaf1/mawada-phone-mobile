@@ -240,7 +240,7 @@ export default function ChatScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="اكتب رسالتك..."
-            placeholderTextColor="#A0AEC0"
+            placeholderTextColor="#94A3B8"
             value={input}
             onChangeText={setInput}
             textAlign="right"
@@ -251,7 +251,7 @@ export default function ChatScreen({ navigation }) {
           />
 
           <TouchableOpacity style={styles.attachBtn}>
-            <Ionicons name="attach" size={22} color="#6B7280" />
+            <Ionicons name="attach" size={22} color="#64748B" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -260,7 +260,7 @@ export default function ChatScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#E0E5EC' },
+  root: { flex: 1, backgroundColor: '#F0F4F8' },
 
   // Header
   header: {
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   headerBtn: {
-    width: 38, height: 38, borderRadius: 12,
+    width: 38, height: 38, borderRadius: 19,
     backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center', alignItems: 'center',
   },
@@ -289,19 +289,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#22C55E', borderWidth: 2, borderColor: '#0F172A',
   },
   headerText: { alignItems: 'flex-start' },
-  agentName: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-  agentStatus: { fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
+  agentName: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  agentStatus: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
 
   // Messages
-  messagesArea: { flex: 1, backgroundColor: '#E0E5EC' },
+  messagesArea: { flex: 1 },
   messagesContent: { padding: 14, paddingBottom: 4 },
   dateBadge: {
-    alignSelf: 'center', backgroundColor: '#E0E5EC',
-    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, marginBottom: 14,
-    shadowColor: '#A3B1C6', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 4,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
+    alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, marginBottom: 14,
   },
-  dateBadgeText: { fontSize: 11, color: '#6B7280', fontWeight: '600' },
+  dateBadgeText: { fontSize: 11, color: '#64748B', fontWeight: '600' },
 
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10 },
   msgRowUser: { flexDirection: 'row' },
@@ -311,7 +309,6 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center',
     marginLeft: 6, flexShrink: 0,
-    shadowColor: '#A3B1C6', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.4, shadowRadius: 6, elevation: 3,
   },
 
   bubble: {
@@ -323,59 +320,53 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   bubbleBot: {
-    backgroundColor: '#E0E5EC',
+    backgroundColor: '#FFFFFF',
     borderBottomRightRadius: 4,
-    shadowColor: '#A3B1C6', shadowOffset: { width: 6, height: 6 }, shadowOpacity: 0.6, shadowRadius: 12, elevation: 6,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 1,
   },
   bubbleText: { fontSize: 14, lineHeight: 21 },
-  bubbleTextUser: { color: '#FFFFFF', textAlign: 'left' },
-  bubbleTextBot: { color: '#3D4852', textAlign: 'left' },
+  bubbleTextUser: { color: '#fff', textAlign: 'left' },
+  bubbleTextBot: { color: '#0F172A', textAlign: 'left' },
   bubbleMeta: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', marginTop: 4 },
   bubbleTime: { fontSize: 10 },
   bubbleTimeUser: { color: 'rgba(255,255,255,0.55)' },
-  bubbleTimeBot: { color: '#6B7280' },
+  bubbleTimeBot: { color: '#94A3B8' },
 
   typingBubble: { paddingVertical: 14 },
   typingDots: { flexDirection: 'row', gap: 5, alignItems: 'center', paddingHorizontal: 4 },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#6B7280' },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#94A3B8' },
   dot1: { opacity: 1 },
   dot2: { opacity: 0.6 },
   dot3: { opacity: 0.3 },
 
   // Quick replies
-  quickRepliesBar: { maxHeight: 48, backgroundColor: '#E0E5EC' },
+  quickRepliesBar: { maxHeight: 48, backgroundColor: '#F8FAFC', borderTopWidth: 1, borderTopColor: '#E2E8F0' },
   quickRepliesContent: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 8, alignItems: 'center' },
   quickChip: {
-    backgroundColor: '#E0E5EC', borderRadius: 20,
+    backgroundColor: '#fff', borderRadius: 16,
     paddingHorizontal: 12, paddingVertical: 6,
-    shadowColor: '#A3B1C6', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 4,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1.5, borderColor: '#E2E8F0',
   },
-  quickChipText: { fontSize: 12, fontWeight: '600', color: '#3D4852' },
+  quickChipText: { fontSize: 12, fontWeight: '600', color: '#334155' },
 
   // Input bar
   inputBar: {
     flexDirection: 'row', alignItems: 'flex-end',
-    backgroundColor: '#E0E5EC', paddingHorizontal: 10, paddingVertical: 8,
+    backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8,
+    borderTopWidth: 1, borderTopColor: '#F1F5F9',
     gap: 8,
   },
-  attachBtn: {
-    width: 36, height: 36, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: '#E0E5EC', borderRadius: 18,
-    shadowColor: '#A3B1C6', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.4, shadowRadius: 6, elevation: 3,
-  },
+  attachBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   input: {
     flex: 1, minHeight: 36, maxHeight: 100,
-    backgroundColor: '#D8DDE4', borderRadius: 24,
+    backgroundColor: '#F8FAFC', borderRadius: 20,
     paddingHorizontal: 14, paddingVertical: 8,
-    fontSize: 14, color: '#3D4852',
-    borderWidth: 0,
+    fontSize: 14, color: '#0F172A',
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
   sendBtn: {
-    width: 38, height: 38, borderRadius: 20,
+    width: 38, height: 38, borderRadius: 19,
     backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#0A0E14', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 6,
   },
-  sendBtnDisabled: { backgroundColor: '#A0AEC0', shadowOpacity: 0, elevation: 0 },
+  sendBtnDisabled: { backgroundColor: '#CBD5E1' },
 });
