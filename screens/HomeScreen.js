@@ -320,6 +320,76 @@ function QuickActions({ navigation, t }) {
   );
 }
 
+function sectionVisible(section) {
+  const payload = section.payload || {};
+  try {
+    const now = Date.now();
+    if (payload.startsAt && now < new Date(payload.startsAt).getTime()) return false;
+    if (payload.endsAt && now > new Date(payload.endsAt).getTime()) return false;
+  } catch {
+    return true;
+  }
+  return true;
+}
+
+function BrandRowSection({ section, navigation, t, locale }) {
+  const dir = useDirection();
+  const [brands, setBrands] = useState([]);
+  const payload = section.payload || {};
+  const wanted = Array.isArray(payload.brandIds) ? payload.brandIds : null;
+
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        let q = supabase.from('brands').select('id, name, nameAr, logoUrl').eq('isActive', true).order('sortOrder');
+        if (wanted && wanted.length) q = q.in('id', wanted);
+        const { data } = await q;
+        let rows = data || [];
+        if (wanted && wanted.length) {
+          const order = new Map(wanted.map((id, i) => [id, i]));
+          rows = [...rows].sort((a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999));
+        }
+        setBrands(rows);
+      } catch {
+        setBrands([]);
+      }
+    };
+    fetchBrands();
+  }, [section.id]);
+
+  if (brands.length === 0) return null;
+
+  return (
+    <View key={section.id} style={styles.featuredSection}>
+      <View style={[styles.sectionHeader, { flexDirection: dir.row }]}>
+        <Text style={styles.sectionTitle}>{locale === 'ar' ? section.nameAr : section.name}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Brands')}>
+          <Text style={styles.sectionSeeAll}>{t('home.seeAll')}</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.brandRowScroll}>
+        {brands.map((b) => (
+          <TouchableOpacity
+            key={b.id}
+            style={styles.brandTile}
+            onPress={() => navigation.navigate('Search', { brandId: b.id, brandName: localizedName(b, locale) })}
+            activeOpacity={0.7}
+          >
+            {b.logoUrl ? (
+              <Image source={{ uri: b.logoUrl }} style={styles.brandTileLogo} resizeMode="contain" />
+            ) : (
+              <Text style={styles.brandTileInitial}>
+                {(localizedName(b, locale) || '?').trim().charAt(0).toUpperCase()}
+              </Text>
+            )}
+            <Text style={styles.brandTileName} numberOfLines={1}>{localizedName(b, locale)}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
 function HomepageSections({ products, navigation, onAddToCart, inCartMap, addedMap, t, locale }) {
   const dir = useDirection();
   const [sections, setSections] = useState([]);
@@ -341,6 +411,20 @@ function HomepageSections({ products, navigation, onAddToCart, inCartMap, addedM
   return (
     <>
       {sections.map((section) => {
+        if (!sectionVisible(section)) return null;
+
+        if ((section.type || 'products') === 'brands') {
+          return (
+            <BrandRowSection
+              key={section.id}
+              section={section}
+              navigation={navigation}
+              t={t}
+              locale={locale}
+            />
+          );
+        }
+
         const sectionProducts = products
           .filter(p => p.homeSection === section.id)
           .sort((a, b) => (a.homeOrder || 999) - (b.homeOrder || 999));
@@ -934,6 +1018,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     gap: 8,
     paddingBottom: 4,
+  },
+  brandRowScroll: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.md,
+    gap: 10,
+    paddingBottom: 4,
+  },
+  brandTile: { width: 76, alignItems: 'center' },
+  brandTileLogo: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.borderLight,
+  },
+  brandTileInitial: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: COLORS.gray100, color: COLORS.text,
+    fontSize: 24, fontWeight: FONT_WEIGHTS.extrabold,
+    textAlign: 'center', textAlignVertical: 'center', lineHeight: 64,
+  },
+  brandTileName: {
+    fontSize: 11, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.textSecondary,
+    marginTop: 6, textAlign: 'center',
   },
 
   bundleSection: { marginBottom: 0, paddingHorizontal: 4 },
